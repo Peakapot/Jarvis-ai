@@ -1,0 +1,23 @@
+# =============================================================================
+# rss-feeds.txt — Cyber Brief intelligence sources (Configuration over hard coding)
+# -----------------------------------------------------------------------------
+# One feed URL per line. Lines starting with '#' are comments. healthcheck.sh
+# verifies reachability; the cyber-brief workflow ingests these as sources.
+# Add or remove feeds here without touching any workflow.
+# =============================================================================
+
+# --- Vendor & national CERT advisories --------------------------------------
+https://www.cisa.gov/cybersecurity-advisories/all.xml
+https://www.ncsc.gov.uk/api/1/services/v1/all-rss-feed.xml
+
+# --- Threat intelligence & research -----------------------------------------
+https://feeds.feedburner.com/TheHackersNews
+https://krebsonsecurity.com/feed/
+https://www.bleepingcomputer.com/feed/
+https://www.darkreading.com/rss.xml
+
+# --- Vulnerability tracking --------------------------------------------------
+https://www.cvedetails.com/json-feed.php
+
+# --- Regional focus (UAE / Gulf) — add trusted local sources here -----------
+# https://example-uae-cert.gov.ae/feed

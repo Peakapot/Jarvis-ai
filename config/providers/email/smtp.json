@@ -1,0 +1,23 @@
+{
+  "$schema": "../provider.schema.json",
+  "id": "smtp",
+  "kind": "email",
+  "displayName": "Generic SMTP",
+  "default": true,
+  "description": "Provider-neutral SMTP. Works with any mail host. Selected via EMAIL_PROVIDER=smtp.",
+  "endpoint": {
+    "hostEnv": "SMTP_HOST",
+    "portEnv": "SMTP_PORT",
+    "portDefault": "587",
+    "securityEnv": "SMTP_SECURE"
+  },
+  "auth": {
+    "type": "basic",
+    "userEnv": "SMTP_USER",
+    "passwordEnv": "SMTP_PASSWORD"
+  },
+  "from": { "env": "EMAIL_FROM" },
+  "capabilities": ["send"],
+  "healthcheck": { "type": "tcp", "hostEnv": "SMTP_HOST", "portEnv": "SMTP_PORT" },
+  "n8nCredentialType": "smtp"
+}

@@ -1,0 +1,30 @@
+{
+  "$schema": "../provider.schema.json",
+  "id": "openai",
+  "kind": "ai",
+  "displayName": "OpenAI",
+  "default": false,
+  "description": "Cloud LLM provider. Selected via AI_PROVIDER=openai; requires OPENAI_API_KEY in .env.",
+  "endpoint": {
+    "baseUrlEnv": "OPENAI_BASE_URL",
+    "baseUrlDefault": "https://api.openai.com/v1",
+    "chatPath": "/chat/completions",
+    "modelsPath": "/models"
+  },
+  "auth": {
+    "type": "bearer",
+    "valueEnv": "OPENAI_API_KEY"
+  },
+  "model": {
+    "env": "OPENAI_MODEL",
+    "default": "gpt-4o"
+  },
+  "capabilities": ["chat", "completion", "vision", "tools", "embeddings"],
+  "healthcheck": {
+    "method": "GET",
+    "path": "/models",
+    "expectStatus": 200,
+    "requiresAuth": true
+  },
+  "n8nCredentialType": "openAiApi"
+}

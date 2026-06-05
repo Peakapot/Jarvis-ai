@@ -1,0 +1,14 @@
+{
+  "$schema": "../provider.schema.json",
+  "id": "gmail",
+  "kind": "email",
+  "displayName": "Gmail (OAuth2)",
+  "default": false,
+  "description": "Google Gmail via OAuth2. Credentials are configured inside n8n; only selection and From/To live in .env. Selected via EMAIL_PROVIDER=gmail.",
+  "endpoint": { "managedBy": "n8n-credential" },
+  "auth": { "type": "oauth2", "configuredIn": "n8n", "scopes": ["https://www.googleapis.com/auth/gmail.send"] },
+  "from": { "env": "EMAIL_FROM" },
+  "capabilities": ["send", "read", "search", "label"],
+  "healthcheck": { "type": "n8n-credential", "credentialType": "gmailOAuth2" },
+  "n8nCredentialType": "gmailOAuth2"
+}

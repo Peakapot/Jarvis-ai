@@ -1,0 +1,23 @@
+{
+  "$schema": "../provider.schema.json",
+  "id": "openai",
+  "kind": "image",
+  "displayName": "OpenAI Image Generation",
+  "default": true,
+  "description": "Image generation via OpenAI. Selected via IMAGE_PROVIDER=openai. Provider-specific logic is kept out of workflows by routing through this descriptor.",
+  "endpoint": {
+    "baseUrlEnv": "OPENAI_BASE_URL",
+    "baseUrlDefault": "https://api.openai.com/v1",
+    "generatePath": "/images/generations"
+  },
+  "auth": {
+    "type": "bearer",
+    "valueEnv": "OPENAI_IMAGE_API_KEY",
+    "fallbackValueEnv": "OPENAI_API_KEY"
+  },
+  "model": { "env": "IMAGE_MODEL", "default": "gpt-image-1" },
+  "options": { "sizeEnv": "IMAGE_SIZE", "sizeDefault": "1024x1024" },
+  "capabilities": ["generate"],
+  "healthcheck": { "method": "GET", "path": "/models", "requiresAuth": true },
+  "n8nCredentialType": "openAiApi"
+}

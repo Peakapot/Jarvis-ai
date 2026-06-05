@@ -1,0 +1,175 @@
+# =============================================================================
+# docker-compose.yml — Jarvis service topology (Docker First)
+# -----------------------------------------------------------------------------
+# Everything that can run in a container does. Services are decoupled and
+# individually replaceable (Modular architecture). Optional/future services are
+# gated behind Compose profiles so the base stack stays lean while leaving a
+# clear, no-redesign path to enable them later (Future expansion).
+#
+# Profiles:
+#   (default)     n8n + ollama          — the core assistant runtime
+#   vectordb      qdrant                 — future knowledge base / long-term memory
+#   monitoring    prometheus + grafana   — future observability stack
+#
+# All tunables come from .env (Configuration over hard coding). Copy
+# .env.example to .env (install.sh does this for you) before running.
+# =============================================================================
+
+name: jarvis
+
+x-logging: &default-logging
+  driver: "json-file"
+  options:
+    max-size: "${DOCKER_LOG_MAX_SIZE:-10m}"
+    max-file: "${DOCKER_LOG_MAX_FILE:-5}"
+
+networks:
+  jarvis-net:
+    name: ${JARVIS_DOCKER_NETWORK:-jarvis-net}
+    external: true
+
+volumes:
+  n8n_data:
+    name: ${N8N_DATA_VOLUME:-jarvis_n8n_data}
+  ollama_data:
+    name: ${OLLAMA_DATA_VOLUME:-jarvis_ollama_data}
+  qdrant_data:
+    name: ${QDRANT_DATA_VOLUME:-jarvis_qdrant_data}
+  prometheus_data:
+    name: jarvis_prometheus_data
+  grafana_data:
+    name: jarvis_grafana_data
+
+services:
+  # ---------------------------------------------------------------------------
+  # n8n — workflow automation engine and orchestration core.
+  # ---------------------------------------------------------------------------
+  n8n:
+    image: ${N8N_IMAGE:-docker.n8n.io/n8nio/n8n:latest}
+    container_name: ${N8N_CONTAINER_NAME:-jarvis-n8n}
+    restart: unless-stopped
+    networks: [jarvis-net]
+    ports:
+      - "${N8N_PORT:-5678}:5678"
+    environment:
+      # Core
+      N8N_HOST: ${N8N_HOST:-localhost}
+      N8N_PORT: "5678"
+      N8N_PROTOCOL: ${N8N_PROTOCOL:-http}
+      WEBHOOK_URL: ${N8N_BASE_URL:-http://localhost:5678}
+      GENERIC_TIMEZONE: ${TZ:-UTC}
+      TZ: ${TZ:-UTC}
+      # Security (Security by default)
+      N8N_ENCRYPTION_KEY: ${N8N_ENCRYPTION_KEY:?N8N_ENCRYPTION_KEY must be set in .env}
+      N8N_SECURE_COOKIE: ${N8N_SECURE_COOKIE:-false}
+      N8N_DIAGNOSTICS_ENABLED: "false"
+      N8N_PERSONALIZATION_ENABLED: "false"
+      # Observability
+      N8N_LOG_LEVEL: ${N8N_LOG_LEVEL:-info}
+      N8N_LOG_OUTPUT: "console,file"
+      N8N_LOG_FILE_LOCATION: /home/node/.n8n/logs/n8n.log
+      EXECUTIONS_DATA_PRUNE: "true"
+      EXECUTIONS_DATA_MAX_AGE: ${N8N_EXEC_MAX_AGE_HOURS:-336}
+      # Provider endpoints reachable from inside the network
+      OLLAMA_BASE_URL: http://${OLLAMA_CONTAINER_NAME:-jarvis-ollama}:11434
+    volumes:
+      - n8n_data:/home/node/.n8n
+      - ./logs:/home/node/.n8n/logs
+      # Repo assets mounted at stable paths so workflows can reference them
+      # deterministically (Separation of concerns; no host-path coupling).
+      - ./workflows:/workflows:ro
+      - ./prompts:/prompts:ro
+      - ./config:/config:ro
+      - ./templates:/templates:ro
+      - ./reports:/reports
+      - ./logs:/logs
+    healthcheck:
+      test: ["CMD-SHELL", "wget -qO- http://localhost:5678/healthz || exit 1"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+      start_period: 30s
+    logging: *default-logging
+    depends_on:
+      ollama:
+        condition: service_started
+
+  # ---------------------------------------------------------------------------
+  # ollama — default, local-first AI provider (AI Provider Abstraction).
+  # ---------------------------------------------------------------------------
+  ollama:
+    image: ${OLLAMA_IMAGE:-ollama/ollama:latest}
+    container_name: ${OLLAMA_CONTAINER_NAME:-jarvis-ollama}
+    restart: unless-stopped
+    networks: [jarvis-net]
+    ports:
+      - "${OLLAMA_PORT:-11434}:11434"
+    environment:
+      OLLAMA_KEEP_ALIVE: ${OLLAMA_KEEP_ALIVE:-5m}
+      OLLAMA_HOST: 0.0.0.0
+    volumes:
+      - ollama_data:/root/.ollama
+    healthcheck:
+      test: ["CMD-SHELL", "ollama list >/dev/null 2>&1 || exit 1"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+      start_period: 20s
+    logging: *default-logging
+    # GPU passthrough is opt-in; uncomment and configure on capable hosts.
+    # deploy:
+    #   resources:
+    #     reservations:
+    #       devices:
+    #         - driver: nvidia
+    #           count: all
+    #           capabilities: [gpu]
+
+  # ---------------------------------------------------------------------------
+  # qdrant — FUTURE vector database for knowledge base / long-term memory.
+  # Enable with:  COMPOSE_PROFILES=vectordb docker compose up -d
+  # ---------------------------------------------------------------------------
+  qdrant:
+    image: ${QDRANT_IMAGE:-qdrant/qdrant:latest}
+    container_name: ${QDRANT_CONTAINER_NAME:-jarvis-qdrant}
+    restart: unless-stopped
+    profiles: ["vectordb"]
+    networks: [jarvis-net]
+    ports:
+      - "${QDRANT_PORT:-6333}:6333"
+    volumes:
+      - qdrant_data:/qdrant/storage
+    logging: *default-logging
+
+  # ---------------------------------------------------------------------------
+  # prometheus + grafana — FUTURE monitoring stack.
+  # Enable with:  COMPOSE_PROFILES=monitoring docker compose up -d
+  # ---------------------------------------------------------------------------
+  prometheus:
+    image: ${PROMETHEUS_IMAGE:-prom/prometheus:latest}
+    container_name: ${PROMETHEUS_CONTAINER_NAME:-jarvis-prometheus}
+    restart: unless-stopped
+    profiles: ["monitoring"]
+    networks: [jarvis-net]
+    ports:
+      - "${PROMETHEUS_PORT:-9090}:9090"
+    volumes:
+      - ./docker/prometheus/prometheus.yml:/etc/prometheus/prometheus.yml:ro
+      - prometheus_data:/prometheus
+    logging: *default-logging
+
+  grafana:
+    image: ${GRAFANA_IMAGE:-grafana/grafana:latest}
+    container_name: ${GRAFANA_CONTAINER_NAME:-jarvis-grafana}
+    restart: unless-stopped
+    profiles: ["monitoring"]
+    networks: [jarvis-net]
+    ports:
+      - "${GRAFANA_PORT:-3000}:3000"
+    environment:
+      GF_SECURITY_ADMIN_PASSWORD: ${GRAFANA_ADMIN_PASSWORD:-admin}
+      GF_USERS_ALLOW_SIGN_UP: "false"
+    volumes:
+      - grafana_data:/var/lib/grafana
+    depends_on: [prometheus]
+    logging: *default-logging

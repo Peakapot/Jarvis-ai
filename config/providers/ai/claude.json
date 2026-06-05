@@ -1,0 +1,32 @@
+{
+  "$schema": "../provider.schema.json",
+  "id": "claude",
+  "kind": "ai",
+  "displayName": "Anthropic Claude",
+  "default": false,
+  "description": "Cloud LLM provider. Selected via AI_PROVIDER=claude; requires ANTHROPIC_API_KEY in .env.",
+  "endpoint": {
+    "baseUrlEnv": "CLAUDE_BASE_URL",
+    "baseUrlDefault": "https://api.anthropic.com",
+    "chatPath": "/v1/messages",
+    "modelsPath": "/v1/models"
+  },
+  "auth": {
+    "type": "header",
+    "header": "x-api-key",
+    "valueEnv": "ANTHROPIC_API_KEY",
+    "extraHeaders": { "anthropic-version": "2023-06-01" }
+  },
+  "model": {
+    "env": "CLAUDE_MODEL",
+    "default": "claude-sonnet-4-6"
+  },
+  "capabilities": ["chat", "completion", "vision", "tools"],
+  "healthcheck": {
+    "method": "GET",
+    "path": "/v1/models",
+    "expectStatus": 200,
+    "requiresAuth": true
+  },
+  "n8nCredentialType": "anthropicApi"
+}

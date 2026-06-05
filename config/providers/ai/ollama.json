@@ -1,0 +1,29 @@
+{
+  "$schema": "../provider.schema.json",
+  "id": "ollama",
+  "kind": "ai",
+  "displayName": "Ollama (local)",
+  "default": true,
+  "description": "Local-first LLM runtime. The Jarvis default provider; no data leaves the host.",
+  "endpoint": {
+    "baseUrlEnv": "OLLAMA_BASE_URL",
+    "baseUrlDefault": "http://localhost:11434",
+    "chatPath": "/api/chat",
+    "generatePath": "/api/generate",
+    "modelsPath": "/api/tags"
+  },
+  "auth": {
+    "type": "none"
+  },
+  "model": {
+    "env": "OLLAMA_DEFAULT_MODEL",
+    "default": "llama3.1:8b"
+  },
+  "capabilities": ["chat", "completion", "embeddings"],
+  "healthcheck": {
+    "method": "GET",
+    "path": "/api/tags",
+    "expectStatus": 200
+  },
+  "n8nCredentialType": "ollamaApi"
+}

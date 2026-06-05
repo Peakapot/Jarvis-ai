@@ -1,0 +1,14 @@
+{
+  "$schema": "../provider.schema.json",
+  "id": "microsoft365",
+  "kind": "email",
+  "displayName": "Microsoft 365 (OAuth2)",
+  "default": false,
+  "description": "Microsoft 365 / Outlook via OAuth2 (Microsoft Graph). Credentials configured inside n8n. Selected via EMAIL_PROVIDER=microsoft365.",
+  "endpoint": { "managedBy": "n8n-credential", "graphBaseUrl": "https://graph.microsoft.com/v1.0" },
+  "auth": { "type": "oauth2", "configuredIn": "n8n", "scopes": ["Mail.Send", "Mail.Read"] },
+  "from": { "env": "EMAIL_FROM" },
+  "capabilities": ["send", "read", "search"],
+  "healthcheck": { "type": "n8n-credential", "credentialType": "microsoftOutlookOAuth2Api" },
+  "n8nCredentialType": "microsoftOutlookOAuth2Api"
+}

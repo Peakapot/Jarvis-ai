@@ -1,0 +1,23 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "https://jarvis.local/schemas/provider.schema.json",
+  "title": "Jarvis Provider Descriptor",
+  "description": "Declarative description of a swappable provider (AI, image or email). Selecting a provider is a configuration change (set the relevant *_PROVIDER variable in .env); no workflow or code change is required. Workflows read the active descriptor via scripts/providers/resolve-provider.sh.",
+  "type": "object",
+  "required": ["id", "kind", "displayName", "capabilities"],
+  "additionalProperties": true,
+  "properties": {
+    "id": { "type": "string", "description": "Stable identifier, e.g. 'ollama'." },
+    "kind": { "type": "string", "enum": ["ai", "image", "email"] },
+    "displayName": { "type": "string" },
+    "default": { "type": "boolean", "description": "Whether this is the default provider for its kind." },
+    "description": { "type": "string" },
+    "endpoint": { "type": "object", "description": "Connection details; values reference env var names so no secrets live here." },
+    "auth": { "type": "object", "description": "Auth strategy (none|bearer|header|basic|oauth2) referencing env var names only." },
+    "model": { "type": "object" },
+    "options": { "type": "object" },
+    "capabilities": { "type": "array", "items": { "type": "string" } },
+    "healthcheck": { "type": "object" },
+    "n8nCredentialType": { "type": "string", "description": "The n8n credential type that backs this provider." }
+  }
+}
