@@ -1,0 +1,72 @@
+# =============================================================================
+# CI — validates the repository on every push / PR (Documentation as code,
+# Observability). Keeps the public repo healthy: shell scripts lint clean,
+# workflows and JSON descriptors are structurally valid, and no secrets leak.
+# =============================================================================
+name: CI
+
+on:
+  push:
+    branches: ["**"]
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  shellcheck:
+    name: ShellCheck
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Install shellcheck
+        run: sudo apt-get update && sudo apt-get install -y shellcheck
+      - name: Lint shell scripts
+        run: |
+          set -e
+          mapfile -t files < <(git ls-files '*.sh')
+          echo "Linting ${#files[@]} shell script(s)"
+          # Library files are sourced, not executed; treat accordingly.
+          shellcheck -x -e SC1090,SC1091 "${files[@]}"
+
+  workflows:
+    name: Workflow & JSON integrity
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Install jq
+        run: sudo apt-get update && sudo apt-get install -y jq
+      - name: Validate all JSON parses
+        run: |
+          set -e
+          fail=0
+          while IFS= read -r f; do
+            if ! jq -e . "$f" >/dev/null 2>&1; then
+              echo "::error file=$f::Invalid JSON"; fail=1
+            fi
+          done < <(git ls-files '*.json')
+          exit $fail
+      - name: Validate n8n workflows (shape + no secrets)
+        run: |
+          chmod +x scripts/**/*.sh scripts/*.sh || true
+          scripts/workflows/workflow-validate.sh
+
+  config:
+    name: Config sanity
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Ensure .env is not committed
+        run: |
+          if git ls-files --error-unmatch .env >/dev/null 2>&1; then
+            echo "::error::.env must never be committed"; exit 1
+          fi
+          test -f .env.example || { echo "::error::.env.example missing"; exit 1; }
+      - name: Scan tracked files for obvious secrets
+        run: |
+          # Heuristic guardrail; not a replacement for proper secret scanning.
+          if git grep -nIE '(AKIA[0-9A-Z]{16}|-----BEGIN (RSA|OPENSSH|EC) PRIVATE KEY-----|xox[baprs]-[0-9A-Za-z-]{10,})' -- . ':!*.example' ':!.github/*'; then
+            echo "::error::Potential secret detected in tracked files"; exit 1
+          fi
+          echo "No obvious secrets found in tracked files"
