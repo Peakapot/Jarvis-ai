@@ -1,0 +1,78 @@
+{
+  "name": "Jarvis · Error Handler",
+  "meta": {
+    "jarvisModule": "core",
+    "jarvisVersion": "1.0.0",
+    "description": "Central error workflow referenced by every Jarvis workflow (settings.errorWorkflow). Captures the failed execution, writes a structured record to logs/, updates the last-failed-run marker used by status.sh, and notifies via Telegram if configured. This gives every workflow a consistent failure path and meaningful diagnostics (Error Handling, Observability).",
+    "envVars": ["TELEGRAM_BOT_TOKEN", "TELEGRAM_ALLOWED_CHAT_IDS"]
+  },
+  "settings": { "executionOrder": "v1" },
+  "nodes": [
+    {
+      "id": "error-trigger",
+      "name": "Error Trigger",
+      "type": "n8n-nodes-base.errorTrigger",
+      "typeVersion": 1,
+      "position": [240, 300],
+      "parameters": {}
+    },
+    {
+      "id": "format",
+      "name": "Format Diagnostic Record",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [480, 300],
+      "parameters": {
+        "language": "javaScript",
+        "jsCode": "const e = $json;\nconst record = {\n  ts: new Date().toISOString(),\n  level: 'error',\n  component: 'workflow-execution',\n  workflow: e.workflow?.name || 'unknown',\n  node: e.execution?.lastNodeExecuted || 'unknown',\n  message: e.execution?.error?.message || 'unknown error',\n  executionId: e.execution?.id || null\n};\nreturn [{ json: { record, line: JSON.stringify(record) } }];"
+      }
+    },
+    {
+      "id": "write-log",
+      "name": "Append to logs/cyber-brief & execution",
+      "type": "n8n-nodes-base.readWriteFile",
+      "typeVersion": 1,
+      "position": [720, 220],
+      "parameters": {
+        "operation": "write",
+        "fileName": "=/logs/workflow-execution.log",
+        "dataPropertyName": "line",
+        "options": { "append": true }
+      },
+      "onError": "continueRegularOutput"
+    },
+    {
+      "id": "mark-failed",
+      "name": "Update last-failed marker",
+      "type": "n8n-nodes-base.readWriteFile",
+      "typeVersion": 1,
+      "position": [720, 380],
+      "parameters": {
+        "operation": "write",
+        "fileName": "=/logs/last-run-failed.txt",
+        "dataPropertyName": "line",
+        "options": { "append": false }
+      },
+      "onError": "continueRegularOutput"
+    },
+    {
+      "id": "notify",
+      "name": "Notify (Telegram)",
+      "type": "n8n-nodes-base.telegram",
+      "typeVersion": 1.2,
+      "position": [960, 300],
+      "parameters": {
+        "resource": "message",
+        "operation": "sendMessage",
+        "chatId": "={{ ($env.TELEGRAM_ALLOWED_CHAT_IDS || '').split(',')[0] }}",
+        "text": "=🚨 Workflow failed: {{ $json.record.workflow }} at node {{ $json.record.node }} — {{ $json.record.message }}"
+      },
+      "onError": "continueRegularOutput",
+      "notes": "Best-effort alert; never throws (so the error handler itself can't fail loudly)."
+    }
+  ],
+  "connections": {
+    "Error Trigger": { "main": [[{ "node": "Format Diagnostic Record", "type": "main", "index": 0 }]] },
+    "Format Diagnostic Record": { "main": [[{ "node": "Append to logs/cyber-brief & execution", "type": "main", "index": 0 }, { "node": "Update last-failed marker", "type": "main", "index": 0 }, { "node": "Notify (Telegram)", "type": "main", "index": 0 }]] }
+  }
+}

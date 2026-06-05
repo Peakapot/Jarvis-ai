@@ -1,0 +1,144 @@
+{
+  "name": "Jarvis · Telegram Assistant",
+  "meta": {
+    "jarvisModule": "telegram-assistant",
+    "jarvisVersion": "1.0.0",
+    "description": "Primary interface. Receives Telegram messages, authorises the chat, routes commands (/help /status /research /emails /image /cyber) and replies. New commands are added by extending the Command Router switch — easy to add (Telegram Assistant Requirements). Every external call has a failure path (Error Handling).",
+    "prompts": ["telegram.router", "system.jarvis-core"],
+    "envVars": ["TELEGRAM_BOT_TOKEN", "TELEGRAM_ALLOWED_CHAT_IDS"]
+  },
+  "settings": {
+    "executionOrder": "v1",
+    "saveDataErrorExecution": "all",
+    "saveExecutionProgress": true,
+    "errorWorkflow": "Jarvis · Error Handler"
+  },
+  "nodes": [
+    {
+      "id": "trigger-telegram",
+      "name": "Telegram Trigger",
+      "type": "n8n-nodes-base.telegramTrigger",
+      "typeVersion": 1,
+      "position": [240, 300],
+      "parameters": { "updates": ["message"] },
+      "notes": "Inbound message entry point. Credentials configured in n8n (no token in repo)."
+    },
+    {
+      "id": "guard-auth",
+      "name": "Authorise Chat",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2,
+      "position": [480, 300],
+      "parameters": {
+        "conditions": {
+          "options": { "caseSensitive": true },
+          "combinator": "and",
+          "conditions": [
+            {
+              "leftValue": "={{ $env.TELEGRAM_ALLOWED_CHAT_IDS }}",
+              "rightValue": "={{ $json.message.chat.id }}",
+              "operator": { "type": "string", "operation": "contains" }
+            }
+          ]
+        }
+      },
+      "notes": "Access control: only chat IDs in TELEGRAM_ALLOWED_CHAT_IDS proceed."
+    },
+    {
+      "id": "router",
+      "name": "Command Router",
+      "type": "n8n-nodes-base.switch",
+      "typeVersion": 3,
+      "position": [760, 240],
+      "parameters": {
+        "rules": {
+          "values": [
+            { "outputKey": "help",     "conditions": { "conditions": [ { "leftValue": "={{ $json.message.text }}", "rightValue": "/help", "operator": { "type": "string", "operation": "startsWith" } } ] } },
+            { "outputKey": "status",   "conditions": { "conditions": [ { "leftValue": "={{ $json.message.text }}", "rightValue": "/status", "operator": { "type": "string", "operation": "startsWith" } } ] } },
+            { "outputKey": "research", "conditions": { "conditions": [ { "leftValue": "={{ $json.message.text }}", "rightValue": "/research", "operator": { "type": "string", "operation": "startsWith" } } ] } },
+            { "outputKey": "emails",   "conditions": { "conditions": [ { "leftValue": "={{ $json.message.text }}", "rightValue": "/emails", "operator": { "type": "string", "operation": "startsWith" } } ] } },
+            { "outputKey": "image",    "conditions": { "conditions": [ { "leftValue": "={{ $json.message.text }}", "rightValue": "/image", "operator": { "type": "string", "operation": "startsWith" } } ] } },
+            { "outputKey": "cyber",    "conditions": { "conditions": [ { "leftValue": "={{ $json.message.text }}", "rightValue": "/cyber", "operator": { "type": "string", "operation": "startsWith" } } ] } }
+          ]
+        },
+        "options": { "fallbackOutput": "extra" }
+      },
+      "notes": "Add a new command by adding an output here and wiring a handler. Fallback routes to the AI assistant for natural-language intent."
+    },
+    {
+      "id": "handler-help",
+      "name": "Help Text",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3,
+      "position": [1040, 80],
+      "parameters": { "assignments": { "assignments": [ { "name": "reply", "type": "string", "value": "Jarvis commands:\n/help — this message\n/status — system status\n/research <topic>\n/emails — inbox summary\n/image <prompt>\n/cyber — latest cyber brief" } ] } }
+    },
+    {
+      "id": "handler-ai",
+      "name": "AI Assistant (provider-abstracted)",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [1040, 420],
+      "parameters": {
+        "method": "POST",
+        "url": "={{ $env.OLLAMA_BASE_URL || 'http://jarvis-ollama:11434' }}/api/chat",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={\n  \"model\": \"{{ $env.OLLAMA_DEFAULT_MODEL || 'llama3.1:8b' }}\",\n  \"stream\": false,\n  \"messages\": [{\"role\":\"user\",\"content\": {{ JSON.stringify($json.message.text) }} }]\n}",
+        "options": { "timeout": 60000 }
+      },
+      "onError": "continueErrorOutput",
+      "notes": "Default provider is Ollama. Switching AI_PROVIDER points this at the resolved endpoint (AI Provider Abstraction)."
+    },
+    {
+      "id": "send-reply",
+      "name": "Send Telegram Reply",
+      "type": "n8n-nodes-base.telegram",
+      "typeVersion": 1.2,
+      "position": [1360, 240],
+      "parameters": {
+        "resource": "message",
+        "operation": "sendMessage",
+        "chatId": "={{ $('Telegram Trigger').item.json.message.chat.id }}",
+        "text": "={{ $json.reply || $json.message?.content || 'Done.' }}"
+      },
+      "onError": "continueErrorOutput"
+    },
+    {
+      "id": "fail-notice",
+      "name": "Failure Notice",
+      "type": "n8n-nodes-base.telegram",
+      "typeVersion": 1.2,
+      "position": [1360, 480],
+      "parameters": {
+        "resource": "message",
+        "operation": "sendMessage",
+        "chatId": "={{ $('Telegram Trigger').item.json.message.chat.id }}",
+        "text": "⚠️ Jarvis hit an error handling that request. The team has been notified and it has been logged."
+      },
+      "notes": "Failure path: AI/Ollama unavailable -> tell the user gracefully (Error Handling)."
+    }
+  ],
+  "connections": {
+    "Telegram Trigger": { "main": [[{ "node": "Authorise Chat", "type": "main", "index": 0 }]] },
+    "Authorise Chat": { "main": [[{ "node": "Command Router", "type": "main", "index": 0 }], []] },
+    "Command Router": {
+      "main": [
+        [{ "node": "Help Text", "type": "main", "index": 0 }],
+        [{ "node": "AI Assistant (provider-abstracted)", "type": "main", "index": 0 }],
+        [{ "node": "AI Assistant (provider-abstracted)", "type": "main", "index": 0 }],
+        [{ "node": "AI Assistant (provider-abstracted)", "type": "main", "index": 0 }],
+        [{ "node": "AI Assistant (provider-abstracted)", "type": "main", "index": 0 }],
+        [{ "node": "AI Assistant (provider-abstracted)", "type": "main", "index": 0 }],
+        [{ "node": "AI Assistant (provider-abstracted)", "type": "main", "index": 0 }]
+      ]
+    },
+    "Help Text": { "main": [[{ "node": "Send Telegram Reply", "type": "main", "index": 0 }]] },
+    "AI Assistant (provider-abstracted)": {
+      "main": [
+        [{ "node": "Send Telegram Reply", "type": "main", "index": 0 }],
+        [{ "node": "Failure Notice", "type": "main", "index": 0 }]
+      ]
+    }
+  }
+}

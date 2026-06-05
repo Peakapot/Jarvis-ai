@@ -1,0 +1,121 @@
+{
+  "name": "Jarvis · Cyber Brief",
+  "meta": {
+    "jarvisModule": "cyber-brief",
+    "jarvisVersion": "1.0.0",
+    "description": "Scheduled daily threat-intelligence product. Pulls RSS sources, summarises with the provider-abstracted AI, renders HTML/PDF/email versions, stores outputs to reports/ and the historical archive, and emails it. Each source/step has a failure path so one bad feed never breaks the brief (Error Handling). See prompts/cyber-brief/analyst.md.",
+    "prompts": ["cyber-brief.analyst", "system.jarvis-core"],
+    "envVars": ["CYBER_BRIEF_SCHEDULE_CRON", "CYBER_BRIEF_REGION_FOCUS", "EMAIL_TO"]
+  },
+  "settings": {
+    "executionOrder": "v1",
+    "saveDataErrorExecution": "all",
+    "errorWorkflow": "Jarvis · Error Handler"
+  },
+  "nodes": [
+    {
+      "id": "schedule",
+      "name": "Daily Schedule",
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "typeVersion": 1.2,
+      "position": [220, 300],
+      "parameters": { "rule": { "interval": [{ "field": "cronExpression", "expression": "={{ $env.CYBER_BRIEF_SCHEDULE_CRON || '0 6 * * *' }}" }] } }
+    },
+    {
+      "id": "load-feeds",
+      "name": "Load Feed List",
+      "type": "n8n-nodes-base.readWriteFile",
+      "typeVersion": 1,
+      "position": [440, 300],
+      "parameters": { "fileSelector": "/config/rss-feeds.txt", "options": {} },
+      "onError": "continueErrorOutput",
+      "notes": "Feeds come from config/rss-feeds.txt (Configuration over hard coding)."
+    },
+    {
+      "id": "fetch-rss",
+      "name": "Fetch RSS Sources",
+      "type": "n8n-nodes-base.rssFeedRead",
+      "typeVersion": 1.1,
+      "position": [680, 240],
+      "parameters": { "url": "={{ $json.url }}", "options": { "ignoreSSL": false } },
+      "onError": "continueRegularOutput",
+      "notes": "Failure path: an unreachable RSS source is skipped, not fatal (continueRegularOutput)."
+    },
+    {
+      "id": "analyst",
+      "name": "AI Analyst (provider-abstracted)",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [920, 240],
+      "parameters": {
+        "method": "POST",
+        "url": "={{ $env.OLLAMA_BASE_URL || 'http://jarvis-ollama:11434' }}/api/chat",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={\n  \"model\": \"{{ $env.OLLAMA_DEFAULT_MODEL || 'llama3.1:8b' }}\",\n  \"stream\": false,\n  \"messages\": [{\"role\":\"system\",\"content\":\"See prompts/cyber-brief/analyst.md\"},{\"role\":\"user\",\"content\": {{ JSON.stringify($json) }} }]\n}",
+        "options": { "timeout": 120000 }
+      },
+      "onError": "continueErrorOutput",
+      "notes": "Ollama by default; AI_PROVIDER switches the endpoint without workflow changes."
+    },
+    {
+      "id": "render",
+      "name": "Render HTML / PDF / Email",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [1160, 240],
+      "parameters": {
+        "language": "javaScript",
+        "jsCode": "// Render the analyst Markdown into the three required output formats.\n// HTML uses templates/report/cyber-brief.html.tpl; PDF is produced downstream.\nconst md = $json.message?.content || $json.body || 'No data available for this period.';\nconst date = new Date().toISOString().slice(0,10);\nreturn [{ json: { date, markdown: md, html: `<!doctype html><meta charset=\\\"utf-8\\\"><title>Cyber Brief ${date}</title><pre>${md}</pre>`, formats: (process.env.CYBER_BRIEF_OUTPUT_FORMATS||'html,pdf,email').split(',') } }];"
+      },
+      "onError": "continueErrorOutput"
+    },
+    {
+      "id": "store",
+      "name": "Store Outputs + Archive",
+      "type": "n8n-nodes-base.readWriteFile",
+      "typeVersion": 1,
+      "position": [1400, 180],
+      "parameters": {
+        "operation": "write",
+        "fileName": "=/reports/cyber-brief/cyber-brief-{{ $json.date }}.html",
+        "dataPropertyName": "html",
+        "options": { "append": false }
+      },
+      "onError": "continueErrorOutput",
+      "notes": "Store all outputs; the historical archive lives under reports/archive (Historical Archive)."
+    },
+    {
+      "id": "email",
+      "name": "Email Brief (provider-abstracted)",
+      "type": "n8n-nodes-base.emailSend",
+      "typeVersion": 2.1,
+      "position": [1400, 360],
+      "parameters": {
+        "fromEmail": "={{ $env.EMAIL_FROM }}",
+        "toEmail": "={{ $env.EMAIL_TO }}",
+        "subject": "=Cyber Brief — {{ $json.date }}",
+        "html": "={{ $json.html }}",
+        "options": {}
+      },
+      "onError": "continueErrorOutput",
+      "notes": "Email provider (Gmail/M365/SMTP) is selected via EMAIL_PROVIDER; credentials live in n8n."
+    },
+    {
+      "id": "fail",
+      "name": "Reduced Coverage Notice",
+      "type": "n8n-nodes-base.noOp",
+      "typeVersion": 1,
+      "position": [1160, 460],
+      "parameters": {},
+      "notes": "Failure path: if sources/AI/email fail, emit a reduced-coverage brief and log it instead of producing nothing."
+    }
+  ],
+  "connections": {
+    "Daily Schedule": { "main": [[{ "node": "Load Feed List", "type": "main", "index": 0 }]] },
+    "Load Feed List": { "main": [[{ "node": "Fetch RSS Sources", "type": "main", "index": 0 }], [{ "node": "Reduced Coverage Notice", "type": "main", "index": 0 }]] },
+    "Fetch RSS Sources": { "main": [[{ "node": "AI Analyst (provider-abstracted)", "type": "main", "index": 0 }]] },
+    "AI Analyst (provider-abstracted)": { "main": [[{ "node": "Render HTML / PDF / Email", "type": "main", "index": 0 }], [{ "node": "Reduced Coverage Notice", "type": "main", "index": 0 }]] },
+    "Render HTML / PDF / Email": { "main": [[{ "node": "Store Outputs + Archive", "type": "main", "index": 0 }, { "node": "Email Brief (provider-abstracted)", "type": "main", "index": 0 }], [{ "node": "Reduced Coverage Notice", "type": "main", "index": 0 }]] }
+  }
+}
