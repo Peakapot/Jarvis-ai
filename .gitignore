@@ -1,0 +1,60 @@
+# =============================================================================
+# .gitignore — Strict by default (Security: this is a PUBLIC repository)
+# -----------------------------------------------------------------------------
+# Everything that could contain a secret, host-specific value, or generated
+# runtime state is excluded. Tracked structure is preserved with .gitkeep.
+# =============================================================================
+
+# ---- Secrets / local configuration (NEVER commit) --------------------------
+.env
+.env.*
+!.env.example
+*.local
+config/local/
+secrets/
+*.key
+*.pem
+*.p12
+*.pfx
+credentials.json
+*credentials*.json
+*.secret
+
+# ---- Runtime state & generated data ----------------------------------------
+state/
+data/
+*.pid
+
+# ---- Logs ------------------------------------------------------------------
+logs/
+!logs/.gitkeep
+*.log
+
+# ---- Backups & generated reports -------------------------------------------
+backups/
+!backups/.gitkeep
+reports/**/*.html
+reports/**/*.pdf
+reports/**/*.eml
+!reports/.gitkeep
+!reports/**/.gitkeep
+
+# ---- Exported workflows (round-trip mirror; commit deliberately) -----------
+# The exported mirror is regenerated from live n8n. Track curated workflows
+# under workflows/core and workflows/modules; ignore the volatile mirror by
+# default. Remove this line if you prefer to version the mirror too.
+workflows/exported/*.json
+
+# ---- OS / editor noise -----------------------------------------------------
+.DS_Store
+Thumbs.db
+*.swp
+*~
+.idea/
+.vscode/
+*.tmp
+
+# ---- Test / tooling artefacts ----------------------------------------------
+.shellcheck-cache/
+node_modules/
+__pycache__/
