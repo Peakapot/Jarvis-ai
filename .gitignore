@@ -26,12 +26,17 @@ data/
 *.pid
 
 # ---- Logs ------------------------------------------------------------------
-logs/
+# Ignore log contents but keep the directory tree under version control
+# (the directive requires logs/ to exist). Use dir/* so negations apply.
+logs/*
 !logs/.gitkeep
+!logs/diagnostics/
+logs/diagnostics/*
+!logs/diagnostics/.gitkeep
 *.log
 
 # ---- Backups & generated reports -------------------------------------------
-backups/
+backups/*
 !backups/.gitkeep
 reports/**/*.html
 reports/**/*.pdf
