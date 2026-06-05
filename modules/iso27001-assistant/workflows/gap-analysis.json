@@ -1,0 +1,90 @@
+{
+  "name": "Jarvis · ISO 27001 Assistant — Gap Analysis (placeholder)",
+  "meta": {
+    "jarvisModule": "iso27001-assistant",
+    "jarvisVersion": "1.0.0",
+    "status": "planned",
+    "description": "PLACEHOLDER. Assesses a described current state against a control and rates the gap. Structurally valid (nodes array + connections object + failure path) so workflow-validate.sh passes.",
+    "prompts": ["iso27001.gap-analysis", "iso27001.control-guidance"],
+    "envVars": ["ISO27001_ASSISTANT_ENABLED", "ISO27001_STANDARD_VERSION"]
+  },
+  "settings": {
+    "executionOrder": "v1",
+    "saveDataErrorExecution": "all",
+    "errorWorkflow": "Jarvis · Error Handler"
+  },
+  "nodes": [
+    {
+      "id": "trigger-manual",
+      "name": "Manual Trigger",
+      "type": "n8n-nodes-base.manualTrigger",
+      "typeVersion": 1,
+      "position": [240, 300],
+      "parameters": {},
+      "notes": "Placeholder entry point. Replace with a Telegram command or webhook carrying control + current state."
+    },
+    {
+      "id": "build-request",
+      "name": "Build Request",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3,
+      "position": [480, 300],
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            { "name": "prompt", "type": "string", "value": "iso27001.gap-analysis" },
+            { "name": "control", "type": "string", "value": "={{ $json.control || '' }}" },
+            { "name": "current_state", "type": "string", "value": "={{ $json.current_state || '' }}" },
+            { "name": "standard_version", "type": "string", "value": "={{ $env.ISO27001_STANDARD_VERSION || '2022' }}" }
+          ]
+        }
+      },
+      "notes": "Loads the prompt id, control, current state and standard edition."
+    },
+    {
+      "id": "assess-ai",
+      "name": "Assess Gap (provider-abstracted)",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [760, 300],
+      "parameters": {
+        "method": "POST",
+        "url": "={{ $env.OLLAMA_BASE_URL || 'http://jarvis-ollama:11434' }}/api/chat",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={\n  \"model\": \"{{ $env.OLLAMA_DEFAULT_MODEL || 'llama3.1:8b' }}\",\n  \"stream\": false,\n  \"messages\": [{\"role\":\"user\",\"content\": {{ JSON.stringify($json.current_state) }} }]\n}",
+        "options": { "timeout": 60000 }
+      },
+      "onError": "continueErrorOutput",
+      "notes": "External call. Produces gap-analysis JSON. Routes through the AI provider abstraction."
+    },
+    {
+      "id": "respond",
+      "name": "Respond",
+      "type": "n8n-nodes-base.noOp",
+      "typeVersion": 1,
+      "position": [1040, 220],
+      "parameters": {},
+      "notes": "Placeholder success branch. Output includes an advisory disclaimer."
+    },
+    {
+      "id": "fail-notice",
+      "name": "Failure Notice",
+      "type": "n8n-nodes-base.noOp",
+      "typeVersion": 1,
+      "position": [1040, 420],
+      "parameters": {},
+      "notes": "Failure path: AI unavailable -> degrade gracefully (Error Handling)."
+    }
+  ],
+  "connections": {
+    "Manual Trigger": { "main": [[{ "node": "Build Request", "type": "main", "index": 0 }]] },
+    "Build Request": { "main": [[{ "node": "Assess Gap (provider-abstracted)", "type": "main", "index": 0 }]] },
+    "Assess Gap (provider-abstracted)": {
+      "main": [
+        [{ "node": "Respond", "type": "main", "index": 0 }],
+        [{ "node": "Failure Notice", "type": "main", "index": 0 }]
+      ]
+    }
+  }
+}

@@ -1,0 +1,109 @@
+{
+  "name": "Jarvis · Calendar Assistant — Daily Agenda (placeholder)",
+  "meta": {
+    "jarvisModule": "calendar-assistant",
+    "jarvisVersion": "1.0.0",
+    "status": "planned",
+    "description": "PLACEHOLDER. Reads the day's events and summarises them into an agenda. Structurally valid (nodes array + connections object + failure path) so workflow-validate.sh passes.",
+    "prompts": ["calendar.daily-agenda"],
+    "envVars": ["CALENDAR_ASSISTANT_ENABLED", "CALENDAR_DEFAULT_TZ", "CALENDAR_ID"]
+  },
+  "settings": {
+    "executionOrder": "v1",
+    "saveDataErrorExecution": "all",
+    "errorWorkflow": "Jarvis · Error Handler"
+  },
+  "nodes": [
+    {
+      "id": "trigger-schedule",
+      "name": "Schedule Trigger",
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "typeVersion": 1.2,
+      "position": [240, 300],
+      "parameters": { "rule": { "interval": [{ "field": "days" }] } },
+      "notes": "Placeholder daily trigger (e.g. each morning). Replace cron as needed."
+    },
+    {
+      "id": "fetch-events",
+      "name": "Fetch Events (Calendar API)",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [480, 300],
+      "parameters": {
+        "method": "GET",
+        "url": "https://www.googleapis.com/calendar/v3/calendars/{{ $env.CALENDAR_ID || 'primary' }}/events",
+        "options": { "timeout": 30000 }
+      },
+      "onError": "continueErrorOutput",
+      "notes": "External call to the calendar provider. Credentials configured in n8n (no token in repo). Failure path wired below."
+    },
+    {
+      "id": "build-request",
+      "name": "Build Request",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3,
+      "position": [760, 220],
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            { "name": "prompt", "type": "string", "value": "calendar.daily-agenda" },
+            { "name": "timezone", "type": "string", "value": "={{ $env.CALENDAR_DEFAULT_TZ || 'Europe/London' }}" },
+            { "name": "events", "type": "string", "value": "={{ JSON.stringify($json.items || []) }}" }
+          ]
+        }
+      },
+      "notes": "Prepares the agenda prompt input from fetched events."
+    },
+    {
+      "id": "summarize-ai",
+      "name": "Summarise Agenda (provider-abstracted)",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [1040, 220],
+      "parameters": {
+        "method": "POST",
+        "url": "={{ $env.OLLAMA_BASE_URL || 'http://jarvis-ollama:11434' }}/api/chat",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={\n  \"model\": \"{{ $env.OLLAMA_DEFAULT_MODEL || 'llama3.1:8b' }}\",\n  \"stream\": false,\n  \"messages\": [{\"role\":\"user\",\"content\": {{ JSON.stringify($json.events) }} }]\n}",
+        "options": { "timeout": 60000 }
+      },
+      "onError": "continueErrorOutput",
+      "notes": "Produces the agenda summary. Routes through the AI provider abstraction."
+    },
+    {
+      "id": "respond",
+      "name": "Respond",
+      "type": "n8n-nodes-base.noOp",
+      "typeVersion": 1,
+      "position": [1320, 220],
+      "parameters": {},
+      "notes": "Placeholder success branch."
+    },
+    {
+      "id": "fail-notice",
+      "name": "Failure Notice",
+      "type": "n8n-nodes-base.noOp",
+      "typeVersion": 1,
+      "position": [760, 440],
+      "parameters": {},
+      "notes": "Failure path: calendar or AI unavailable -> degrade gracefully (Error Handling)."
+    }
+  ],
+  "connections": {
+    "Schedule Trigger": { "main": [[{ "node": "Fetch Events (Calendar API)", "type": "main", "index": 0 }]] },
+    "Fetch Events (Calendar API)": {
+      "main": [
+        [{ "node": "Build Request", "type": "main", "index": 0 }],
+        [{ "node": "Failure Notice", "type": "main", "index": 0 }]
+      ]
+    },
+    "Build Request": { "main": [[{ "node": "Summarise Agenda (provider-abstracted)", "type": "main", "index": 0 }]] },
+    "Summarise Agenda (provider-abstracted)": {
+      "main": [
+        [{ "node": "Respond", "type": "main", "index": 0 }],
+        [{ "node": "Failure Notice", "type": "main", "index": 0 }]
+      ]
+    }
+  }
+}

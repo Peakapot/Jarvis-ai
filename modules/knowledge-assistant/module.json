@@ -1,0 +1,33 @@
+{
+  "$comment": "Module manifest — the contract between this module and the Jarvis core (Plugin Architecture / Separation of concerns). Status 'planned': structurally valid scaffold for a future capability, not yet wired into the live stack.",
+  "id": "knowledge-assistant",
+  "name": "Knowledge Assistant",
+  "version": "1.0.0",
+  "status": "planned",
+  "description": "Retrieval-augmented Q&A and document ingestion over a personal knowledge base, backed by the future Qdrant vector DB for long-term memory and research archives.",
+  "provides": [
+    "knowledge.qa",
+    "knowledge.ingest",
+    "knowledge.search"
+  ],
+  "dependsOn": [
+    "core.ai-provider",
+    "core.vector-db"
+  ],
+  "prompts": [
+    { "id": "knowledge.rag-qa", "file": "prompts/rag-qa.md", "version": "1.0.0" },
+    { "id": "knowledge.ingest-summarize", "file": "prompts/ingest-summarize.md", "version": "1.0.0" }
+  ],
+  "workflows": [
+    "workflows/rag-query.json",
+    "workflows/ingest.json"
+  ],
+  "envVars": [
+    { "name": "KNOWLEDGE_ASSISTANT_ENABLED", "required": false, "default": "false", "secret": false, "description": "Set to 'true' to enable this module's workflows." },
+    { "name": "QDRANT_URL", "required": false, "default": "http://jarvis-qdrant:6333", "secret": false, "description": "Base URL of the Qdrant vector database (future core service)." },
+    { "name": "QDRANT_API_KEY", "required": false, "default": "", "secret": true, "description": "Qdrant API key, if the instance requires auth. Stored only in .env." },
+    { "name": "KNOWLEDGE_COLLECTION", "required": false, "default": "jarvis_knowledge", "secret": false, "description": "Qdrant collection name for stored documents/embeddings." },
+    { "name": "KNOWLEDGE_TOP_K", "required": false, "default": "5", "secret": false, "description": "Number of chunks to retrieve per query." }
+  ],
+  "healthcheck": "healthcheck.sh"
+}

@@ -1,0 +1,111 @@
+{
+  "name": "Jarvis · Knowledge Assistant — RAG Query (placeholder)",
+  "meta": {
+    "jarvisModule": "knowledge-assistant",
+    "jarvisVersion": "1.0.0",
+    "status": "planned",
+    "description": "PLACEHOLDER. Embeds a question, retrieves matching chunks from Qdrant, and answers with RAG. Structurally valid (nodes array + connections object + failure path) so workflow-validate.sh passes. Replace with the real capability.",
+    "prompts": ["knowledge.rag-qa"],
+    "envVars": ["KNOWLEDGE_ASSISTANT_ENABLED", "QDRANT_URL", "KNOWLEDGE_COLLECTION", "KNOWLEDGE_TOP_K"]
+  },
+  "settings": {
+    "executionOrder": "v1",
+    "saveDataErrorExecution": "all",
+    "errorWorkflow": "Jarvis · Error Handler"
+  },
+  "nodes": [
+    {
+      "id": "trigger-manual",
+      "name": "Manual Trigger",
+      "type": "n8n-nodes-base.manualTrigger",
+      "typeVersion": 1,
+      "position": [240, 300],
+      "parameters": {},
+      "notes": "Placeholder entry point. Replace with a Telegram command or webhook carrying the question."
+    },
+    {
+      "id": "build-query",
+      "name": "Build Query",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3,
+      "position": [480, 300],
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            { "name": "prompt", "type": "string", "value": "knowledge.rag-qa" },
+            { "name": "question", "type": "string", "value": "={{ $json.question || '' }}" }
+          ]
+        }
+      },
+      "notes": "Loads the prompt id and the user question. Prompt body resolves from prompts/registry.json."
+    },
+    {
+      "id": "search-qdrant",
+      "name": "Vector Search (Qdrant)",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [760, 300],
+      "parameters": {
+        "method": "POST",
+        "url": "={{ $env.QDRANT_URL || 'http://jarvis-qdrant:6333' }}/collections/{{ $env.KNOWLEDGE_COLLECTION || 'jarvis_knowledge' }}/points/search",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={\n  \"limit\": {{ $env.KNOWLEDGE_TOP_K || 5 }},\n  \"with_payload\": true\n}",
+        "options": { "timeout": 30000 }
+      },
+      "onError": "continueErrorOutput",
+      "notes": "External call to the vector DB. Embedding of the question is done via the AI provider abstraction upstream (placeholder). Failure path wired below."
+    },
+    {
+      "id": "answer-ai",
+      "name": "RAG Answer (provider-abstracted)",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [1040, 220],
+      "parameters": {
+        "method": "POST",
+        "url": "={{ $env.OLLAMA_BASE_URL || 'http://jarvis-ollama:11434' }}/api/chat",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={\n  \"model\": \"{{ $env.OLLAMA_DEFAULT_MODEL || 'llama3.1:8b' }}\",\n  \"stream\": false,\n  \"messages\": [{\"role\":\"user\",\"content\": {{ JSON.stringify($json.question) }} }]\n}",
+        "options": { "timeout": 60000 }
+      },
+      "onError": "continueErrorOutput",
+      "notes": "Generates the cited answer from retrieved context. Routes through the AI provider abstraction."
+    },
+    {
+      "id": "respond",
+      "name": "Respond",
+      "type": "n8n-nodes-base.noOp",
+      "typeVersion": 1,
+      "position": [1320, 220],
+      "parameters": {},
+      "notes": "Placeholder success branch."
+    },
+    {
+      "id": "fail-notice",
+      "name": "Failure Notice",
+      "type": "n8n-nodes-base.noOp",
+      "typeVersion": 1,
+      "position": [1040, 440],
+      "parameters": {},
+      "notes": "Failure path: Qdrant or AI unavailable -> degrade gracefully (Error Handling)."
+    }
+  ],
+  "connections": {
+    "Manual Trigger": { "main": [[{ "node": "Build Query", "type": "main", "index": 0 }]] },
+    "Build Query": { "main": [[{ "node": "Vector Search (Qdrant)", "type": "main", "index": 0 }]] },
+    "Vector Search (Qdrant)": {
+      "main": [
+        [{ "node": "RAG Answer (provider-abstracted)", "type": "main", "index": 0 }],
+        [{ "node": "Failure Notice", "type": "main", "index": 0 }]
+      ]
+    },
+    "RAG Answer (provider-abstracted)": {
+      "main": [
+        [{ "node": "Respond", "type": "main", "index": 0 }],
+        [{ "node": "Failure Notice", "type": "main", "index": 0 }]
+      ]
+    }
+  }
+}

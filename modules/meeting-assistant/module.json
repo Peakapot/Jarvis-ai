@@ -1,0 +1,26 @@
+{
+  "$comment": "Module manifest — the contract between this module and the Jarvis core (Plugin Architecture / Separation of concerns). Status 'planned': structurally valid scaffold for a future capability.",
+  "id": "meeting-assistant",
+  "name": "Meeting Assistant",
+  "version": "1.0.0",
+  "status": "planned",
+  "description": "Summarises meeting notes and transcripts into decisions and action items, with owners and due dates where stated.",
+  "provides": [
+    "meeting.summarize",
+    "meeting.action-items"
+  ],
+  "dependsOn": [
+    "core.ai-provider"
+  ],
+  "prompts": [
+    { "id": "meeting.summarize-transcript", "file": "prompts/summarize-transcript.md", "version": "1.0.0" }
+  ],
+  "workflows": [
+    "workflows/summarize.json"
+  ],
+  "envVars": [
+    { "name": "MEETING_ASSISTANT_ENABLED", "required": false, "default": "false", "secret": false, "description": "Set to 'true' to enable this module's workflow." },
+    { "name": "MEETING_OUTPUT_FORMAT", "required": false, "default": "markdown", "secret": false, "description": "Default output format for summaries (markdown|json)." }
+  ],
+  "healthcheck": "healthcheck.sh"
+}

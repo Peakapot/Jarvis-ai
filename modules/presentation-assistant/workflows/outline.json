@@ -1,0 +1,89 @@
+{
+  "name": "Jarvis · Presentation Assistant — Outline (placeholder)",
+  "meta": {
+    "jarvisModule": "presentation-assistant",
+    "jarvisVersion": "1.0.0",
+    "status": "planned",
+    "description": "PLACEHOLDER. Converts a brief into a structured slide outline with speaker notes. Structurally valid (nodes array + connections object + failure path) so workflow-validate.sh passes.",
+    "prompts": ["presentation.brief-to-outline"],
+    "envVars": ["PRESENTATION_ASSISTANT_ENABLED", "PRESENTATION_DEFAULT_SLIDES"]
+  },
+  "settings": {
+    "executionOrder": "v1",
+    "saveDataErrorExecution": "all",
+    "errorWorkflow": "Jarvis · Error Handler"
+  },
+  "nodes": [
+    {
+      "id": "trigger-manual",
+      "name": "Manual Trigger",
+      "type": "n8n-nodes-base.manualTrigger",
+      "typeVersion": 1,
+      "position": [240, 300],
+      "parameters": {},
+      "notes": "Placeholder entry point. Replace with a Telegram command or webhook carrying the brief."
+    },
+    {
+      "id": "build-request",
+      "name": "Build Request",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3,
+      "position": [480, 300],
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            { "name": "prompt", "type": "string", "value": "presentation.brief-to-outline" },
+            { "name": "brief", "type": "string", "value": "={{ $json.brief || '' }}" },
+            { "name": "slide_count", "type": "string", "value": "={{ $json.slide_count || $env.PRESENTATION_DEFAULT_SLIDES || '10' }}" }
+          ]
+        }
+      },
+      "notes": "Loads the prompt id, the brief and the target slide count."
+    },
+    {
+      "id": "outline-ai",
+      "name": "Generate Outline (provider-abstracted)",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [760, 300],
+      "parameters": {
+        "method": "POST",
+        "url": "={{ $env.OLLAMA_BASE_URL || 'http://jarvis-ollama:11434' }}/api/chat",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={\n  \"model\": \"{{ $env.OLLAMA_DEFAULT_MODEL || 'llama3.1:8b' }}\",\n  \"stream\": false,\n  \"messages\": [{\"role\":\"user\",\"content\": {{ JSON.stringify($json.brief) }} }]\n}",
+        "options": { "timeout": 60000 }
+      },
+      "onError": "continueErrorOutput",
+      "notes": "External call. Produces slide outline JSON. Routes through the AI provider abstraction."
+    },
+    {
+      "id": "respond",
+      "name": "Respond",
+      "type": "n8n-nodes-base.noOp",
+      "typeVersion": 1,
+      "position": [1040, 220],
+      "parameters": {},
+      "notes": "Placeholder success branch. A downstream renderer could turn JSON into slides."
+    },
+    {
+      "id": "fail-notice",
+      "name": "Failure Notice",
+      "type": "n8n-nodes-base.noOp",
+      "typeVersion": 1,
+      "position": [1040, 420],
+      "parameters": {},
+      "notes": "Failure path: AI unavailable -> degrade gracefully (Error Handling)."
+    }
+  ],
+  "connections": {
+    "Manual Trigger": { "main": [[{ "node": "Build Request", "type": "main", "index": 0 }]] },
+    "Build Request": { "main": [[{ "node": "Generate Outline (provider-abstracted)", "type": "main", "index": 0 }]] },
+    "Generate Outline (provider-abstracted)": {
+      "main": [
+        [{ "node": "Respond", "type": "main", "index": 0 }],
+        [{ "node": "Failure Notice", "type": "main", "index": 0 }]
+      ]
+    }
+  }
+}

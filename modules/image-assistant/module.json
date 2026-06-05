@@ -1,0 +1,30 @@
+{
+  "$comment": "Module manifest — the contract between this module and the Jarvis core (Plugin Architecture / Separation of concerns). Status 'planned': structurally valid scaffold for a future capability. Routes through the Image Provider Abstraction (IMAGE_PROVIDER) — no provider specifics hardcoded.",
+  "id": "image-assistant",
+  "name": "Image Assistant",
+  "version": "1.0.0",
+  "status": "planned",
+  "description": "Generates images via the Image Provider Abstraction (IMAGE_PROVIDER, default openai descriptor). Refines a user request into a provider-neutral generation spec, then routes the spec through the resolved provider.",
+  "provides": [
+    "image.refine-spec",
+    "image.generate"
+  ],
+  "dependsOn": [
+    "core.ai-provider",
+    "core.image-provider"
+  ],
+  "prompts": [
+    { "id": "image.refine-spec", "file": "prompts/refine-spec.md", "version": "1.0.0" }
+  ],
+  "workflows": [
+    "workflows/generate.json"
+  ],
+  "envVars": [
+    { "name": "IMAGE_ASSISTANT_ENABLED", "required": false, "default": "false", "secret": false, "description": "Set to 'true' to enable this module's workflow." },
+    { "name": "IMAGE_PROVIDER", "required": false, "default": "openai", "secret": false, "description": "Selects the image provider descriptor under config/providers/image/ (e.g. openai)." },
+    { "name": "IMAGE_MODEL", "required": false, "default": "gpt-image-1", "secret": false, "description": "Model id for the selected provider (read from the provider descriptor)." },
+    { "name": "IMAGE_SIZE", "required": false, "default": "1024x1024", "secret": false, "description": "Default output size." },
+    { "name": "OPENAI_IMAGE_API_KEY", "required": false, "default": "", "secret": true, "description": "API key for the OpenAI image provider (falls back to OPENAI_API_KEY). Stored only in .env; never in workflows." }
+  ],
+  "healthcheck": "healthcheck.sh"
+}

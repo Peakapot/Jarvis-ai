@@ -1,0 +1,112 @@
+{
+  "name": "Jarvis · Knowledge Assistant — Ingest (placeholder)",
+  "meta": {
+    "jarvisModule": "knowledge-assistant",
+    "jarvisVersion": "1.0.0",
+    "status": "planned",
+    "description": "PLACEHOLDER. Summarises and tags an incoming document, then upserts embeddings into Qdrant. Structurally valid (nodes array + connections object + failure path) so workflow-validate.sh passes.",
+    "prompts": ["knowledge.ingest-summarize"],
+    "envVars": ["KNOWLEDGE_ASSISTANT_ENABLED", "QDRANT_URL", "KNOWLEDGE_COLLECTION"]
+  },
+  "settings": {
+    "executionOrder": "v1",
+    "saveDataErrorExecution": "all",
+    "errorWorkflow": "Jarvis · Error Handler"
+  },
+  "nodes": [
+    {
+      "id": "trigger-manual",
+      "name": "Manual Trigger",
+      "type": "n8n-nodes-base.manualTrigger",
+      "typeVersion": 1,
+      "position": [240, 300],
+      "parameters": {},
+      "notes": "Placeholder entry point. Replace with a file/webhook trigger carrying the document and source."
+    },
+    {
+      "id": "build-doc",
+      "name": "Build Document",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3,
+      "position": [480, 300],
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            { "name": "prompt", "type": "string", "value": "knowledge.ingest-summarize" },
+            { "name": "source", "type": "string", "value": "={{ $json.source || 'unknown' }}" },
+            { "name": "document", "type": "string", "value": "={{ $json.document || '' }}" }
+          ]
+        }
+      },
+      "notes": "Loads the prompt id, the document and its source."
+    },
+    {
+      "id": "summarize-ai",
+      "name": "Summarise & Tag (provider-abstracted)",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [760, 300],
+      "parameters": {
+        "method": "POST",
+        "url": "={{ $env.OLLAMA_BASE_URL || 'http://jarvis-ollama:11434' }}/api/chat",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={\n  \"model\": \"{{ $env.OLLAMA_DEFAULT_MODEL || 'llama3.1:8b' }}\",\n  \"stream\": false,\n  \"messages\": [{\"role\":\"user\",\"content\": {{ JSON.stringify($json.document) }} }]\n}",
+        "options": { "timeout": 60000 }
+      },
+      "onError": "continueErrorOutput",
+      "notes": "Produces title/abstract/tags JSON. Routes through the AI provider abstraction."
+    },
+    {
+      "id": "upsert-qdrant",
+      "name": "Upsert Embeddings (Qdrant)",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [1040, 220],
+      "parameters": {
+        "method": "PUT",
+        "url": "={{ $env.QDRANT_URL || 'http://jarvis-qdrant:6333' }}/collections/{{ $env.KNOWLEDGE_COLLECTION || 'jarvis_knowledge' }}/points",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={\n  \"points\": []\n}",
+        "options": { "timeout": 30000 }
+      },
+      "onError": "continueErrorOutput",
+      "notes": "External call to the vector DB. Embeddings come from the AI provider abstraction (placeholder)."
+    },
+    {
+      "id": "done",
+      "name": "Ingested",
+      "type": "n8n-nodes-base.noOp",
+      "typeVersion": 1,
+      "position": [1320, 220],
+      "parameters": {},
+      "notes": "Placeholder success branch."
+    },
+    {
+      "id": "fail-notice",
+      "name": "Failure Notice",
+      "type": "n8n-nodes-base.noOp",
+      "typeVersion": 1,
+      "position": [1040, 440],
+      "parameters": {},
+      "notes": "Failure path: AI or Qdrant unavailable -> degrade gracefully (Error Handling)."
+    }
+  ],
+  "connections": {
+    "Manual Trigger": { "main": [[{ "node": "Build Document", "type": "main", "index": 0 }]] },
+    "Build Document": { "main": [[{ "node": "Summarise & Tag (provider-abstracted)", "type": "main", "index": 0 }]] },
+    "Summarise & Tag (provider-abstracted)": {
+      "main": [
+        [{ "node": "Upsert Embeddings (Qdrant)", "type": "main", "index": 0 }],
+        [{ "node": "Failure Notice", "type": "main", "index": 0 }]
+      ]
+    },
+    "Upsert Embeddings (Qdrant)": {
+      "main": [
+        [{ "node": "Ingested", "type": "main", "index": 0 }],
+        [{ "node": "Failure Notice", "type": "main", "index": 0 }]
+      ]
+    }
+  }
+}

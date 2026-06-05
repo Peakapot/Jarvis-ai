@@ -1,0 +1,89 @@
+{
+  "name": "Jarvis · MindHaven Assistant — Reflect (placeholder)",
+  "meta": {
+    "jarvisModule": "mindhaven-assistant",
+    "jarvisVersion": "1.0.0",
+    "status": "planned",
+    "description": "PLACEHOLDER. Responds supportively to a journal entry; crisis indicators escalate to resources. Structurally valid (nodes array + connections object + failure path) so workflow-validate.sh passes.",
+    "prompts": ["mindhaven.reflective-companion"],
+    "envVars": ["MINDHAVEN_ASSISTANT_ENABLED", "MINDHAVEN_CRISIS_RESOURCES"]
+  },
+  "settings": {
+    "executionOrder": "v1",
+    "saveDataErrorExecution": "all",
+    "errorWorkflow": "Jarvis · Error Handler"
+  },
+  "nodes": [
+    {
+      "id": "trigger-manual",
+      "name": "Manual Trigger",
+      "type": "n8n-nodes-base.manualTrigger",
+      "typeVersion": 1,
+      "position": [240, 300],
+      "parameters": {},
+      "notes": "Placeholder entry point. Replace with a Telegram command carrying the journal entry."
+    },
+    {
+      "id": "build-request",
+      "name": "Build Request",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3,
+      "position": [480, 300],
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            { "name": "prompt", "type": "string", "value": "mindhaven.reflective-companion" },
+            { "name": "entry", "type": "string", "value": "={{ $json.entry || '' }}" },
+            { "name": "crisis_resources", "type": "string", "value": "={{ $env.MINDHAVEN_CRISIS_RESOURCES || 'Contact your local emergency services or a crisis line.' }}" }
+          ]
+        }
+      },
+      "notes": "Loads the prompt id, the entry and region crisis resources. Safety screening is enforced by the prompt."
+    },
+    {
+      "id": "reflect-ai",
+      "name": "Reflect (provider-abstracted)",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [760, 300],
+      "parameters": {
+        "method": "POST",
+        "url": "={{ $env.OLLAMA_BASE_URL || 'http://jarvis-ollama:11434' }}/api/chat",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={\n  \"model\": \"{{ $env.OLLAMA_DEFAULT_MODEL || 'llama3.1:8b' }}\",\n  \"stream\": false,\n  \"messages\": [{\"role\":\"user\",\"content\": {{ JSON.stringify($json.entry) }} }]\n}",
+        "options": { "timeout": 60000 }
+      },
+      "onError": "continueErrorOutput",
+      "notes": "External call. Routes through the AI provider abstraction (local-first by default). Failure path wired below."
+    },
+    {
+      "id": "respond",
+      "name": "Respond",
+      "type": "n8n-nodes-base.noOp",
+      "typeVersion": 1,
+      "position": [1040, 220],
+      "parameters": {},
+      "notes": "Placeholder success branch (supportive reflection)."
+    },
+    {
+      "id": "fail-notice",
+      "name": "Failure Notice (safe fallback)",
+      "type": "n8n-nodes-base.noOp",
+      "typeVersion": 1,
+      "position": [1040, 420],
+      "parameters": {},
+      "notes": "Failure path: AI unavailable -> reply gently and, if appropriate, surface crisis resources rather than failing silently (Error Handling + Safety)."
+    }
+  ],
+  "connections": {
+    "Manual Trigger": { "main": [[{ "node": "Build Request", "type": "main", "index": 0 }]] },
+    "Build Request": { "main": [[{ "node": "Reflect (provider-abstracted)", "type": "main", "index": 0 }]] },
+    "Reflect (provider-abstracted)": {
+      "main": [
+        [{ "node": "Respond", "type": "main", "index": 0 }],
+        [{ "node": "Failure Notice (safe fallback)", "type": "main", "index": 0 }]
+      ]
+    }
+  }
+}

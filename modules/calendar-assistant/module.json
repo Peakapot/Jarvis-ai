@@ -1,0 +1,31 @@
+{
+  "$comment": "Module manifest — the contract between this module and the Jarvis core (Plugin Architecture / Separation of concerns). Status 'planned': structurally valid scaffold for a future capability.",
+  "id": "calendar-assistant",
+  "name": "Calendar Assistant",
+  "version": "1.0.0",
+  "status": "planned",
+  "description": "Answers schedule questions, drafts event-creation payloads from natural language, and produces a daily agenda summary.",
+  "provides": [
+    "calendar.query",
+    "calendar.draft-event",
+    "calendar.daily-agenda"
+  ],
+  "dependsOn": [
+    "core.ai-provider"
+  ],
+  "prompts": [
+    { "id": "calendar.nl-to-event", "file": "prompts/nl-to-event.md", "version": "1.0.0" },
+    { "id": "calendar.daily-agenda", "file": "prompts/daily-agenda.md", "version": "1.0.0" }
+  ],
+  "workflows": [
+    "workflows/draft-event.json",
+    "workflows/daily-agenda.json"
+  ],
+  "envVars": [
+    { "name": "CALENDAR_ASSISTANT_ENABLED", "required": false, "default": "false", "secret": false, "description": "Set to 'true' to enable this module's workflows." },
+    { "name": "CALENDAR_PROVIDER", "required": false, "default": "google", "secret": false, "description": "Calendar backend (google|microsoft365|caldav). Credentials are configured in n8n, not the repo." },
+    { "name": "CALENDAR_DEFAULT_TZ", "required": false, "default": "Europe/London", "secret": false, "description": "Default IANA timezone for event drafts and agendas." },
+    { "name": "CALENDAR_ID", "required": false, "default": "primary", "secret": false, "description": "Target calendar id for queries and drafts." }
+  ],
+  "healthcheck": "healthcheck.sh"
+}

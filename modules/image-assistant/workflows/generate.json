@@ -1,0 +1,118 @@
+{
+  "name": "Jarvis · Image Assistant — Generate (placeholder)",
+  "meta": {
+    "jarvisModule": "image-assistant",
+    "jarvisVersion": "1.0.0",
+    "status": "planned",
+    "description": "PLACEHOLDER. Refines a request into a provider-neutral spec, then generates via the Image Provider Abstraction (IMAGE_PROVIDER). No vendor specifics hardcoded. Structurally valid (nodes array + connections object + failure path) so workflow-validate.sh passes.",
+    "prompts": ["image.refine-spec"],
+    "envVars": ["IMAGE_ASSISTANT_ENABLED", "IMAGE_PROVIDER", "IMAGE_MODEL", "IMAGE_SIZE", "OPENAI_IMAGE_API_KEY"]
+  },
+  "settings": {
+    "executionOrder": "v1",
+    "saveDataErrorExecution": "all",
+    "errorWorkflow": "Jarvis · Error Handler"
+  },
+  "nodes": [
+    {
+      "id": "trigger-manual",
+      "name": "Manual Trigger",
+      "type": "n8n-nodes-base.manualTrigger",
+      "typeVersion": 1,
+      "position": [240, 300],
+      "parameters": {},
+      "notes": "Placeholder entry point. Replace with the /image Telegram command or a webhook carrying the request."
+    },
+    {
+      "id": "build-request",
+      "name": "Build Request",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3,
+      "position": [480, 300],
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            { "name": "prompt", "type": "string", "value": "image.refine-spec" },
+            { "name": "request", "type": "string", "value": "={{ $json.request || '' }}" },
+            { "name": "size", "type": "string", "value": "={{ $env.IMAGE_SIZE || '1024x1024' }}" }
+          ]
+        }
+      },
+      "notes": "Loads the prompt id, the user request and the target size."
+    },
+    {
+      "id": "refine-ai",
+      "name": "Refine Spec (provider-abstracted)",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [760, 300],
+      "parameters": {
+        "method": "POST",
+        "url": "={{ $env.OLLAMA_BASE_URL || 'http://jarvis-ollama:11434' }}/api/chat",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={\n  \"model\": \"{{ $env.OLLAMA_DEFAULT_MODEL || 'llama3.1:8b' }}\",\n  \"stream\": false,\n  \"messages\": [{\"role\":\"user\",\"content\": {{ JSON.stringify($json.request) }} }]\n}",
+        "options": { "timeout": 60000 }
+      },
+      "onError": "continueErrorOutput",
+      "notes": "Text step: produces a provider-neutral generation spec. Routes through the AI provider abstraction."
+    },
+    {
+      "id": "generate-image",
+      "name": "Generate Image (Image Provider Abstraction)",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [1040, 220],
+      "parameters": {
+        "method": "POST",
+        "url": "={{ $env.IMAGE_PROVIDER_BASE_URL || $env.OPENAI_BASE_URL || 'https://api.openai.com/v1' }}/images/generations",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={\n  \"model\": \"{{ $env.IMAGE_MODEL || 'gpt-image-1' }}\",\n  \"prompt\": {{ JSON.stringify($json.prompt || $json.request || '') }},\n  \"size\": \"{{ $env.IMAGE_SIZE || '1024x1024' }}\"\n}",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            { "name": "Authorization", "value": "=Bearer {{ $env.OPENAI_IMAGE_API_KEY || $env.OPENAI_API_KEY }}" }
+          ]
+        },
+        "options": { "timeout": 120000 }
+      },
+      "onError": "continueErrorOutput",
+      "notes": "Routes through the Image Provider Abstraction: endpoint/model/size/auth come from env + the IMAGE_PROVIDER descriptor (config/providers/image/<provider>.json). The API key is referenced by env var NAME only — never embedded."
+    },
+    {
+      "id": "respond",
+      "name": "Respond",
+      "type": "n8n-nodes-base.noOp",
+      "typeVersion": 1,
+      "position": [1320, 220],
+      "parameters": {},
+      "notes": "Placeholder success branch (returns the generated image)."
+    },
+    {
+      "id": "fail-notice",
+      "name": "Failure Notice",
+      "type": "n8n-nodes-base.noOp",
+      "typeVersion": 1,
+      "position": [1040, 440],
+      "parameters": {},
+      "notes": "Failure path: AI refine or image provider unavailable -> degrade gracefully (Error Handling)."
+    }
+  ],
+  "connections": {
+    "Manual Trigger": { "main": [[{ "node": "Build Request", "type": "main", "index": 0 }]] },
+    "Build Request": { "main": [[{ "node": "Refine Spec (provider-abstracted)", "type": "main", "index": 0 }]] },
+    "Refine Spec (provider-abstracted)": {
+      "main": [
+        [{ "node": "Generate Image (Image Provider Abstraction)", "type": "main", "index": 0 }],
+        [{ "node": "Failure Notice", "type": "main", "index": 0 }]
+      ]
+    },
+    "Generate Image (Image Provider Abstraction)": {
+      "main": [
+        [{ "node": "Respond", "type": "main", "index": 0 }],
+        [{ "node": "Failure Notice", "type": "main", "index": 0 }]
+      ]
+    }
+  }
+}

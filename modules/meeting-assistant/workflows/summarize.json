@@ -1,0 +1,89 @@
+{
+  "name": "Jarvis · Meeting Assistant — Summarise (placeholder)",
+  "meta": {
+    "jarvisModule": "meeting-assistant",
+    "jarvisVersion": "1.0.0",
+    "status": "planned",
+    "description": "PLACEHOLDER. Summarises a transcript into decisions and action items. Structurally valid (nodes array + connections object + failure path) so workflow-validate.sh passes.",
+    "prompts": ["meeting.summarize-transcript"],
+    "envVars": ["MEETING_ASSISTANT_ENABLED", "MEETING_OUTPUT_FORMAT"]
+  },
+  "settings": {
+    "executionOrder": "v1",
+    "saveDataErrorExecution": "all",
+    "errorWorkflow": "Jarvis · Error Handler"
+  },
+  "nodes": [
+    {
+      "id": "trigger-manual",
+      "name": "Manual Trigger",
+      "type": "n8n-nodes-base.manualTrigger",
+      "typeVersion": 1,
+      "position": [240, 300],
+      "parameters": {},
+      "notes": "Placeholder entry point. Replace with a Telegram command or webhook carrying the transcript."
+    },
+    {
+      "id": "build-request",
+      "name": "Build Request",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3,
+      "position": [480, 300],
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            { "name": "prompt", "type": "string", "value": "meeting.summarize-transcript" },
+            { "name": "transcript", "type": "string", "value": "={{ $json.transcript || '' }}" },
+            { "name": "format", "type": "string", "value": "={{ $env.MEETING_OUTPUT_FORMAT || 'markdown' }}" }
+          ]
+        }
+      },
+      "notes": "Loads the prompt id, transcript and desired output format."
+    },
+    {
+      "id": "summarize-ai",
+      "name": "Summarise (provider-abstracted)",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [760, 300],
+      "parameters": {
+        "method": "POST",
+        "url": "={{ $env.OLLAMA_BASE_URL || 'http://jarvis-ollama:11434' }}/api/chat",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={\n  \"model\": \"{{ $env.OLLAMA_DEFAULT_MODEL || 'llama3.1:8b' }}\",\n  \"stream\": false,\n  \"messages\": [{\"role\":\"user\",\"content\": {{ JSON.stringify($json.transcript) }} }]\n}",
+        "options": { "timeout": 60000 }
+      },
+      "onError": "continueErrorOutput",
+      "notes": "External call. Routes through the AI provider abstraction; failure path wired below."
+    },
+    {
+      "id": "respond",
+      "name": "Respond",
+      "type": "n8n-nodes-base.noOp",
+      "typeVersion": 1,
+      "position": [1040, 220],
+      "parameters": {},
+      "notes": "Placeholder success branch."
+    },
+    {
+      "id": "fail-notice",
+      "name": "Failure Notice",
+      "type": "n8n-nodes-base.noOp",
+      "typeVersion": 1,
+      "position": [1040, 420],
+      "parameters": {},
+      "notes": "Failure path: AI unavailable -> degrade gracefully (Error Handling)."
+    }
+  ],
+  "connections": {
+    "Manual Trigger": { "main": [[{ "node": "Build Request", "type": "main", "index": 0 }]] },
+    "Build Request": { "main": [[{ "node": "Summarise (provider-abstracted)", "type": "main", "index": 0 }]] },
+    "Summarise (provider-abstracted)": {
+      "main": [
+        [{ "node": "Respond", "type": "main", "index": 0 }],
+        [{ "node": "Failure Notice", "type": "main", "index": 0 }]
+      ]
+    }
+  }
+}

@@ -1,0 +1,26 @@
+{
+  "$comment": "Module manifest — the contract between this module and the Jarvis core (Plugin Architecture / Separation of concerns). Status 'planned': structurally valid scaffold for a future capability.",
+  "id": "presentation-assistant",
+  "name": "Presentation Assistant",
+  "version": "1.0.0",
+  "status": "planned",
+  "description": "Generates a structured slide outline and speaker notes from a short brief.",
+  "provides": [
+    "presentation.outline",
+    "presentation.speaker-notes"
+  ],
+  "dependsOn": [
+    "core.ai-provider"
+  ],
+  "prompts": [
+    { "id": "presentation.brief-to-outline", "file": "prompts/brief-to-outline.md", "version": "1.0.0" }
+  ],
+  "workflows": [
+    "workflows/outline.json"
+  ],
+  "envVars": [
+    { "name": "PRESENTATION_ASSISTANT_ENABLED", "required": false, "default": "false", "secret": false, "description": "Set to 'true' to enable this module's workflow." },
+    { "name": "PRESENTATION_DEFAULT_SLIDES", "required": false, "default": "10", "secret": false, "description": "Default target number of slides when the brief does not specify one." }
+  ],
+  "healthcheck": "healthcheck.sh"
+}

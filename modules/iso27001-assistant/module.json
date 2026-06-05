@@ -1,0 +1,28 @@
+{
+  "$comment": "Module manifest — the contract between this module and the Jarvis core (Plugin Architecture / Separation of concerns). Status 'planned': structurally valid scaffold for a future capability. Defensive/compliance context.",
+  "id": "iso27001-assistant",
+  "name": "ISO 27001 Assistant",
+  "version": "1.0.0",
+  "status": "planned",
+  "description": "Explains ISO/IEC 27001 controls, assists with gap analysis against the Annex A controls, and drafts policy text. Advisory only — not a substitute for a qualified auditor.",
+  "provides": [
+    "iso27001.control-explain",
+    "iso27001.gap-analysis",
+    "iso27001.policy-draft"
+  ],
+  "dependsOn": [
+    "core.ai-provider"
+  ],
+  "prompts": [
+    { "id": "iso27001.control-guidance", "file": "prompts/control-guidance.md", "version": "1.0.0" },
+    { "id": "iso27001.gap-analysis", "file": "prompts/gap-analysis.md", "version": "1.0.0" }
+  ],
+  "workflows": [
+    "workflows/gap-analysis.json"
+  ],
+  "envVars": [
+    { "name": "ISO27001_ASSISTANT_ENABLED", "required": false, "default": "false", "secret": false, "description": "Set to 'true' to enable this module's workflow." },
+    { "name": "ISO27001_STANDARD_VERSION", "required": false, "default": "2022", "secret": false, "description": "ISO/IEC 27001 edition to reference (e.g. 2022)." }
+  ],
+  "healthcheck": "healthcheck.sh"
+}

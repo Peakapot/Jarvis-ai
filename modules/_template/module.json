@@ -1,0 +1,30 @@
+{
+  "$comment": "Module manifest. Copy this directory to create a new module, then edit every field. The manifest is the contract between a module and the Jarvis core: it declares what the module provides, what it depends on, and where its prompts/workflows/healthcheck live (Plugin Architecture / Separation of concerns).",
+  "id": "_template",
+  "name": "Module Template",
+  "version": "1.0.0",
+  "status": "scaffold",
+  "description": "Copy-me template for a self-contained Jarvis capability module. Replace every field with your module's specifics.",
+  "provides": ["example.capability"],
+  "dependsOn": [],
+  "prompts": [
+    {
+      "id": "template.example",
+      "file": "prompts/example.md",
+      "version": "1.0.0"
+    }
+  ],
+  "workflows": [
+    "workflows/example.json"
+  ],
+  "envVars": [
+    {
+      "name": "TEMPLATE_FEATURE_ENABLED",
+      "required": false,
+      "default": "false",
+      "secret": false,
+      "description": "Set to 'true' to enable this module's workflow."
+    }
+  ],
+  "healthcheck": "healthcheck.sh"
+}
