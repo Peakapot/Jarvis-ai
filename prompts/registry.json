@@ -1,0 +1,48 @@
+{
+  "$comment": "Prompt registry — prompts are first-class, versioned assets stored OUTSIDE workflows so they can be updated without editing workflows. Workflows reference a prompt by id; this registry maps id -> file + version. Bump 'version' (semver) on every meaningful change and note it in the prompt's own changelog section.",
+  "version": 1,
+  "prompts": [
+    {
+      "id": "system.jarvis-core",
+      "file": "system/jarvis-core.md",
+      "version": "1.0.0",
+      "purpose": "Global system persona and guardrails shared by all assistants.",
+      "owner": "core"
+    },
+    {
+      "id": "telegram.router",
+      "file": "telegram/router.md",
+      "version": "1.0.0",
+      "purpose": "Classify an inbound Telegram message into a command/intent for routing.",
+      "owner": "telegram-assistant"
+    },
+    {
+      "id": "cyber-brief.analyst",
+      "file": "cyber-brief/analyst.md",
+      "version": "1.0.0",
+      "purpose": "Produce the daily cyber threat intelligence brief from collected sources.",
+      "owner": "cyber-brief"
+    },
+    {
+      "id": "email.summarize-inbox",
+      "file": "email-assistant/summarize-inbox.md",
+      "version": "1.0.0",
+      "purpose": "Summarise an inbox / set of threads into a prioritised digest.",
+      "owner": "email-assistant"
+    },
+    {
+      "id": "email.draft-reply",
+      "file": "email-assistant/draft-reply.md",
+      "version": "1.0.0",
+      "purpose": "Draft a context-appropriate reply to an email thread.",
+      "owner": "email-assistant"
+    },
+    {
+      "id": "email.categorize",
+      "file": "email-assistant/categorize.md",
+      "version": "1.0.0",
+      "purpose": "Categorise and prioritise an email for triage.",
+      "owner": "email-assistant"
+    }
+  ]
+}
