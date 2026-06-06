@@ -1,0 +1,44 @@
+{
+  "$comment": "Intelligence module manifest. Same plugin contract + intelligence metadata as cyber-opportunities; consumed by config/intelligence/products.json. status 'active' + autoImport true wires it into install/validation/health/backup automatically. A template for future intelligence products (Defence, AI, Government, Healthcare, Market, ...).",
+  "id": "energy-intelligence",
+  "name": "Daily Energy Intelligence Brief",
+  "version": "1.0.0",
+  "status": "active",
+  "intelligence": true,
+  "autoImport": true,
+  "registry": "config/intelligence/products.json",
+  "description": "Tracks strategic developments in the energy sector with a heavy focus on the UAE and ADNOC ecosystem (ADNOC, ADNOC Gas, ADNOC Drilling, TAQA, Masdar, Borouge, TA'ZIZ, Mubadala Energy), then regional and global oil & gas, plus energy security, technology, AI, cybersecurity and digital transformation. Produces a premium HTML/PDF/email brief with an AI-generated cover image and an archive copy.",
+  "provides": [
+    "intelligence.energy",
+    "telegram.command./energy"
+  ],
+  "dependsOn": [
+    "core.ai-provider",
+    "core.image-provider",
+    "core.email-provider"
+  ],
+  "prompts": [
+    { "id": "energy-intelligence.analyst", "file": "prompts/analyst.md", "version": "1.0.0" }
+  ],
+  "workflows": [
+    "workflows/energy-intelligence.json"
+  ],
+  "envVars": [
+    { "name": "ENERGY_BRIEF_ENABLED", "required": false, "default": "true", "secret": false, "description": "Set to 'false' to disable this intelligence product." },
+    { "name": "ENERGY_BRIEF_SCHEDULE_CRON", "required": false, "default": "30 6 * * *", "secret": false, "description": "Cron schedule for the brief (default 06:30 daily; configurable)." },
+    { "name": "ENERGY_BRIEF_PRIMARY_FOCUS", "required": false, "default": "ADNOC,ADNOC Gas,ADNOC Drilling,TAQA,Masdar,Borouge,TA'ZIZ,Mubadala Energy,UAE Energy Sector", "secret": false, "description": "Primary focus entities." },
+    { "name": "ENERGY_BRIEF_SECONDARY_FOCUS", "required": false, "default": "Saudi Aramco,Shell,BP,Chevron,ExxonMobil,TotalEnergies,QatarEnergy", "secret": false, "description": "Secondary focus entities." },
+    { "name": "ENERGY_BRIEF_OUTPUT_FORMATS", "required": false, "default": "html,pdf,email,archive", "secret": false, "description": "Output formats to generate." },
+    { "name": "ENERGY_BRIEF_SOURCES_FILE", "required": false, "default": "config/energy-sources.txt", "secret": false, "description": "Source list for energy-sector signals." }
+  ],
+  "report": {
+    "sourcesFile": "config/energy-sources.txt",
+    "reportDir": "reports/energy-intelligence",
+    "archiveDir": "reports/archive/energy-intelligence",
+    "template": "templates/report/energy-intelligence.html.tpl",
+    "coverImagePrompt": "intelligence.cover-image",
+    "sections": ["Executive Summary", "Top Stories", "ADNOC Focus", "UAE Focus", "Regional Focus", "Global Focus", "Strategic Implications", "Investment Activity", "Digital Transformation Activity", "Cybersecurity Activity", "Emerging Trends"]
+  },
+  "telegram": { "command": "/energy" },
+  "healthcheck": "healthcheck.sh"
+}

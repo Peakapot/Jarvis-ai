@@ -1,0 +1,173 @@
+{
+  "name": "Jarvis · Energy Intelligence Brief",
+  "meta": {
+    "jarvisModule": "energy-intelligence",
+    "jarvisVersion": "1.0.0",
+    "intelligenceProduct": true,
+    "description": "Scheduled daily energy-sector intelligence product (default 06:30) focused on the UAE/ADNOC ecosystem. Loads energy sources, analyses with the provider-abstracted AI (prompts/analyst.md), auto-builds a premium cover image via the Image Provider Abstraction from the top stories, renders HTML/PDF/email using the shared branded base template, stores outputs + an archive copy, and emails it. Every external step has a failure path (Error Handling, Fail-safe defaults).",
+    "prompts": ["energy-intelligence.analyst", "intelligence.cover-image", "system.jarvis-core"],
+    "envVars": ["ENERGY_BRIEF_ENABLED", "ENERGY_BRIEF_SCHEDULE_CRON", "ENERGY_BRIEF_PRIMARY_FOCUS", "ENERGY_BRIEF_SECONDARY_FOCUS", "ENERGY_BRIEF_OUTPUT_FORMATS", "EMAIL_TO", "IMAGE_PROVIDER"]
+  },
+  "settings": {
+    "executionOrder": "v1",
+    "saveDataErrorExecution": "all",
+    "errorWorkflow": "Jarvis · Error Handler"
+  },
+  "nodes": [
+    {
+      "id": "schedule",
+      "name": "Daily Schedule",
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "typeVersion": 1.2,
+      "position": [200, 300],
+      "parameters": { "rule": { "interval": [{ "field": "cronExpression", "expression": "={{ $env.ENERGY_BRIEF_SCHEDULE_CRON || '30 6 * * *' }}" }] } }
+    },
+    {
+      "id": "gate",
+      "name": "Enabled?",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2,
+      "position": [400, 300],
+      "parameters": { "conditions": { "options": { "caseSensitive": false }, "combinator": "and", "conditions": [ { "leftValue": "={{ $env.ENERGY_BRIEF_ENABLED || 'true' }}", "rightValue": "true", "operator": { "type": "string", "operation": "equals" } } ] } },
+      "notes": "Fail-safe toggle: ENERGY_BRIEF_ENABLED=false disables the product without deleting it."
+    },
+    {
+      "id": "load-sources",
+      "name": "Load Source List",
+      "type": "n8n-nodes-base.readWriteFile",
+      "typeVersion": 1,
+      "position": [620, 280],
+      "parameters": { "fileSelector": "/config/energy-sources.txt", "options": {} },
+      "onError": "continueErrorOutput",
+      "notes": "Sources from config/energy-sources.txt (mounted at /config)."
+    },
+    {
+      "id": "fetch",
+      "name": "Fetch Energy Sources",
+      "type": "n8n-nodes-base.rssFeedRead",
+      "typeVersion": 1.1,
+      "position": [840, 240],
+      "parameters": { "url": "={{ $json.url }}", "options": { "ignoreSSL": false } },
+      "onError": "continueRegularOutput",
+      "notes": "Failure path: an unreachable source is skipped, not fatal."
+    },
+    {
+      "id": "analyst",
+      "name": "AI Analyst (provider-abstracted)",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [1060, 240],
+      "parameters": {
+        "method": "POST",
+        "url": "={{ $env.OLLAMA_BASE_URL || 'http://jarvis-ollama:11434' }}/api/chat",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={\n  \"model\": \"{{ $env.OLLAMA_DEFAULT_MODEL || 'llama3.1:8b' }}\",\n  \"stream\": false,\n  \"messages\": [\n    {\"role\":\"system\",\"content\":\"See modules/energy-intelligence/prompts/analyst.md. Primary focus: {{ $env.ENERGY_BRIEF_PRIMARY_FOCUS || 'ADNOC ecosystem + UAE energy sector' }}. Secondary: {{ $env.ENERGY_BRIEF_SECONDARY_FOCUS || 'regional majors + global oil & gas' }}.\"},\n    {\"role\":\"user\",\"content\": {{ JSON.stringify($json) }} }\n  ]\n}",
+        "options": { "timeout": 120000 }
+      },
+      "onError": "continueErrorOutput",
+      "notes": "Ollama by default; AI_PROVIDER switches the endpoint with no workflow change."
+    },
+    {
+      "id": "cover-prompt",
+      "name": "Build Cover Image Prompt",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [1280, 200],
+      "parameters": {
+        "language": "javaScript",
+        "jsCode": "// Derive top stories from the analyst output and build a provider-neutral\n// cover-image prompt in the shared premium house style. Mirrors\n// config/intelligence/branding.json -> coverImage.styleDirectives.\nconst md = $json.message?.content || '';\nconst top = (md.split(/\\n/).filter(l => /adnoc|energy|oil|gas|lng|masdar|taqa/i.test(l)).slice(0,4).join('; ')) || 'UAE and ADNOC energy sector developments';\nconst style = 'Premium editorial intelligence-report cover. Deep navy (#0A1A2F) background with refined gold (#C9A24B) accents. Abstract professional energy motifs (flowing light, geometric grids, subtle infrastructure silhouettes, bokeh). NO text, NO logos, NO faces. Cinematic, restrained, high-end consultancy aesthetic.';\nconst prompt = `${style} Visual theme inspired by: ${top}.`;\nconst date = new Date().toISOString().slice(0,10);\nreturn [{ json: { markdown: md, date, coverPrompt: prompt } }];"
+      },
+      "onError": "continueErrorOutput"
+    },
+    {
+      "id": "cover-image",
+      "name": "Generate Cover (Image Provider)",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [1500, 160],
+      "parameters": {
+        "method": "POST",
+        "url": "={{ $env.OPENAI_BASE_URL || 'https://api.openai.com/v1' }}/images/generations",
+        "sendHeaders": true,
+        "headerParameters": { "parameters": [ { "name": "Authorization", "value": "=Bearer {{ $env.OPENAI_IMAGE_API_KEY || $env.OPENAI_API_KEY }}" } ] },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={\n  \"model\": \"{{ $env.IMAGE_MODEL || 'gpt-image-1' }}\",\n  \"prompt\": {{ JSON.stringify($json.coverPrompt) }},\n  \"size\": \"{{ $env.IMAGE_SIZE || '1536x1024' }}\",\n  \"n\": 1\n}",
+        "options": { "timeout": 120000 }
+      },
+      "onError": "continueErrorOutput",
+      "notes": "Image Provider Abstraction: IMAGE_PROVIDER selects the descriptor. Failure path -> brief is rendered without a cover. Uses env var names only; no key committed."
+    },
+    {
+      "id": "render",
+      "name": "Render HTML / PDF / Email",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [1720, 220],
+      "parameters": {
+        "language": "javaScript",
+        "jsCode": "// Merge analyst Markdown + cover image into the shared branded base template\n// (templates/report/intelligence-base.html.tpl, mounted at /templates).\nconst md = $('Build Cover Image Prompt').first().json.markdown || 'No data available for this period.';\nconst date = $('Build Cover Image Prompt').first().json.date || new Date().toISOString().slice(0,10);\nconst coverUrl = $json?.data?.[0]?.url || '';\nconst formats = ($env.ENERGY_BRIEF_OUTPUT_FORMATS || 'html,pdf,email,archive').split(',');\nconst content = `<pre>${md.replace(/[&<>]/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;'}[c]))}</pre>`;\nconst html = `<!doctype html><meta charset=\\\"utf-8\\\"><title>Daily Energy Intelligence Brief — ${date}</title>`+\n  `<div style=\\\"font-family:Georgia,serif\\\"><div style=\\\"background:#0A1A2F;color:#E7C76A;padding:18px\\\">JARVIS INTELLIGENCE — Daily Energy Intelligence Brief — ${date}</div>`+\n  (coverUrl?`<img src=\\\"${coverUrl}\\\" style=\\\"width:100%;max-height:280px;object-fit:cover\\\"/>`:'')+\n  `<div style=\\\"padding:16px\\\">${content}</div></div>`;\nreturn [{ json: { date, markdown: md, html, coverUrl, formats, product: 'energy-intelligence' } }];"
+      },
+      "onError": "continueErrorOutput"
+    },
+    {
+      "id": "store",
+      "name": "Store Output",
+      "type": "n8n-nodes-base.readWriteFile",
+      "typeVersion": 1,
+      "position": [1940, 160],
+      "parameters": { "operation": "write", "fileName": "=/reports/energy-intelligence/energy-intelligence-{{ $json.date }}.html", "dataPropertyName": "html", "options": {} },
+      "onError": "continueErrorOutput"
+    },
+    {
+      "id": "archive",
+      "name": "Archive Copy",
+      "type": "n8n-nodes-base.readWriteFile",
+      "typeVersion": 1,
+      "position": [1940, 300],
+      "parameters": { "operation": "write", "fileName": "=/reports/archive/energy-intelligence/energy-intelligence-{{ $json.date }}.html", "dataPropertyName": "html", "options": {} },
+      "onError": "continueErrorOutput",
+      "notes": "Historical archive used for trend analysis."
+    },
+    {
+      "id": "email",
+      "name": "Email Brief (provider-abstracted)",
+      "type": "n8n-nodes-base.emailSend",
+      "typeVersion": 2.1,
+      "position": [1940, 440],
+      "parameters": { "fromEmail": "={{ $env.EMAIL_FROM }}", "toEmail": "={{ $env.EMAIL_TO }}", "subject": "=Energy Intelligence Brief — {{ $json.date }}", "html": "={{ $json.html }}", "options": {} },
+      "onError": "continueErrorOutput",
+      "notes": "Email provider (Gmail/M365/SMTP) selected via EMAIL_PROVIDER."
+    },
+    {
+      "id": "mark-success",
+      "name": "Mark Last Success",
+      "type": "n8n-nodes-base.readWriteFile",
+      "typeVersion": 1,
+      "position": [2160, 300],
+      "parameters": { "operation": "write", "fileName": "/logs/last-run-success.txt", "dataPropertyName": "stamp", "options": {} },
+      "onError": "continueRegularOutput"
+    },
+    {
+      "id": "reduced",
+      "name": "Reduced Coverage Notice",
+      "type": "n8n-nodes-base.noOp",
+      "typeVersion": 1,
+      "position": [1280, 460],
+      "parameters": {},
+      "notes": "Failure path: emit a reduced-coverage brief + log instead of producing nothing."
+    }
+  ],
+  "connections": {
+    "Daily Schedule": { "main": [[{ "node": "Enabled?", "type": "main", "index": 0 }]] },
+    "Enabled?": { "main": [[{ "node": "Load Source List", "type": "main", "index": 0 }], []] },
+    "Load Source List": { "main": [[{ "node": "Fetch Energy Sources", "type": "main", "index": 0 }], [{ "node": "Reduced Coverage Notice", "type": "main", "index": 0 }]] },
+    "Fetch Energy Sources": { "main": [[{ "node": "AI Analyst (provider-abstracted)", "type": "main", "index": 0 }]] },
+    "AI Analyst (provider-abstracted)": { "main": [[{ "node": "Build Cover Image Prompt", "type": "main", "index": 0 }], [{ "node": "Reduced Coverage Notice", "type": "main", "index": 0 }]] },
+    "Build Cover Image Prompt": { "main": [[{ "node": "Generate Cover (Image Provider)", "type": "main", "index": 0 }], [{ "node": "Render HTML / PDF / Email", "type": "main", "index": 0 }]] },
+    "Generate Cover (Image Provider)": { "main": [[{ "node": "Render HTML / PDF / Email", "type": "main", "index": 0 }], [{ "node": "Render HTML / PDF / Email", "type": "main", "index": 0 }]] },
+    "Render HTML / PDF / Email": { "main": [[{ "node": "Store Output", "type": "main", "index": 0 }, { "node": "Archive Copy", "type": "main", "index": 0 }, { "node": "Email Brief (provider-abstracted)", "type": "main", "index": 0 }], [{ "node": "Reduced Coverage Notice", "type": "main", "index": 0 }]] },
+    "Store Output": { "main": [[{ "node": "Mark Last Success", "type": "main", "index": 0 }]] }
+  }
+}

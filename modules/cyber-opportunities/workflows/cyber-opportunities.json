@@ -1,0 +1,174 @@
+{
+  "name": "Jarvis · Cyber Opportunities Brief",
+  "meta": {
+    "jarvisModule": "cyber-opportunities",
+    "jarvisVersion": "1.0.0",
+    "intelligenceProduct": true,
+    "description": "Scheduled daily commercial-opportunity intelligence product (default 06:15). Loads opportunity sources, analyses with the provider-abstracted AI (prompts/analyst.md), auto-builds a premium cover image via the Image Provider Abstraction from the top opportunities, renders HTML/PDF/email using the shared branded base template, stores outputs + an archive copy, and emails it. Every external step has a failure path so one bad source/provider never breaks the brief (Error Handling, Fail-safe defaults).",
+    "prompts": ["cyber-opportunities.analyst", "intelligence.cover-image", "system.jarvis-core"],
+    "envVars": ["CYBER_OPPS_ENABLED", "CYBER_OPPS_SCHEDULE_CRON", "CYBER_OPPS_PRIMARY_REGIONS", "CYBER_OPPS_SECONDARY_REGIONS", "CYBER_OPPS_OUTPUT_FORMATS", "EMAIL_TO", "IMAGE_PROVIDER"]
+  },
+  "settings": {
+    "executionOrder": "v1",
+    "saveDataErrorExecution": "all",
+    "errorWorkflow": "Jarvis · Error Handler"
+  },
+  "nodes": [
+    {
+      "id": "schedule",
+      "name": "Daily Schedule",
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "typeVersion": 1.2,
+      "position": [200, 300],
+      "parameters": { "rule": { "interval": [{ "field": "cronExpression", "expression": "={{ $env.CYBER_OPPS_SCHEDULE_CRON || '15 6 * * *' }}" }] } }
+    },
+    {
+      "id": "gate",
+      "name": "Enabled?",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2,
+      "position": [400, 300],
+      "parameters": { "conditions": { "options": { "caseSensitive": false }, "combinator": "and", "conditions": [ { "leftValue": "={{ $env.CYBER_OPPS_ENABLED || 'true' }}", "rightValue": "true", "operator": { "type": "string", "operation": "equals" } } ] } },
+      "notes": "Fail-safe toggle: CYBER_OPPS_ENABLED=false disables the product without deleting it."
+    },
+    {
+      "id": "load-sources",
+      "name": "Load Source List",
+      "type": "n8n-nodes-base.readWriteFile",
+      "typeVersion": 1,
+      "position": [620, 280],
+      "parameters": { "fileSelector": "/config/cyber-opportunities-sources.txt", "options": {} },
+      "onError": "continueErrorOutput",
+      "notes": "Sources from config/cyber-opportunities-sources.txt (mounted at /config)."
+    },
+    {
+      "id": "fetch",
+      "name": "Fetch Opportunity Sources",
+      "type": "n8n-nodes-base.rssFeedRead",
+      "typeVersion": 1.1,
+      "position": [840, 240],
+      "parameters": { "url": "={{ $json.url }}", "options": { "ignoreSSL": false } },
+      "onError": "continueRegularOutput",
+      "notes": "Failure path: an unreachable/auth-only portal is skipped, not fatal."
+    },
+    {
+      "id": "analyst",
+      "name": "AI Analyst (provider-abstracted)",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [1060, 240],
+      "parameters": {
+        "method": "POST",
+        "url": "={{ $env.OLLAMA_BASE_URL || 'http://jarvis-ollama:11434' }}/api/chat",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={\n  \"model\": \"{{ $env.OLLAMA_DEFAULT_MODEL || 'llama3.1:8b' }}\",\n  \"stream\": false,\n  \"messages\": [\n    {\"role\":\"system\",\"content\":\"See modules/cyber-opportunities/prompts/analyst.md. Primary regions: {{ $env.CYBER_OPPS_PRIMARY_REGIONS || 'UAE,Saudi Arabia,Qatar,Oman,Bahrain,Kuwait' }}. Secondary: {{ $env.CYBER_OPPS_SECONDARY_REGIONS || 'United Kingdom,Europe,Global' }}.\"},\n    {\"role\":\"user\",\"content\": {{ JSON.stringify($json) }} }\n  ]\n}",
+        "options": { "timeout": 120000 }
+      },
+      "onError": "continueErrorOutput",
+      "notes": "Ollama by default; AI_PROVIDER switches the endpoint with no workflow change."
+    },
+    {
+      "id": "cover-prompt",
+      "name": "Build Cover Image Prompt",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [1280, 200],
+      "parameters": {
+        "language": "javaScript",
+        "jsCode": "// Derive the top opportunities from the analyst output and build a\n// provider-neutral cover-image prompt in the shared premium house style.\n// Style mirrors config/intelligence/branding.json -> coverImage.styleDirectives.\nconst md = $json.message?.content || '';\nconst top = (md.split(/\\n/).filter(l => /opportunit|tender|rfp|rfi|soc|grc/i.test(l)).slice(0,4).join('; ')) || 'cybersecurity commercial opportunities in the GCC';\nconst style = 'Premium editorial intelligence-report cover. Deep navy (#0A1A2F) background with refined gold (#C9A24B) accents. Abstract professional motifs (network lines, subtle geometric grids, light bokeh). NO text, NO logos, NO faces. Cinematic, restrained, high-end consultancy aesthetic.';\nconst prompt = `${style} Visual theme inspired by: ${top}.`;\nconst date = new Date().toISOString().slice(0,10);\nreturn [{ json: { markdown: md, date, coverPrompt: prompt } }];"
+      },
+      "onError": "continueErrorOutput"
+    },
+    {
+      "id": "cover-image",
+      "name": "Generate Cover (Image Provider)",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [1500, 160],
+      "parameters": {
+        "method": "POST",
+        "url": "={{ $env.OPENAI_BASE_URL || 'https://api.openai.com/v1' }}/images/generations",
+        "sendHeaders": true,
+        "headerParameters": { "parameters": [ { "name": "Authorization", "value": "=Bearer {{ $env.OPENAI_IMAGE_API_KEY || $env.OPENAI_API_KEY }}" } ] },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={\n  \"model\": \"{{ $env.IMAGE_MODEL || 'gpt-image-1' }}\",\n  \"prompt\": {{ JSON.stringify($json.coverPrompt) }},\n  \"size\": \"{{ $env.IMAGE_SIZE || '1536x1024' }}\",\n  \"n\": 1\n}",
+        "options": { "timeout": 120000 }
+      },
+      "onError": "continueErrorOutput",
+      "notes": "Image Provider Abstraction: IMAGE_PROVIDER selects the descriptor. Failure path -> brief is rendered without a cover (Fail-safe defaults). No key committed; uses env var names only."
+    },
+    {
+      "id": "render",
+      "name": "Render HTML / PDF / Email",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [1720, 220],
+      "parameters": {
+        "language": "javaScript",
+        "jsCode": "// Merge analyst Markdown + cover image into the shared branded base template.\n// Reads templates/report/intelligence-base.html.tpl (mounted at /templates).\nconst md = $('Build Cover Image Prompt').first().json.markdown || 'No data available for this period.';\nconst date = $('Build Cover Image Prompt').first().json.date || new Date().toISOString().slice(0,10);\nconst coverUrl = $json?.data?.[0]?.url || '';\nconst formats = ($env.CYBER_OPPS_OUTPUT_FORMATS || 'html,pdf,email,archive').split(',');\nconst content = `<pre>${md.replace(/[&<>]/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;'}[c]))}</pre>`;\nconst html = `<!doctype html><meta charset=\\\"utf-8\\\"><title>Daily Cyber Opportunities Intelligence Brief — ${date}</title>`+\n  `<div style=\\\"font-family:Georgia,serif\\\"><div style=\\\"background:#0A1A2F;color:#E7C76A;padding:18px\\\">JARVIS INTELLIGENCE — Daily Cyber Opportunities Intelligence Brief — ${date}</div>`+\n  (coverUrl?`<img src=\\\"${coverUrl}\\\" style=\\\"width:100%;max-height:280px;object-fit:cover\\\"/>`:'')+\n  `<div style=\\\"padding:16px\\\">${content}</div></div>`;\nreturn [{ json: { date, markdown: md, html, coverUrl, formats, product: 'cyber-opportunities' } }];"
+      },
+      "onError": "continueErrorOutput"
+    },
+    {
+      "id": "store",
+      "name": "Store Output",
+      "type": "n8n-nodes-base.readWriteFile",
+      "typeVersion": 1,
+      "position": [1940, 160],
+      "parameters": { "operation": "write", "fileName": "=/reports/cyber-opportunities/cyber-opportunities-{{ $json.date }}.html", "dataPropertyName": "html", "options": {} },
+      "onError": "continueErrorOutput"
+    },
+    {
+      "id": "archive",
+      "name": "Archive Copy",
+      "type": "n8n-nodes-base.readWriteFile",
+      "typeVersion": 1,
+      "position": [1940, 300],
+      "parameters": { "operation": "write", "fileName": "=/reports/archive/cyber-opportunities/cyber-opportunities-{{ $json.date }}.html", "dataPropertyName": "html", "options": {} },
+      "onError": "continueErrorOutput",
+      "notes": "Opportunity Archive / Historical Trends are built from this archive directory."
+    },
+    {
+      "id": "email",
+      "name": "Email Brief (provider-abstracted)",
+      "type": "n8n-nodes-base.emailSend",
+      "typeVersion": 2.1,
+      "position": [1940, 440],
+      "parameters": { "fromEmail": "={{ $env.EMAIL_FROM }}", "toEmail": "={{ $env.EMAIL_TO }}", "subject": "=Cyber Opportunities Brief — {{ $json.date }}", "html": "={{ $json.html }}", "options": {} },
+      "onError": "continueErrorOutput",
+      "notes": "Email provider (Gmail/M365/SMTP) selected via EMAIL_PROVIDER."
+    },
+    {
+      "id": "mark-success",
+      "name": "Mark Last Success",
+      "type": "n8n-nodes-base.readWriteFile",
+      "typeVersion": 1,
+      "position": [2160, 300],
+      "parameters": { "operation": "write", "fileName": "/logs/last-run-success.txt", "dataPropertyName": "stamp", "options": {} },
+      "onError": "continueRegularOutput",
+      "notes": "Observability: status.sh reads last-run markers."
+    },
+    {
+      "id": "reduced",
+      "name": "Reduced Coverage Notice",
+      "type": "n8n-nodes-base.noOp",
+      "typeVersion": 1,
+      "position": [1280, 460],
+      "parameters": {},
+      "notes": "Failure path: emit a reduced-coverage brief + log instead of producing nothing."
+    }
+  ],
+  "connections": {
+    "Daily Schedule": { "main": [[{ "node": "Enabled?", "type": "main", "index": 0 }]] },
+    "Enabled?": { "main": [[{ "node": "Load Source List", "type": "main", "index": 0 }], []] },
+    "Load Source List": { "main": [[{ "node": "Fetch Opportunity Sources", "type": "main", "index": 0 }], [{ "node": "Reduced Coverage Notice", "type": "main", "index": 0 }]] },
+    "Fetch Opportunity Sources": { "main": [[{ "node": "AI Analyst (provider-abstracted)", "type": "main", "index": 0 }]] },
+    "AI Analyst (provider-abstracted)": { "main": [[{ "node": "Build Cover Image Prompt", "type": "main", "index": 0 }], [{ "node": "Reduced Coverage Notice", "type": "main", "index": 0 }]] },
+    "Build Cover Image Prompt": { "main": [[{ "node": "Generate Cover (Image Provider)", "type": "main", "index": 0 }], [{ "node": "Render HTML / PDF / Email", "type": "main", "index": 0 }]] },
+    "Generate Cover (Image Provider)": { "main": [[{ "node": "Render HTML / PDF / Email", "type": "main", "index": 0 }], [{ "node": "Render HTML / PDF / Email", "type": "main", "index": 0 }]] },
+    "Render HTML / PDF / Email": { "main": [[{ "node": "Store Output", "type": "main", "index": 0 }, { "node": "Archive Copy", "type": "main", "index": 0 }, { "node": "Email Brief (provider-abstracted)", "type": "main", "index": 0 }], [{ "node": "Reduced Coverage Notice", "type": "main", "index": 0 }]] },
+    "Store Output": { "main": [[{ "node": "Mark Last Success", "type": "main", "index": 0 }]] }
+  }
+}

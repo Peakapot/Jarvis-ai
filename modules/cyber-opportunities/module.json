@@ -1,0 +1,44 @@
+{
+  "$comment": "Intelligence module manifest. An 'intelligence product' module follows the same plugin contract as any module, plus intelligence-specific metadata consumed by config/intelligence/products.json. status 'active' + autoImport true means install.sh imports its workflow and the validation/health/backup frameworks include it automatically. New intelligence products (Defence, AI, Government, Healthcare, Market, ...) are added the same way — nothing here is product-specific in a way that blocks reuse.",
+  "id": "cyber-opportunities",
+  "name": "Daily Cyber Opportunities Intelligence Brief",
+  "version": "1.0.0",
+  "status": "active",
+  "intelligence": true,
+  "autoImport": true,
+  "registry": "config/intelligence/products.json",
+  "description": "Identifies commercial opportunities (RFPs, RFIs, government tenders, MSS, awareness, GRC, SOC, vuln mgmt, OT, CNI, AI security, cloud security) relevant to cybersecurity consulting and managed services, focused on the GCC with UK/Europe/Global as secondary. Produces a premium HTML/PDF/email brief with an AI-generated cover image and an opportunity archive.",
+  "provides": [
+    "intelligence.cyber-opportunities",
+    "telegram.command./opportunities"
+  ],
+  "dependsOn": [
+    "core.ai-provider",
+    "core.image-provider",
+    "core.email-provider"
+  ],
+  "prompts": [
+    { "id": "cyber-opportunities.analyst", "file": "prompts/analyst.md", "version": "1.0.0" }
+  ],
+  "workflows": [
+    "workflows/cyber-opportunities.json"
+  ],
+  "envVars": [
+    { "name": "CYBER_OPPS_ENABLED", "required": false, "default": "true", "secret": false, "description": "Set to 'false' to disable this intelligence product." },
+    { "name": "CYBER_OPPS_SCHEDULE_CRON", "required": false, "default": "15 6 * * *", "secret": false, "description": "Cron schedule for the brief (default 06:15 daily)." },
+    { "name": "CYBER_OPPS_PRIMARY_REGIONS", "required": false, "default": "UAE,Saudi Arabia,Qatar,Oman,Bahrain,Kuwait", "secret": false, "description": "Primary focus regions." },
+    { "name": "CYBER_OPPS_SECONDARY_REGIONS", "required": false, "default": "United Kingdom,Europe,Global", "secret": false, "description": "Secondary focus regions." },
+    { "name": "CYBER_OPPS_OUTPUT_FORMATS", "required": false, "default": "html,pdf,email,archive", "secret": false, "description": "Output formats to generate." },
+    { "name": "CYBER_OPPS_SOURCES_FILE", "required": false, "default": "config/cyber-opportunities-sources.txt", "secret": false, "description": "Source list for opportunity signals." }
+  ],
+  "report": {
+    "sourcesFile": "config/cyber-opportunities-sources.txt",
+    "reportDir": "reports/cyber-opportunities",
+    "archiveDir": "reports/archive/cyber-opportunities",
+    "template": "templates/report/cyber-opportunities.html.tpl",
+    "coverImagePrompt": "intelligence.cover-image",
+    "sections": ["Executive Summary", "Top Opportunities", "Regional Breakdown", "High Priority Opportunities", "Strategic Relevance", "Recommended Actions", "Win Probability Assessment", "Opportunity Archive", "Historical Trends"]
+  },
+  "telegram": { "command": "/opportunities" },
+  "healthcheck": "healthcheck.sh"
+}
