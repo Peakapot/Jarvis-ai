@@ -145,6 +145,39 @@ retry() {
   done
 }
 
+# ---------------------------------------------------------------------------
+# Module workflow discovery (Plugin Architecture). Lets the workflow framework
+# treat module-owned workflows as first-class without hardcoding module names.
+# ---------------------------------------------------------------------------
+# jarvis_module_workflow_dirs — every existing modules/*/workflows directory
+# (excludes the _template). Used for validation/backup scope.
+jarvis_module_workflow_dirs() {
+  local d
+  for d in "${JARVIS_ROOT}"/modules/*/workflows; do
+    [[ -d "${d}" ]] || continue
+    [[ "${d}" == *"/_template/"* ]] && continue
+    printf '%s\n' "${d}"
+  done
+}
+
+# jarvis_autoimport_module_workflow_dirs — only modules whose module.json sets
+# "autoImport": true (active products). Used by the importer so planned/scaffold
+# modules are not pushed into n8n.
+jarvis_autoimport_module_workflow_dirs() {
+  local mj dir
+  for mj in "${JARVIS_ROOT}"/modules/*/module.json; do
+    [[ -f "${mj}" ]] || continue
+    dir="$(dirname "${mj}")"
+    [[ -d "${dir}/workflows" ]] || continue
+    if have_cmd jq; then
+      [[ "$(jq -r '.autoImport // false' "${mj}" 2>/dev/null)" == "true" ]] || continue
+    else
+      grep -q '"autoImport"[[:space:]]*:[[:space:]]*true' "${mj}" || continue
+    fi
+    printf '%s\n' "${dir}/workflows"
+  done
+}
+
 # Resolve the docker compose command (plugin v2 preferred, legacy fallback).
 compose() {
   if docker compose version >/dev/null 2>&1; then
@@ -158,4 +191,5 @@ compose() {
 
 export JARVIS_ENV_FILE
 export -f load_env require_env have_cmd require_cmd semver_ge confirm \
-  prompt_default run_step retry compose 2>/dev/null || true
+  prompt_default run_step retry compose \
+  jarvis_module_workflow_dirs jarvis_autoimport_module_workflow_dirs 2>/dev/null || true

@@ -21,6 +21,8 @@ set -o errexit -o nounset -o pipefail
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 # shellcheck source=scripts/lib/common.sh
 source "${SCRIPT_DIR}/lib/common.sh"
+# shellcheck source=scripts/lib/intelligence.sh
+source "${SCRIPT_DIR}/lib/intelligence.sh"
 log_init "healthcheck"
 load_env
 
@@ -134,6 +136,40 @@ check_workflows() {
   fi
 }
 
+check_image_provider() {
+  local provider="${IMAGE_PROVIDER:-}"
+  if [[ -z "${provider}" ]]; then
+    record SKIP "Image Provider" "IMAGE_PROVIDER not configured (cover images disabled)"
+    return
+  fi
+  # Non-network credential presence check (used by intelligence cover images).
+  local key="${OPENAI_IMAGE_API_KEY:-${OPENAI_API_KEY:-}}"
+  if [[ -n "${key}" ]]; then
+    record PASS "Image Provider" "Provider '${provider}' configured with credentials"
+  else
+    record WARN "Image Provider" "Provider '${provider}' selected but no API key (briefs render without cover)"
+  fi
+}
+
+# Intelligence products — registry-driven; folds each product's shared checks in.
+check_intelligence() {
+  local ids id
+  ids="$(intel_ids)"
+  if [[ -z "${ids}" ]]; then
+    record SKIP "Intelligence" "No products registered (jq missing or empty registry)"
+    return
+  fi
+  while IFS= read -r id; do
+    [[ -z "${id}" ]] && continue
+    while IFS= read -r line; do
+      [[ -z "${line}" ]] && continue
+      local st nm dt
+      IFS='|' read -r st nm dt <<<"${line}"
+      record "${st}" "${nm}" "${dt}"
+    done < <(intel_checks "${id}")
+  done <<<"${ids}"
+}
+
 check_disk() {
   local pct
   pct="$(df --output=pcent "${JARVIS_ROOT}" 2>/dev/null | tail -n1 | tr -dc '0-9')"
@@ -195,8 +231,10 @@ main() {
   check_ollama
   check_telegram
   check_email
+  check_image_provider
   check_rss
   check_workflows
+  check_intelligence
   check_disk
 
   [[ "${json}" == 1 ]] && print_json

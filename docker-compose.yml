@@ -70,6 +70,9 @@ services:
       N8N_LOG_FILE_LOCATION: /home/node/.n8n/logs/n8n.log
       EXECUTIONS_DATA_PRUNE: "true"
       EXECUTIONS_DATA_MAX_AGE: ${N8N_EXEC_MAX_AGE_HOURS:-336}
+      # Allow Code nodes to use the built-in 'fs' module only (scoped), so the
+      # Telegram handler can list archived intelligence briefs under /reports.
+      NODE_FUNCTION_ALLOW_BUILTIN: ${N8N_ALLOW_BUILTIN:-fs}
       # Provider endpoints reachable from inside the network
       OLLAMA_BASE_URL: http://${OLLAMA_CONTAINER_NAME:-jarvis-ollama}:11434
     volumes:

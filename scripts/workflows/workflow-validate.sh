@@ -22,14 +22,27 @@ source "${SCRIPT_DIR}/../lib/common.sh"
 log_init "workflow"
 
 QUIET=0
-ROOT_DIR="${JARVIS_ROOT}/workflows"
+EXPLICIT_DIR=""
 while [[ $# -gt 0 ]]; do
   case "$1" in
     --quiet) QUIET=1; shift ;;
     -h|--help) grep -E '^#( |$)' "$0" | sed 's/^# \{0,1\}//'; exit 0 ;;
-    *) ROOT_DIR="$1"; shift ;;
+    *) EXPLICIT_DIR="$1"; shift ;;
   esac
 done
+
+# Default scope: the workflows/ tree PLUS every module-owned workflows directory
+# (intelligence products, future modules) so module workflows are validated by
+# the same integrity check (Modular, Observability). An explicit dir overrides.
+declare -a ROOTS=()
+if [[ -n "${EXPLICIT_DIR}" ]]; then
+  ROOTS=("${EXPLICIT_DIR}")
+else
+  ROOTS=("${JARVIS_ROOT}/workflows")
+  while IFS= read -r mdir; do
+    [[ -n "${mdir}" ]] && ROOTS+=("${mdir}")
+  done < <(jarvis_module_workflow_dirs)
+fi
 
 say() { [[ "${QUIET}" == 1 ]] || log_info "$@"; }
 
@@ -71,10 +84,10 @@ while IFS= read -r wf; do
     log_error "Possible plaintext secret in: ${rel} (workflows must not contain credentials)"; bad=$((bad+1)); continue
   fi
   say "Valid: ${rel}"
-done < <(find "${ROOT_DIR}" -name '*.json' 2>/dev/null | sort)
+done < <(find "${ROOTS[@]}" -name '*.json' 2>/dev/null | sort)
 
 if (( total == 0 )); then
-  say "No workflow files found under ${ROOT_DIR}"
+  say "No workflow files found under: ${ROOTS[*]}"
 fi
 
 if (( bad > 0 )); then

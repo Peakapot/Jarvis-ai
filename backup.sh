@@ -55,8 +55,10 @@ log_section "Creating full backup (${STAMP})"
 # Refresh exported workflows from live n8n (best-effort).
 "${JARVIS_ROOT}/scripts/workflows/workflow-export.sh" >/dev/null 2>&1 || true
 
-# Copy non-secret assets into the staging area.
-for d in workflows prompts config templates reports; do
+# Copy non-secret assets into the staging area. 'modules' is included so that
+# module-owned workflows/prompts/config (e.g. intelligence products) are part of
+# every backup (Backup framework integration).
+for d in workflows prompts config templates reports modules; do
   if [[ -d "${JARVIS_ROOT}/${d}" ]]; then
     mkdir -p "${STAGE}/${d}"
     cp -a "${JARVIS_ROOT}/${d}/." "${STAGE}/${d}/" 2>/dev/null || true

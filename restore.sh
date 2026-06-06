@@ -64,8 +64,8 @@ tar -xzf "${ARCHIVE}" -C "${STAGE}"
   && log_ok "Saved pre-restore safety backup" \
   || log_warn "Could not take pre-restore safety backup; continuing"
 
-# Restore non-secret asset trees.
-for d in workflows prompts config templates reports; do
+# Restore non-secret asset trees (includes module-owned intelligence products).
+for d in workflows prompts config templates reports modules; do
   if [[ -d "${STAGE}/${d}" ]]; then
     mkdir -p "${JARVIS_ROOT}/${d}"
     cp -a "${STAGE}/${d}/." "${JARVIS_ROOT}/${d}/"

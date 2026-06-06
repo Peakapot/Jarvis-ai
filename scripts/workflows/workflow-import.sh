@@ -40,6 +40,13 @@ while [[ $# -gt 0 ]]; do
 done
 [[ "${INCLUDE_EXPORTED}" == 1 ]] && DIRS+=("${JARVIS_ROOT}/workflows/exported")
 
+# Include workflows owned by active modules (e.g. intelligence products) that
+# opt in via "autoImport": true. Planned/scaffold modules are skipped. This
+# keeps modules self-contained while reusing the core import path (Modular).
+while IFS= read -r mdir; do
+  [[ -n "${mdir}" ]] && DIRS+=("${mdir}")
+done < <(jarvis_autoimport_module_workflow_dirs)
+
 log_section "Importing workflows into n8n"
 
 # Validate integrity before mutating anything (Fail-safe defaults).

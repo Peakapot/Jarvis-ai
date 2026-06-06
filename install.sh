@@ -16,8 +16,9 @@
 #   5. Stack start                               (docker compose up -d)
 #   6. Ollama model pull                         (default provider)
 #   7. Workflow import                           (workflows as source code)
-#   8. Post-install health check                 (scripts/healthcheck.sh)
-#   9. Readiness report
+#   8. Intelligence product registration         (registry-driven, idempotent)
+#   9. Post-install health check                 (scripts/healthcheck.sh)
+#  10. Readiness report
 #
 # Usage:
 #   ./install.sh [--reset] [--skip-validate] [--yes] [--no-pull]
@@ -32,6 +33,8 @@ JARVIS_ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 export JARVIS_ROOT
 # shellcheck source=scripts/lib/common.sh
 source "${JARVIS_ROOT}/scripts/lib/common.sh"
+# shellcheck source=scripts/lib/intelligence.sh
+source "${JARVIS_ROOT}/scripts/lib/intelligence.sh"
 log_init "installer"
 
 SKIP_VALIDATE=0
@@ -170,6 +173,38 @@ stage_workflows() {
 }
 
 # ---------------------------------------------------------------------------
+# Stage 8 — Register intelligence products. Registry-driven (no hardcoded list):
+# ensures each product's report/archive directories exist and reports its
+# schedule. Future products appear here automatically once added to
+# config/intelligence/products.json (Future expansion).
+# ---------------------------------------------------------------------------
+stage_intelligence() {
+  local ids id name reportdir archivedir sched_var sched_def count=0
+  ids="$(intel_ids)"
+  if [[ -z "${ids}" ]]; then
+    log_warn "No intelligence products registered (jq missing or empty registry)"
+    return 0
+  fi
+  while IFS= read -r id; do
+    [[ -z "${id}" ]] && continue
+    count=$((count+1))
+    name="$(intel_field "${id}" name)"
+    reportdir="$(intel_field "${id}" reportDir)"
+    archivedir="$(intel_field "${id}" archiveDir)"
+    sched_var="$(intel_field "${id}" scheduleEnv)"
+    sched_def="$(intel_field "${id}" scheduleDefault)"
+    [[ -n "${reportdir}" ]] && mkdir -p "${JARVIS_ROOT}/${reportdir}"
+    [[ -n "${archivedir}" ]] && mkdir -p "${JARVIS_ROOT}/${archivedir}"
+    if intel_enabled "${id}"; then
+      log_ok "Intelligence product '${name}' enabled — schedule ${!sched_var:-${sched_def}}"
+    else
+      log_info "Intelligence product '${name}' present but disabled ($(intel_field "${id}" enabledEnv)=false)"
+    fi
+  done <<<"${ids}"
+  log_ok "Registered ${count} intelligence product(s)"
+}
+
+# ---------------------------------------------------------------------------
 # Stage 8/9 — Health + readiness report.
 # ---------------------------------------------------------------------------
 stage_health() {
@@ -201,16 +236,19 @@ readiness_report() {
 main() {
   banner
   log_section "Jarvis installation starting"
-  ensure_task "01-validate"        "Stage 1/9 · Validate environment"   stage_validate
-  ensure_task "02-config"          "Stage 2/9 · Bootstrap configuration" stage_config
+  ensure_task "01-validate"        "Stage 1/10 · Validate environment"   stage_validate
+  ensure_task "02-config"          "Stage 2/10 · Bootstrap configuration" stage_config
   # config must be loaded for later stages even if already done.
   load_env
-  ensure_task "03-scaffold"        "Stage 3/9 · Create directories"     stage_scaffold
-  ensure_task "04-docker-network"  "Stage 4/9 · Provision docker network" stage_docker_network
-  ensure_task "05-stack-up"        "Stage 5/9 · Start stack"            stage_stack_up
+  ensure_task "03-scaffold"        "Stage 3/10 · Create directories"     stage_scaffold
+  ensure_task "04-docker-network"  "Stage 4/10 · Provision docker network" stage_docker_network
+  ensure_task "05-stack-up"        "Stage 5/10 · Start stack"            stage_stack_up
   # Model pull and workflow import are allowed to fail without blocking re-runs.
-  ensure_task "06-ollama-pull"     "Stage 6/9 · Pull default model"     stage_ollama_pull || true
-  ensure_task "07-workflows"       "Stage 7/9 · Import workflows"       stage_workflows || true
+  ensure_task "06-ollama-pull"     "Stage 6/10 · Pull default model"     stage_ollama_pull || true
+  ensure_task "07-workflows"       "Stage 7/10 · Import workflows"       stage_workflows || true
+  # Intelligence registration is idempotent; always reconcile (not state-gated)
+  # so newly-added products are picked up on re-runs.
+  run_step "Stage 8/10 · Register intelligence products" stage_intelligence || true
   stage_health
   readiness_report
   log_ok "Installation complete. Re-run ./install.sh any time; completed steps are skipped."

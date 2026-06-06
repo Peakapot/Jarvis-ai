@@ -17,6 +17,8 @@ set -o errexit -o nounset -o pipefail
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 # shellcheck source=scripts/lib/common.sh
 source "${SCRIPT_DIR}/lib/common.sh"
+# shellcheck source=scripts/lib/intelligence.sh
+source "${SCRIPT_DIR}/lib/intelligence.sh"
 log_init "status"
 load_env
 
@@ -63,6 +65,23 @@ print_text() {
   printf '  %-22s %s\n' "Files under VCS" "$(find "${JARVIS_ROOT}/workflows" -name '*.json' 2>/dev/null | wc -l | tr -d ' ')" >&2
   printf '  %-22s %s\n' "Last successful run" "$(last_run success)" >&2
   printf '  %-22s %s\n' "Last failed run"     "$(last_run failed)" >&2
+
+  # Intelligence products — registry-driven (Future expansion).
+  local ids id name sv sd enabled latest adir
+  ids="$(intel_ids)"
+  if [[ -n "${ids}" ]]; then
+    printf '\n%sIntelligence Products%s\n' "${C_BOLD}" "${C_RESET}" >&2
+    while IFS= read -r id; do
+      [[ -z "${id}" ]] && continue
+      name="$(intel_field "${id}" name)"
+      sv="$(intel_field "${id}" scheduleEnv)"; sd="$(intel_field "${id}" scheduleDefault)"
+      adir="$(intel_field "${id}" archiveDir)"
+      if intel_enabled "${id}"; then enabled="${C_GREEN}enabled${C_RESET}"; else enabled="${C_GREY}disabled${C_RESET}"; fi
+      latest="n/a"
+      [[ -n "${adir}" && -d "${JARVIS_ROOT}/${adir}" ]] && latest="$(find "${JARVIS_ROOT}/${adir}" -name '*.html' 2>/dev/null | sort | tail -n1 | xargs -r basename)"
+      printf '  %-26s %-8b sched %-12s latest %s\n' "${id}" "${enabled}" "${!sv:-${sd}}" "${latest:-n/a}" >&2
+    done <<<"${ids}"
+  fi
 
   printf '\n%sStorage%s\n' "${C_BOLD}" "${C_RESET}" >&2
   printf '  %-22s %s used\n' "Disk (repo volume)" "$(df --output=pcent "${JARVIS_ROOT}" 2>/dev/null | tail -n1 | tr -d ' ')" >&2

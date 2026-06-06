@@ -26,6 +26,8 @@ set -o errexit -o nounset -o pipefail
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 # shellcheck source=scripts/lib/common.sh
 source "${SCRIPT_DIR}/lib/common.sh"
+# shellcheck source=scripts/lib/intelligence.sh
+source "${SCRIPT_DIR}/lib/intelligence.sh"
 log_init "validate"
 load_env
 
@@ -178,6 +180,37 @@ check_ollama() {
   fi
 }
 
+# Validate the intelligence product registry and that each product's referenced
+# assets exist (config integrity, before anything runs).
+check_intelligence_config() {
+  local reg; reg="$(intel_registry_file)"
+  if [[ ! -f "${reg}" ]]; then
+    record WARN "Intelligence Config" "No registry at ${reg#"${JARVIS_ROOT}/"}"
+    return
+  fi
+  if have_cmd jq && ! jq -e . "${reg}" >/dev/null 2>&1; then
+    record FAIL "Intelligence Config" "Registry JSON is invalid (config/intelligence/products.json)"
+    return
+  fi
+  local ids id missing=0 count=0 wf tpl
+  ids="$(intel_ids)"
+  while IFS= read -r id; do
+    [[ -z "${id}" ]] && continue
+    count=$((count+1))
+    wf="$(intel_field "${id}" workflow)"
+    tpl="$(intel_field "${id}" template)"
+    [[ -n "${wf}"  && ! -f "${JARVIS_ROOT}/${wf}"  ]] && { missing=$((missing+1)); }
+    [[ -n "${tpl}" && ! -f "${JARVIS_ROOT}/${tpl}" ]] && { missing=$((missing+1)); }
+  done <<<"${ids}"
+  if (( count == 0 )); then
+    record WARN "Intelligence Config" "Registry present but no products listed"
+  elif (( missing > 0 )); then
+    record FAIL "Intelligence Config" "${count} product(s); ${missing} referenced asset(s) missing"
+  else
+    record PASS "Intelligence Config" "${count} product(s); all assets present"
+  fi
+}
+
 # ---------------------------------------------------------------------------
 # Reporting.
 # ---------------------------------------------------------------------------
@@ -233,6 +266,7 @@ main() {
   check_disk
   check_network
   check_ollama
+  check_intelligence_config
 
   [[ "${json}" == 1 ]] && print_json
   [[ "${quiet}" == 0 && "${json}" == 0 ]] && print_report
