@@ -27,8 +27,12 @@ jobs:
           set -e
           mapfile -t files < <(git ls-files '*.sh')
           echo "Linting ${#files[@]} shell script(s)"
-          # Library files are sourced, not executed; treat accordingly.
-          shellcheck -x -e SC1090,SC1091 "${files[@]}"
+          # Excludes:
+          #   SC1090/SC1091 — sourced library paths (resolved at runtime).
+          #   SC2015 — info on the intentional `cmd && log_ok || log_warn`
+          #            logging idiom; the middle log_* always returns 0, so the
+          #            fallback only runs when the command actually fails.
+          shellcheck -x -e SC1090,SC1091,SC2015 "${files[@]}"
 
   workflows:
     name: Workflow & JSON integrity

@@ -133,8 +133,8 @@ stage_stack_up() {
   ( cd "${JARVIS_ROOT}" && compose up -d ) || log_fatal "docker compose up failed (see logs)"
   log_ok "Stack started"
   # Wait for n8n to become healthy (bounded).
-  local url="${N8N_BASE_URL:-http://localhost:5678}" i
-  for i in $(seq 1 30); do
+  local url="${N8N_BASE_URL:-http://localhost:5678}"
+  for _ in $(seq 1 30); do
     if curl -fsS --max-time 4 -o /dev/null "${url}/healthz" 2>/dev/null \
        || curl -fsS --max-time 4 -o /dev/null "${url}" 2>/dev/null; then
       log_ok "n8n is up at ${url}"
@@ -212,7 +212,8 @@ stage_health() {
 }
 
 readiness_report() {
-  local report="${JARVIS_ROOT}/reports/readiness-$(date -u +%Y%m%dT%H%M%SZ).txt"
+  local report
+  report="${JARVIS_ROOT}/reports/readiness-$(date -u +%Y%m%dT%H%M%SZ).txt"
   {
     echo "Jarvis Readiness Report"
     echo "Generated: $(date -u +%Y-%m-%dT%H:%M:%SZ)"

@@ -38,7 +38,8 @@ done < <(find . -name '*.sh' -not -path './.git/*')
 
 log_section "2. ShellCheck"
 if have_cmd shellcheck; then
-  if shellcheck -x -e SC1090,SC1091 $(find . -name '*.sh' -not -path './.git/*') ; then
+  mapfile -t _sc_files < <(find . -name '*.sh' -not -path './.git/*')
+  if shellcheck -x -e SC1090,SC1091,SC2015 "${_sc_files[@]}"; then
     pass "shellcheck clean"
   else
     fail "shellcheck reported issues"
