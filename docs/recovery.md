@@ -47,11 +47,20 @@ What `restore.sh` does, in order:
 2. **Verifies the SHA-256 checksum** — refuses to restore on mismatch.
 3. Prints the backup manifest and asks for confirmation.
 4. Takes a **pre-restore safety backup** to `backups/pre-restore/`.
-5. Restores `workflows/`, `prompts/`, `config/`, `templates/`, `reports/`.
+5. Restores `workflows/`, `prompts/`, `config/`, `templates/`, `reports/` and
+   `modules/` (so intelligence products' workflows, prompts and config return).
 6. With `--with-data`, restores the `n8n_data` volume from `n8n-data.tar.gz`.
 7. Prints `ENV_KEYS.txt` — the credentials you must re-supply in `.env`.
-8. `docker compose up -d` and re-imports workflows (`--include-exported`).
+8. `docker compose up -d` and re-imports workflows (`--include-exported`),
+   including auto-imported module workflows for the intelligence products.
 9. Runs `scripts/healthcheck.sh`.
+
+After restore, the **intelligence products** (Cyber, Cyber Opportunities, Energy
+and any future product) resume on their configured schedules — nothing further is
+needed beyond re-supplying any secrets. Verify they are healthy with
+`scripts/healthcheck.sh` (per-product + Image Provider checks) and
+`scripts/status.sh` (Intelligence Products panel); see
+[intelligence-products.md](intelligence-products.md).
 
 ## Integrity verification
 

@@ -37,6 +37,7 @@ Every document here reflects the principles the platform is built on:
 | [architecture.md](architecture.md) | System architecture: service topology, provider abstraction, workflows-as-code, storage and observability, with diagrams. |
 | [installation.md](installation.md) | Prerequisites and the `./install.sh` flow, stage by stage, with all flags. |
 | [operations.md](operations.md) | Day-to-day running: status, health, logs, starting/stopping, Compose profiles, Telegram commands. |
+| [intelligence-products.md](intelligence-products.md) | The registry-driven intelligence framework: the Cyber, Cyber Opportunities and Energy briefs, cover-image/branding system, monitoring, and the add-a-new-product recipe. |
 | [administration.md](administration.md) | Configuration management, provider switching, RSS feeds, credentials, access control, log rotation. |
 | [backup.md](backup.md) | What `backup.sh` captures, retention, checksums, scheduling, workflow-specific backup tooling. |
 | [recovery.md](recovery.md) | `restore.sh` usage, integrity verification, the < 15 minute recovery runbook, disaster scenarios. |

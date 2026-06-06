@@ -31,9 +31,14 @@ it validates workflows and refreshes the exported mirror from live n8n
 | `workflows/` | Workflow source, including the exported mirror. |
 | `prompts/` | First-class versioned prompt assets. |
 | `config/` | Provider/config descriptors, RSS feeds, templates (non-secret). |
-| `templates/` | Email / report templates. |
-| `reports/` | Generated intelligence products and archive. |
+| `templates/` | Email / report templates (incl. the shared intelligence base + per-product templates). |
+| `reports/` | Generated intelligence products and archive (`reports/archive/`). |
+| `modules/` | Plugin modules — including the intelligence products' workflows, prompts, config and docs. |
 | n8n data volume | **Optional** (`--with-data`): the encrypted credentials + execution DB. |
+
+Because `modules/` and `reports/` are captured, every **intelligence product**
+(Cyber, Cyber Opportunities, Energy and any future product) is backed up whole:
+its module workflow/prompt/config plus its latest and archived editions.
 
 An `ENV_KEYS.txt` (key **names** only) and a `MANIFEST.txt` (stamp, host,
 git commit, `with_data` flag) are included for provenance.
@@ -74,7 +79,7 @@ backups/
 Inside the archive:
 
 ```text
-workflows/  prompts/  config/  templates/  reports/
+workflows/  prompts/  config/  templates/  reports/  modules/
 ENV_KEYS.txt        # env var names, values redacted as "<set at restore>"
 MANIFEST.txt        # backup_stamp, created, host, with_data, git_commit
 n8n-data.tar.gz     # only present when created with --with-data

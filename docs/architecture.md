@@ -22,6 +22,7 @@ platform built on [n8n](https://n8n.io) (workflow orchestration) and
 - [Logging and observability](#logging-and-observability)
 - [Storage architecture and the knowledge base](#storage-architecture-and-the-knowledge-base)
 - [Plugin / module architecture](#plugin--module-architecture)
+- [Intelligence Product Framework](#intelligence-product-framework)
 - [Request flow: a Telegram message round-trip](#request-flow-a-telegram-message-round-trip)
 
 ## High-level overview
@@ -368,6 +369,48 @@ modules/<your-module>/
 
 See [development.md](development.md#adding-a-module) for the full procedure.
 
+## Intelligence Product Framework
+
+Daily intelligence briefs are not bespoke workflows — they are instances of a
+**registry-driven framework** layered on top of the provider abstraction, prompt
+management and module architecture above. It exists so that adding a new brief is
+a *configuration and module* change, never a core code change (*Configuration
+over hard coding*, *Future expansion*).
+
+The framework has four pillars:
+
+1. **The registry.**
+   [`config/intelligence/products.json`](../config/intelligence/products.json) is
+   the single source of truth — each product declares its module, enable/schedule
+   env vars, workflow, prompt, sources file, report/archive dirs, template,
+   outputs, cover-image flag and Telegram command. Nothing hardcodes a fixed list
+   of products.
+2. **A shared library.**
+   [`scripts/lib/intelligence.sh`](../scripts/lib/intelligence.sh) understands the
+   registry (`intel_ids`, `intel_field`, `intel_enabled`, `intel_checks`). The
+   installer (Stage 8 `stage_intelligence`), `validate.sh` (Intelligence Config),
+   `healthcheck.sh` (per-product + Image Provider checks) and `status.sh`
+   (Intelligence Products panel) all consume it, so every framework covers every
+   product — including future ones — automatically.
+3. **Reused provider abstractions.** Each brief calls the **AI** provider for
+   analysis, the **Image** provider (`IMAGE_PROVIDER`) for an auto-built premium
+   cover image, and the **Email** provider for delivery — exactly the
+   abstractions described above, no new plumbing.
+4. **A common branding framework.**
+   [`config/intelligence/branding.json`](../config/intelligence/branding.json) and
+   the shared base template
+   [`templates/report/intelligence-base.html.tpl`](../templates/report/intelligence-base.html.tpl)
+   give every brief one consistent premium style; products supply only a content
+   fragment.
+
+Intelligence products are **modules** (`"intelligence": true`,
+`"autoImport": true`) so they inherit module discovery, health, docs and backup.
+Three products ship today — `cyber-brief` (core), `cyber-opportunities` and
+`energy-intelligence` — and future products (Defence, AI, Government, Healthcare,
+Market) follow the identical architecture. Full detail, including the
+add-a-product recipe, is in
+[intelligence-products.md](intelligence-products.md).
+
 ## Request flow: a Telegram message round-trip
 
 Telegram is the primary interface. The
@@ -413,6 +456,10 @@ sequenceDiagram
 ```
 
 Supported commands (extend by adding an output to the Command Router switch):
-`/help`, `/status`, `/research <topic>`, `/emails`, `/image <prompt>`,
-`/cyber`. Anything else falls back to the AI assistant for natural-language
-intent. See [operations.md](operations.md#telegram-commands).
+`/help`, `/status`, `/research <topic>`, `/emails`, `/image <prompt>`, `/cyber`,
+`/opportunities`, `/energy`. The intelligence commands (`/cyber`,
+`/opportunities`, `/energy`) are registry-driven — one shared **Latest
+Intelligence Brief** handler serves any product. Anything else falls back to the
+AI assistant for natural-language intent. See
+[operations.md](operations.md#telegram-commands) and
+[intelligence-products.md](intelligence-products.md).

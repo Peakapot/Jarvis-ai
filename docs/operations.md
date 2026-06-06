@@ -18,6 +18,7 @@ with the assistant.
 - [Starting and stopping the stack](#starting-and-stopping-the-stack)
 - [Compose profiles](#compose-profiles)
 - [The scheduled cyber brief](#the-scheduled-cyber-brief)
+- [Intelligence products](#intelligence-products)
 - [Telegram commands](#telegram-commands)
 - [Diagnostics](#diagnostics)
 
@@ -38,8 +39,9 @@ Both are safe to run any time and as often as you like (*Idempotent*,
 [`scripts/status.sh`](../scripts/status.sh) is a lightweight, read-only
 dashboard. It reports service up/down (n8n, Ollama, Telegram), the configured
 email provider, container states (`docker compose ps`), workflow file count,
-last successful / failed run markers, and storage usage for `logs/`, `backups/`
-and `reports/`.
+last successful / failed run markers, an **Intelligence Products** panel
+(per-product enabled state, effective schedule and latest archived edition), and
+storage usage for `logs/`, `backups/` and `reports/`.
 
 ```bash
 scripts/status.sh           # human-readable
@@ -68,7 +70,11 @@ scripts/healthcheck.sh --quiet   # set exit code only
 
 Checks: **n8n** responding, **Ollama** responding, **Telegram** token valid
 (if set), **Email** reachability (SMTP TCP probe / OAuth providers reported as
-configured), **RSS feeds** reachability, **Workflows** present, **Disk usage**.
+configured), **RSS feeds** reachability, **Workflows** present, **Image
+Provider** (configured + credentials present, used by intelligence cover
+images), **Intelligence** products (registry-driven per-product checks via
+`scripts/lib/intelligence.sh`: enablement, workflow present, sources count,
+report/archive dirs, latest archived edition, schedule), and **Disk usage**.
 
 Status meanings:
 
@@ -185,6 +191,47 @@ remove feeds there without touching the workflow (see
 in `reports/cyber-brief/` and are archived under `reports/archive/`. You can
 also trigger it on demand from Telegram with `/cyber`.
 
+The cyber brief is one of three **intelligence products** — see below.
+
+## Intelligence products
+
+Jarvis runs a **registry-driven intelligence framework**
+([architecture.md](architecture.md#intelligence-product-framework)). Three daily
+briefs share one pipeline, schedules, archive and premium branding; each is
+declared in [`config/intelligence/products.json`](../config/intelligence/products.json).
+Full detail is in [intelligence-products.md](intelligence-products.md).
+
+| Product | Default schedule | Schedule env | Telegram | Outputs |
+| --- | --- | --- | --- | --- |
+| Cyber Threat Brief (`cyber-brief`) | `0 6 * * *` (06:00) | `CYBER_BRIEF_SCHEDULE_CRON` | `/cyber` | `reports/cyber-brief/` + archive |
+| Cyber Opportunities Brief (`cyber-opportunities`) | `15 6 * * *` (06:15) | `CYBER_OPPS_SCHEDULE_CRON` | `/opportunities` | `reports/cyber-opportunities/` + archive |
+| Energy Intelligence Brief (`energy-intelligence`) | `30 6 * * *` (06:30) | `ENERGY_BRIEF_SCHEDULE_CRON` | `/energy` | `reports/energy-intelligence/` + archive |
+
+Running and scheduling:
+
+- **On a schedule.** Each brief runs from its own cron trigger; change the time
+  by editing the relevant `*_SCHEDULE_CRON` in `.env` (e.g.
+  `ENERGY_BRIEF_SCHEDULE_CRON=0 7 * * *`).
+- **On demand.** Trigger the workflow in n8n, or send the Telegram command
+  (`/opportunities`, `/energy`).
+- **Enable / disable.** Set the product's `*_ENABLED` flag (e.g.
+  `CYBER_OPPS_ENABLED=false`); a disabled product reports `SKIP` in health and
+  status, never `FAIL`.
+- **Sources.** Edit the per-product source list — `config/rss-feeds.txt`,
+  `config/cyber-opportunities-sources.txt`, `config/energy-sources.txt` — without
+  touching any workflow.
+- **Cover images.** All three open with an AI-generated cover via
+  `IMAGE_PROVIDER`; if it is unset or fails, the brief renders without a cover.
+
+Monitor them with the standard tooling:
+
+```bash
+scripts/status.sh                              # Intelligence Products panel
+scripts/healthcheck.sh --json                  # per-product + Image Provider checks
+modules/cyber-opportunities/healthcheck.sh     # one product, including source reachability
+modules/energy-intelligence/healthcheck.sh --json
+```
+
 ## Telegram commands
 
 Telegram is the primary interface. Only chat IDs in
@@ -197,7 +244,9 @@ Telegram is the primary interface. Only chat IDs in
 | `/research <topic>` | Run a research task. |
 | `/emails` | Inbox summary / digest. |
 | `/image <prompt>` | Generate an image (image provider). |
-| `/cyber` | Return the latest cyber brief. |
+| `/cyber` | Return the latest cyber threat brief. |
+| `/opportunities [org\|date]` | Latest cyber opportunities brief (plus history / search by organisation or date). |
+| `/energy [org\|date]` | Latest energy intelligence brief (plus history / search, e.g. ADNOC, TAQA, Masdar). |
 | _free text_ | Falls back to the AI assistant for natural-language intent. |
 
 Every external call in the workflow has a failure path: if a request errors, the

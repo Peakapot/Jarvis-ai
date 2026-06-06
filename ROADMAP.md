@@ -24,6 +24,24 @@ priorities may shift.
 - Plugin module architecture (scaffolds).
 - Enterprise documentation.
 
+## Intelligence products ✅ (v0.2.0)
+
+A reusable, registry-driven intelligence framework plus two new daily briefs,
+all built on the existing module/provider/branding frameworks with no core
+refactoring (*Prefer adding modules over modifying the core*):
+
+- **Intelligence Product Registry** (`config/intelligence/products.json`) as the
+  single source of truth, consumed by install/validate/health/status/backup via
+  `scripts/lib/intelligence.sh`.
+- **Common branding framework** + **AI cover images** for a consistent premium
+  style across every brief (HTML/PDF/email/cover).
+- **Daily Cyber Opportunities Intelligence Brief** (`/opportunities`, GCC-first
+  commercial opportunity radar).
+- **Daily Energy Intelligence Brief** (`/energy`, UAE/ADNOC-focused).
+- Future products (Defence, AI, Government, Healthcare, Market) follow the same
+  recipe: module + registry entry + sources + template, no core code changes.
+  See [`docs/intelligence-products.md`](docs/intelligence-products.md).
+
 ## Phase 1 — Core assistants hardening (next)
 
 - Production-ready Telegram command set (`/help`, `/status`, `/research`,

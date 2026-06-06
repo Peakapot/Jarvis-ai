@@ -78,10 +78,26 @@ checks, backup, restore and upgrade — **without manually editing any code**.
 
 | Capability | Description | Entry point |
 |------------|-------------|-------------|
-| **Telegram Assistant** | Primary interface with a command architecture (`/help`, `/status`, `/research`, `/emails`, `/image`, `/cyber`) — new commands are easy to add. | `workflows/core/telegram-assistant.json` |
+| **Telegram Assistant** | Primary interface with a command architecture (`/help`, `/status`, `/research`, `/emails`, `/image`, `/cyber`, `/opportunities`, `/energy`) — new commands are easy to add. | `workflows/core/telegram-assistant.json` |
 | **Cyber Brief** | Professional daily threat-intelligence product: Executive & Technical summaries, Top Threats, Recommended Actions, Emerging Trends, UAE Relevance, Historical Archive — rendered to HTML/PDF/email. | `workflows/core/cyber-brief.json` |
+| **Cyber Opportunities Brief** | Daily commercial-opportunity radar (RFPs, RFIs, tenders, MSS, GRC, SOC, OT/CNI, cloud & AI security) with a GCC-first focus; premium HTML/PDF/email/archive with an AI cover image. | `modules/cyber-opportunities/` |
+| **Energy Intelligence Brief** | Daily UAE/ADNOC-focused energy intelligence (ADNOC ecosystem, then regional & global oil & gas) with the same premium output and AI cover image. | `modules/energy-intelligence/` |
 | **Email Assistant** | Inbox summaries, draft replies, categorisation & prioritisation, thread summaries. | `prompts/email-assistant/` |
 | **Error Handler** | Central failure path for every workflow: structured logging + alerting. | `workflows/core/error-handler.json` |
+
+## Intelligence products
+
+Jarvis runs a **registry-driven intelligence framework**: three daily briefs —
+**Cyber Threat**, **Cyber Opportunities** and **Energy** — share one reusable
+pipeline (provider-abstracted AI, sources files, schedules, archive) and one
+**common premium branding framework** ([`config/intelligence/branding.json`](config/intelligence/branding.json)),
+so every brief has a consistent, premium style across HTML/PDF/email, each
+opened by an **AI-generated cover image** built from the day's top stories. The
+registry [`config/intelligence/products.json`](config/intelligence/products.json)
+is the single source of truth — install, validate, health, status and backup all
+iterate it, so future products (Defence, AI, Government, Healthcare, Market) are
+added as a module + registry entry with **no core code changes**. See
+[`docs/intelligence-products.md`](docs/intelligence-products.md).
 
 ## Provider abstraction
 
