@@ -1,0 +1,30 @@
+# =============================================================================
+# energy-sources.txt — sources for the Daily Energy Intelligence Brief
+# -----------------------------------------------------------------------------
+# One source URL per line ('#' = comment). Heavy focus on the UAE / ADNOC
+# ecosystem, then regional and global oil & gas. healthcheck.sh verifies
+# reachability; the workflow ingests these. Add company newsrooms / sector
+# feeds here without touching any workflow (Configuration over hard coding).
+# =============================================================================
+
+# --- UAE / ADNOC ecosystem (primary focus) ----------------------------------
+https://www.adnoc.ae/en/news-and-media
+https://www.taqa.com/media-centre/news/
+https://www.masdar.ae/en/news
+https://www.borouge.com/mediacentre/Pages/news.aspx
+https://www.mubadala.com/en/news
+
+# --- Regional energy (secondary focus) --------------------------------------
+https://www.aramco.com/en/news-media/news
+https://www.qatarenergy.qa/en/MediaCenter/Pages/news.aspx
+
+# --- Global oil & gas majors -------------------------------------------------
+https://www.shell.com/news-and-insights/newsroom.html
+https://www.bp.com/en/global/corporate/news-and-insights.html
+https://corporate.exxonmobil.com/news/news-releases
+https://www.totalenergies.com/news
+
+# --- Sector news / energy technology, security & AI (feeds) -----------------
+https://www.rigzone.com/news/rss/rigzone_latest.aspx
+https://oilprice.com/rss/main
+https://www.energyvoice.com/feed/

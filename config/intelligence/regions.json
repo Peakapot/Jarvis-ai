@@ -1,0 +1,23 @@
+{
+  "$comment": "Reusable region groupings for intelligence products (Configuration over hard coding). Products reference these group ids instead of hardcoding country lists, so adding a region or a new product is a config change. Used by the opportunities brief (primary/secondary focus) and available to any future intelligence module.",
+  "schemaVersion": 1,
+  "groups": {
+    "gcc": {
+      "label": "GCC (Primary)",
+      "members": ["United Arab Emirates", "Saudi Arabia", "Qatar", "Oman", "Bahrain", "Kuwait"]
+    },
+    "secondary": {
+      "label": "Secondary",
+      "members": ["United Kingdom", "Europe"]
+    },
+    "global": {
+      "label": "Global Strategic",
+      "members": ["Global"]
+    }
+  },
+  "defaults": {
+    "primary": "gcc",
+    "secondary": "secondary",
+    "tertiary": "global"
+  }
+}

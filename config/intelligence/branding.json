@@ -1,0 +1,46 @@
+{
+  "$comment": "Common branding framework for ALL Jarvis intelligence products (Cyber Brief, Cyber Opportunities, Energy Intelligence, and future products). Ensures a consistent premium visual style across every brief and every output format (HTML/PDF/email/cover image). Report templates and the AI cover-image prompt read these tokens so a single change here re-skins every product. No secrets — pure presentation (Configuration over hard coding, Separation of concerns).",
+  "schemaVersion": 1,
+  "brand": {
+    "wordmark": "JARVIS INTELLIGENCE",
+    "tagline": "Decision-grade intelligence, delivered daily",
+    "logoText": "◆ JARVIS"
+  },
+  "palette": {
+    "primary": "#0A1A2F",
+    "primaryDark": "#05101F",
+    "accent": "#C9A24B",
+    "accentBright": "#E7C76A",
+    "surface": "#FFFFFF",
+    "surfaceMuted": "#F4F6F9",
+    "ink": "#11151C",
+    "inkMuted": "#5A6472",
+    "success": "#1E8E5A",
+    "warning": "#B8860B",
+    "danger": "#B02525",
+    "line": "#E2E6EC"
+  },
+  "typography": {
+    "heading": "'Georgia', 'Times New Roman', serif",
+    "body": "-apple-system, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif",
+    "mono": "'SF Mono', 'Consolas', monospace",
+    "baseSizePx": 15
+  },
+  "severity": {
+    "high": "#B02525",
+    "medium": "#B8860B",
+    "low": "#1E8E5A"
+  },
+  "coverImage": {
+    "enabledByDefault": true,
+    "aspect": "wide",
+    "sizeEnv": "IMAGE_SIZE",
+    "sizeDefault": "1536x1024",
+    "styleDirectives": "Premium editorial intelligence-report cover. Sophisticated, corporate, modern. Deep navy (#0A1A2F) background with refined gold (#C9A24B) accents. Abstract, professional, NON-literal data-visualisation motifs (network lines, subtle geometric grids, light bokeh). Absolutely NO readable text, NO logos, NO watermarks, NO people's faces. Cinematic, restrained, high-end consultancy aesthetic suitable as a report banner.",
+    "negativeDirectives": "no text, no words, no letters, no logos, no watermark, no charts with numbers, no clipart, no cartoon, no low quality"
+  },
+  "footer": {
+    "disclaimer": "Produced automatically from open sources by Jarvis Intelligence. Verify critical findings against primary sources before acting. This is an automated analytical product, not professional advice.",
+    "confidentiality": "FOR INTERNAL USE"
+  }
+}

@@ -43,6 +43,14 @@
       "version": "1.0.0",
       "purpose": "Categorise and prioritise an email for triage.",
       "owner": "email-assistant"
+    },
+    {
+      "id": "intelligence.cover-image",
+      "file": "intelligence/cover-image.md",
+      "version": "1.0.0",
+      "purpose": "Build a provider-neutral cover-image prompt from a brief's top stories, in the shared premium house style. Used by all intelligence products.",
+      "owner": "intelligence"
     }
-  ]
+  ],
+  "$note": "Intelligence-product analyst prompts are owned by their modules and live alongside them (modules/<product>/prompts/), consistent with the plugin architecture. This central registry holds core and shared/cross-product prompts."
 }

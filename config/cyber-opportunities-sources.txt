@@ -1,0 +1,38 @@
+# =============================================================================
+# cyber-opportunities-sources.txt — sources for the Cyber Opportunities Brief
+# -----------------------------------------------------------------------------
+# One source URL per line ('#' = comment). The workflow ingests these to surface
+# RFPs/RFIs/tenders and managed-security opportunities; healthcheck.sh verifies
+# reachability. Add tender portals / procurement feeds here without touching any
+# workflow (Configuration over hard coding).
+#
+# NOTE: Many government tender portals require authenticated/search access and
+# are not plain RSS. List the publicly reachable landing/feed URLs here; the
+# workflow's source-adapter handles those it can fetch and degrades gracefully
+# for those it cannot (Fail-safe defaults).
+# =============================================================================
+
+# --- GCC procurement / tender portals (landing pages) -----------------------
+# UAE
+https://www.adnoc.ae/en/supplier-finder
+https://www.dubai.gov.ae/en/business
+# Saudi Arabia (Etimad)
+https://tenders.etimad.sa/
+# Qatar
+https://www.monoqasat.gov.qa/
+# Oman
+https://etimad.tenderboard.gov.om/
+# Bahrain
+https://www.tenders.bh/
+# Kuwait (CAPT)
+https://www.capt.gov.kw/
+
+# --- UK / Europe public procurement -----------------------------------------
+https://www.find-tender.service.gov.uk/Search/Results
+https://www.contractsfinder.service.gov.uk/Search
+https://ted.europa.eu/en/
+
+# --- Managed security / industry opportunity signals (news feeds) -----------
+https://www.bleepingcomputer.com/feed/
+https://feeds.feedburner.com/TheHackersNews
+https://www.darkreading.com/rss.xml

@@ -1,0 +1,63 @@
+{
+  "$comment": "Intelligence Product Registry — the single source of truth for all Jarvis daily intelligence briefs. NEW intelligence products are added by appending an entry here (and supplying the referenced workflow/prompt/template/sources). Nothing in the platform hardcodes a fixed list of products: install.sh, healthcheck.sh, status.sh and backup.sh all iterate this registry, so future products (Defence, AI, Government, Healthcare, Market intelligence, ...) follow exactly the same architecture. Reuses the established configuration framework (Configuration over hard coding).",
+  "schemaVersion": 1,
+  "products": [
+    {
+      "id": "cyber-brief",
+      "name": "Daily Cyber Threat Intelligence Brief",
+      "module": "core",
+      "status": "active",
+      "enabledEnv": "CYBER_BRIEF_ENABLED",
+      "enabledDefault": "true",
+      "scheduleEnv": "CYBER_BRIEF_SCHEDULE_CRON",
+      "scheduleDefault": "0 6 * * *",
+      "workflow": "workflows/core/cyber-brief.json",
+      "prompt": "cyber-brief.analyst",
+      "sourcesFile": "config/rss-feeds.txt",
+      "reportDir": "reports/cyber-brief",
+      "archiveDir": "reports/archive/cyber-brief",
+      "template": "templates/report/cyber-brief.html.tpl",
+      "outputs": ["html", "pdf", "email", "archive"],
+      "coverImage": true,
+      "telegramCommand": "/cyber"
+    },
+    {
+      "id": "cyber-opportunities",
+      "name": "Daily Cyber Opportunities Intelligence Brief",
+      "module": "cyber-opportunities",
+      "status": "active",
+      "enabledEnv": "CYBER_OPPS_ENABLED",
+      "enabledDefault": "true",
+      "scheduleEnv": "CYBER_OPPS_SCHEDULE_CRON",
+      "scheduleDefault": "15 6 * * *",
+      "workflow": "modules/cyber-opportunities/workflows/cyber-opportunities.json",
+      "prompt": "cyber-opportunities.analyst",
+      "sourcesFile": "config/cyber-opportunities-sources.txt",
+      "reportDir": "reports/cyber-opportunities",
+      "archiveDir": "reports/archive/cyber-opportunities",
+      "template": "templates/report/cyber-opportunities.html.tpl",
+      "outputs": ["html", "pdf", "email", "archive"],
+      "coverImage": true,
+      "telegramCommand": "/opportunities"
+    },
+    {
+      "id": "energy-intelligence",
+      "name": "Daily Energy Intelligence Brief",
+      "module": "energy-intelligence",
+      "status": "active",
+      "enabledEnv": "ENERGY_BRIEF_ENABLED",
+      "enabledDefault": "true",
+      "scheduleEnv": "ENERGY_BRIEF_SCHEDULE_CRON",
+      "scheduleDefault": "30 6 * * *",
+      "workflow": "modules/energy-intelligence/workflows/energy-intelligence.json",
+      "prompt": "energy-intelligence.analyst",
+      "sourcesFile": "config/energy-sources.txt",
+      "reportDir": "reports/energy-intelligence",
+      "archiveDir": "reports/archive/energy-intelligence",
+      "template": "templates/report/energy-intelligence.html.tpl",
+      "outputs": ["html", "pdf", "email", "archive"],
+      "coverImage": true,
+      "telegramCommand": "/energy"
+    }
+  ]
+}
