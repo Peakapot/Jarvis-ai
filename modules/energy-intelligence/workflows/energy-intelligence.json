@@ -467,7 +467,7 @@
       ],
       "parameters": {
         "language": "javaScript",
-        "jsCode": "let b64 = '';\ntry { b64 = $input.first().binary.data.data; } catch (e) {}\nconst date = $('Render HTML').first().json.date;\nreturn [{ json: { date: date, coverB64: b64 } }];"
+        "jsCode": "const buf = await this.helpers.getBinaryDataBuffer(0, 'data');\nconst b64 = buf ? buf.toString('base64') : '';\nconst date = $('Render HTML').first().json.date;\nreturn [{ json: { date: date, coverB64: b64 } }];"
       },
       "onError": "continueErrorOutput",
       "notes": "Carry the cover PDF as base64 in JSON so it survives the body conversion HTTP call."
@@ -565,7 +565,7 @@
       ],
       "parameters": {
         "language": "javaScript",
-        "jsCode": "const coverB64 = ($('Stash Cover').first().json.coverB64) || '';\nlet bodyB64 = '';\ntry { bodyB64 = $input.first().binary.data.data; } catch (e) {}\nconst date = $('Render HTML').first().json.date;\nreturn [{ json: { date: date },\n  binary: {\n    cover: { data: coverB64, mimeType: 'application/pdf', fileName: '01-cover.pdf' },\n    body:  { data: bodyB64,  mimeType: 'application/pdf', fileName: '02-body.pdf' }\n  } }];"
+        "jsCode": "const coverB64 = ($('Stash Cover').first().json.coverB64) || '';\nconst bodyBuf = await this.helpers.getBinaryDataBuffer(0, 'data');\nconst coverBuf = Buffer.from(coverB64, 'base64');\nconst cover = await this.helpers.prepareBinaryData(coverBuf, '01-cover.pdf', 'application/pdf');\nconst body  = await this.helpers.prepareBinaryData(bodyBuf,  '02-body.pdf', 'application/pdf');\nconst date = $('Render HTML').first().json.date;\nreturn [{ json: { date: date }, binary: { cover: cover, body: body } }];"
       },
       "onError": "continueErrorOutput",
       "notes": "Place cover + body PDFs on one item with order-prefixed filenames for the merge."
