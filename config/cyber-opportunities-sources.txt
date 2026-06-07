@@ -1,38 +1,20 @@
 # =============================================================================
-# cyber-opportunities-sources.txt — sources for the Cyber Opportunities Brief
+# cyber-opportunities-sources.txt — Cyber Opportunities (RFP) brief sources
 # -----------------------------------------------------------------------------
-# One source URL per line ('#' = comment). The workflow ingests these to surface
-# RFPs/RFIs/tenders and managed-security opportunities; healthcheck.sh verifies
-# reachability. Add tender portals / procurement feeds here without touching any
-# workflow (Configuration over hard coding).
-#
-# NOTE: Many government tender portals require authenticated/search access and
-# are not plain RSS. List the publicly reachable landing/feed URLs here; the
-# workflow's source-adapter handles those it can fetch and degrades gracefully
-# for those it cannot (Fail-safe defaults).
+# Google News RSS *search* feeds (reliable, recent) surfacing tenders, RFPs,
+# contract awards and managed-security demand signals. One URL per line.
+# NOTE: live government tender portals (Etimad, Find-a-Tender, TED, etc.) are
+# authenticated/search pages, not RSS — track them manually; these news feeds
+# surface the publicly-reported opportunities and awards.
 # =============================================================================
 
-# --- GCC procurement / tender portals (landing pages) -----------------------
-# UAE
-https://www.adnoc.ae/en/supplier-finder
-https://www.dubai.gov.ae/en/business
-# Saudi Arabia (Etimad)
-https://tenders.etimad.sa/
-# Qatar
-https://www.monoqasat.gov.qa/
-# Oman
-https://etimad.tenderboard.gov.om/
-# Bahrain
-https://www.tenders.bh/
-# Kuwait (CAPT)
-https://www.capt.gov.kw/
-
-# --- UK / Europe public procurement -----------------------------------------
-https://www.find-tender.service.gov.uk/Search/Results
-https://www.contractsfinder.service.gov.uk/Search
-https://ted.europa.eu/en/
-
-# --- Managed security / industry opportunity signals (news feeds) -----------
-https://www.bleepingcomputer.com/feed/
-https://feeds.feedburner.com/TheHackersNews
-https://www.darkreading.com/rss.xml
+# --- GCC cybersecurity tenders / RFPs / awards ------------------------------
+https://news.google.com/rss/search?q=cybersecurity+(tender+OR+RFP+OR+RFI+OR+contract+OR+award)+(UAE+OR+%22Saudi+Arabia%22+OR+Qatar+OR+Oman+OR+Bahrain+OR+Kuwait)+when:21d&hl=en-US&gl=US&ceid=US:en
+# --- Managed security / SOC / GRC / awareness demand ------------------------
+https://news.google.com/rss/search?q=(%22managed+security%22+OR+%22SOC%22+OR+%22GRC%22+OR+%22vulnerability+management%22+OR+%22security+awareness%22)+(UAE+OR+Gulf+OR+%22Saudi+Arabia%22+OR+Qatar)+when:21d&hl=en-US&gl=US&ceid=US:en
+# --- OT / CNI / cloud / AI security -----------------------------------------
+https://news.google.com/rss/search?q=(%22OT+security%22+OR+%22critical+infrastructure%22+OR+%22cloud+security%22+OR+%22AI+security%22)+(Gulf+OR+UAE+OR+%22Middle+East%22)+when:21d&hl=en-US&gl=US&ceid=US:en
+# --- UK / Europe -------------------------------------------------------------
+https://news.google.com/rss/search?q=cybersecurity+(tender+OR+framework+OR+RFP+OR+procurement)+(%22United+Kingdom%22+OR+UK+OR+Europe)+when:21d&hl=en-US&gl=US&ceid=US:en
+# --- Global strategic (gov / defence / banking awards) ----------------------
+https://news.google.com/rss/search?q=(government+OR+defence+OR+banking+OR+energy)+cybersecurity+(contract+OR+award+OR+deal)+when:14d&hl=en-US&gl=US&ceid=US:en
