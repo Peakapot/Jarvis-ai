@@ -1,24 +1,16 @@
 # =============================================================================
-# cyber-sources.txt — sources for the Weekly Cyber Intelligence Brief
+# cyber-sources.txt — sources for "Cybersecurity Talent" (awareness/skills mag)
 # -----------------------------------------------------------------------------
-# Google News RSS *search* feeds (real, recent, per-topic) plus publisher feeds
-# that carry article images for the magazine layout. One URL per line
-# ('#' = comment). 'when:7d' limits to the last 7 days. Edit freely.
+# Training techniques, awareness, security culture, phishing/social-engineering,
+# skills & careers. Google News search feeds + publisher feeds (carry images).
 # =============================================================================
-
-# --- Per-topic threat news ---------------------------------------------------
-https://news.google.com/rss/search?q=ransomware+attack+when:7d&hl=en-US&gl=US&ceid=US:en
-https://news.google.com/rss/search?q=(data+breach+OR+%22data+leak%22)+when:7d&hl=en-US&gl=US&ceid=US:en
-https://news.google.com/rss/search?q=(zero-day+OR+vulnerability+OR+exploit+OR+CVE)+when:7d&hl=en-US&gl=US&ceid=US:en
-https://news.google.com/rss/search?q=(%22nation-state%22+OR+APT+OR+%22state-sponsored%22)+cyber+when:7d&hl=en-US&gl=US&ceid=US:en
-https://news.google.com/rss/search?q=(%22critical+infrastructure%22+OR+ICS+OR+OT)+cyber+when:7d&hl=en-US&gl=US&ceid=US:en
-
-# --- Regional focus (Gulf / Middle East) ------------------------------------
-https://news.google.com/rss/search?q=(UAE+OR+Gulf+OR+%22Middle+East%22+OR+Saudi+OR+Qatar)+(cyber+OR+cybersecurity)+when:7d&hl=en-US&gl=US&ceid=US:en
-
-# --- Publisher-direct feeds (carry article images for the layout) ------------
-https://www.bleepingcomputer.com/feed/
-https://feeds.feedburner.com/TheHackersNews
+https://news.google.com/rss/search?q=(%22security+awareness+training%22+OR+%22cybersecurity+training%22)+when:7d&hl=en-US&gl=US&ceid=US:en
+https://news.google.com/rss/search?q=(%22phishing+simulation%22+OR+%22social+engineering%22+training)+when:7d&hl=en-US&gl=US&ceid=US:en
+https://news.google.com/rss/search?q=(%22cyber+range%22+OR+%22hands-on+lab%22+OR+gamified+OR+%22capture+the+flag%22)+cybersecurity+when:14d&hl=en-US&gl=US&ceid=US:en
+https://news.google.com/rss/search?q=(%22cyber+skills+gap%22+OR+%22cybersecurity+workforce%22+OR+%22security+culture%22)+when:14d&hl=en-US&gl=US&ceid=US:en
+https://news.google.com/rss/search?q=(UAE+OR+Gulf+OR+Saudi)+(cybersecurity+awareness+OR+training+OR+skills)+when:14d&hl=en-US&gl=US&ceid=US:en
+# Publisher-direct feeds (images + depth)
+https://www.infosecurity-magazine.com/rss/news/
+https://www.helpnetsecurity.com/feed/
 https://www.darkreading.com/rss.xml
-https://www.securityweek.com/feed/
-https://krebsonsecurity.com/feed/
+https://feeds.feedburner.com/TheHackersNews

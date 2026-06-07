@@ -1,0 +1,8 @@
+# =============================================================================
+# cyber-quals-sources.txt — qualifications, certifications & courses channel
+# -----------------------------------------------------------------------------
+# Feeds the "Qualifications & Courses" + "Training Technology" sections.
+# =============================================================================
+https://news.google.com/rss/search?q=(cybersecurity+certification+OR+%22security+certification%22)+(new+OR+launch+OR+updated+OR+released)+when:21d&hl=en-US&gl=US&ceid=US:en
+https://news.google.com/rss/search?q=(CompTIA+OR+%22(ISC)2%22+OR+SANS+OR+GIAC+OR+ISACA+OR+EC-Council+OR+Offensive+Security)+(course+OR+certification+OR+training)+when:21d&hl=en-US&gl=US&ceid=US:en
+https://news.google.com/rss/search?q=(%22security+training+platform%22+OR+%22training+technology%22+OR+%22AI+training%22)+cybersecurity+when:21d&hl=en-US&gl=US&ceid=US:en
