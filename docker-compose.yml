@@ -96,6 +96,8 @@ services:
       # Telegram (primary interface) — workflows read these via $env
       TELEGRAM_BOT_TOKEN: ${TELEGRAM_BOT_TOKEN:-}
       TELEGRAM_ALLOWED_CHAT_IDS: ${TELEGRAM_ALLOWED_CHAT_IDS:-}
+      # Chat that scheduled briefs are delivered to (falls back to first allowed chat)
+      TELEGRAM_BRIEF_CHAT_ID: ${TELEGRAM_BRIEF_CHAT_ID:-}
       # Email delivery
       EMAIL_PROVIDER: ${EMAIL_PROVIDER:-smtp}
       EMAIL_FROM: ${EMAIL_FROM:-}

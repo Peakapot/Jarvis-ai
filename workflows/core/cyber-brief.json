@@ -223,27 +223,6 @@
       "notes": "Writes via fs (NODE_FUNCTION_ALLOW_BUILTIN=fs) to avoid the Read/Write File node's binary requirement."
     },
     {
-      "id": "email",
-      "name": "Email Brief (provider-abstracted)",
-      "type": "n8n-nodes-base.emailSend",
-      "typeVersion": 2.1,
-      "position": [
-        3700,
-        420
-      ],
-      "parameters": {
-        "fromEmail": "={{ $env.EMAIL_FROM }}",
-        "toEmail": "={{ $env.EMAIL_TO }}",
-        "subject": "=Cyber Intelligence Brief — {{ $('Render HTML').first().json.date }}",
-        "html": "={{ $('Render HTML').first().json.html }}",
-        "options": {
-          "attachments": "data"
-        }
-      },
-      "onError": "continueRegularOutput",
-      "notes": "Email provider selected via EMAIL_PROVIDER; fails gracefully if SMTP not configured."
-    },
-    {
       "id": "reduced",
       "name": "Reduced Coverage Notice",
       "type": "n8n-nodes-base.noOp",
@@ -662,6 +641,61 @@
       },
       "onError": "continueRegularOutput",
       "notes": "Live actively-exploited vulnerabilities from the CISA KEV catalog (public, no API key). Non-fatal on failure."
+    },
+    {
+      "id": "name-pdf",
+      "name": "Name PDF",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        3700,
+        420
+      ],
+      "parameters": {
+        "language": "javaScript",
+        "jsCode": "const items=$input.all();\nconst date=$('Render HTML').first().json.date;\nitems.forEach(function(it){ if(it.binary && it.binary.data){ it.binary.data.fileName='cyber-brief-'+date+'.pdf'; } });\nreturn items;"
+      },
+      "onError": "continueRegularOutput"
+    },
+    {
+      "id": "send-telegram",
+      "name": "Send to Telegram",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        3920,
+        420
+      ],
+      "parameters": {
+        "method": "POST",
+        "url": "=https://api.telegram.org/bot{{ $env.TELEGRAM_BOT_TOKEN }}/sendDocument",
+        "contentType": "multipart-form-data",
+        "sendBody": true,
+        "bodyParameters": {
+          "parameters": [
+            {
+              "parameterType": "formData",
+              "name": "chat_id",
+              "value": "={{ ($env.TELEGRAM_BRIEF_CHAT_ID || ($env.TELEGRAM_ALLOWED_CHAT_IDS || '').toString().split(',')[0] || '').toString().trim() }}"
+            },
+            {
+              "parameterType": "formData",
+              "name": "caption",
+              "value": "=🛡️ Cyber Intelligence Brief — {{ $('Render HTML').first().json.date }}"
+            },
+            {
+              "parameterType": "formBinaryData",
+              "name": "document",
+              "inputDataFieldName": "data"
+            }
+          ]
+        },
+        "options": {
+          "timeout": 60000
+        }
+      },
+      "onError": "continueRegularOutput",
+      "notes": "Delivers the finished PDF to Telegram via the Bot API (sendDocument). Uses TELEGRAM_BOT_TOKEN + TELEGRAM_BRIEF_CHAT_ID (falls back to the first TELEGRAM_ALLOWED_CHAT_IDS entry)."
     }
   ],
   "connections": {
@@ -994,7 +1028,7 @@
       "main": [
         [
           {
-            "node": "Email Brief (provider-abstracted)",
+            "node": "Name PDF",
             "type": "main",
             "index": 0
           }
@@ -1010,6 +1044,22 @@
             "index": 0
           }
         ]
+      ]
+    },
+    "Name PDF": {
+      "main": [
+        [
+          {
+            "node": "Send to Telegram",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Send to Telegram": {
+      "main": [
+        []
       ]
     }
   }
