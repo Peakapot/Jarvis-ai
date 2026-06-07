@@ -1,30 +1,31 @@
 # =============================================================================
-# energy-sources.txt — sources for the Daily Energy Intelligence Brief
+# energy-sources.txt — sources for the Daily/Weekly Energy Intelligence Brief
 # -----------------------------------------------------------------------------
-# One source URL per line ('#' = comment). Heavy focus on the UAE / ADNOC
-# ecosystem, then regional and global oil & gas. healthcheck.sh verifies
-# reachability; the workflow ingests these. Add company newsrooms / sector
-# feeds here without touching any workflow (Configuration over hard coding).
+# Uses Google News RSS *search* feeds (reliable, real, recent, per-company), so
+# the analyst gets genuine articles to build the NOC / IOC / Movers tables.
+# One URL per line ('#' = comment). 'when:7d' limits to the last 7 days.
+# Add/adjust queries here without touching the workflow.
 # =============================================================================
 
-# --- UAE / ADNOC ecosystem (primary focus) ----------------------------------
-https://www.adnoc.ae/en/news-and-media
-https://www.taqa.com/media-centre/news/
-https://www.masdar.ae/en/news
-https://www.borouge.com/mediacentre/Pages/news.aspx
-https://www.mubadala.com/en/news
+# --- Middle East NOCs (primary focus) ---------------------------------------
+https://news.google.com/rss/search?q=ADNOC+OR+%22ADNOC+Gas%22+OR+%22ADNOC+Drilling%22+when:7d&hl=en-US&gl=US&ceid=US:en
+https://news.google.com/rss/search?q=%22QatarEnergy%22+when:7d&hl=en-US&gl=US&ceid=US:en
+https://news.google.com/rss/search?q=%22Saudi+Aramco%22+when:7d&hl=en-US&gl=US&ceid=US:en
+https://news.google.com/rss/search?q=%22Kuwait+Petroleum%22+OR+%22KPC%22+petroleum+when:7d&hl=en-US&gl=US&ceid=US:en
+https://news.google.com/rss/search?q=Borouge+OR+TAZIZ+OR+%22ADNOC%22+petrochemicals+when:7d&hl=en-US&gl=US&ceid=US:en
 
-# --- Regional energy (secondary focus) --------------------------------------
-https://www.aramco.com/en/news-media/news
-https://www.qatarenergy.qa/en/MediaCenter/Pages/news.aspx
+# --- UAE energy ecosystem ----------------------------------------------------
+https://news.google.com/rss/search?q=TAQA+OR+Masdar+OR+%22Mubadala+Energy%22+when:7d&hl=en-US&gl=US&ceid=US:en
 
-# --- Global oil & gas majors -------------------------------------------------
-https://www.shell.com/news-and-insights/newsroom.html
-https://www.bp.com/en/global/corporate/news-and-insights.html
-https://corporate.exxonmobil.com/news/news-releases
-https://www.totalenergies.com/news
+# --- Supermajor IOCs ---------------------------------------------------------
+https://news.google.com/rss/search?q=%22Shell%22+oil+gas+when:7d&hl=en-US&gl=US&ceid=US:en
+https://news.google.com/rss/search?q=%22TotalEnergies%22+when:7d&hl=en-US&gl=US&ceid=US:en
+https://news.google.com/rss/search?q=%22ExxonMobil%22+when:7d&hl=en-US&gl=US&ceid=US:en
+https://news.google.com/rss/search?q=%22BP%22+oil+gas+when:7d&hl=en-US&gl=US&ceid=US:en
+https://news.google.com/rss/search?q=%22Chevron%22+oil+when:7d&hl=en-US&gl=US&ceid=US:en
 
-# --- Sector news / energy technology, security & AI (feeds) -----------------
-https://www.rigzone.com/news/rss/rigzone_latest.aspx
-https://oilprice.com/rss/main
-https://www.energyvoice.com/feed/
+# --- Movers & shakers (leadership changes) ----------------------------------
+https://news.google.com/rss/search?q=(ADNOC+OR+Aramco+OR+Shell+OR+BP+OR+Chevron+OR+TotalEnergies+OR+QatarEnergy)+(appoints+OR+CEO+OR+chairman+OR+resigns+OR+%22board%22)+when:14d&hl=en-US&gl=US&ceid=US:en
+
+# --- Sector context (energy security, AI, digital, OT cyber) ----------------
+https://news.google.com/rss/search?q=(energy+OR+oil+OR+gas)+(%22energy+security%22+OR+%22digital+transformation%22+OR+%22AI%22+OR+%22cybersecurity%22)+Gulf+OR+UAE+when:7d&hl=en-US&gl=US&ceid=US:en
