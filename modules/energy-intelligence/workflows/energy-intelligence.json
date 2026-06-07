@@ -3,7 +3,7 @@
   "name": "Jarvis · Energy Intelligence Brief",
   "meta": {
     "jarvisModule": "energy-intelligence",
-    "jarvisVersion": "1.4.0",
+    "jarvisVersion": "1.5.0",
     "intelligenceProduct": true,
     "description": "Daily UAE/ADNOC-focused energy intelligence. Splits config/energy-sources.txt into feeds, fetches them, aggregates real articles, analyses with local Ollama, renders HTML and writes report + archive via fs. Cover image is an optional side branch (Image Provider Abstraction). Every external step has a failure path.",
     "prompts": [
@@ -119,7 +119,7 @@
       ],
       "parameters": {
         "language": "javaScript",
-        "jsCode": "const items = $input.all();\nconst arts = items.map(function(i){ return i.json; }).filter(function(a){ return a && (a.title || a.contentSnippet || a.content); });\nconst lines = arts.slice(0,12).map(function(a){\n  var t = (a.title||'').toString();\n  var s = (a.contentSnippet||a.content||'').toString().replace(/\\s+/g,' ').slice(0,140);\n  var u = (a.link||a.url||'').toString();\n  return '- ' + t + ' — ' + s + ' (' + u + ')';\n});\nconst text = lines.length ? lines.join('\\n') : 'No source articles were retrieved this period.';\nreturn [{ json: { articles: text, count: arts.length, date: new Date().toISOString().slice(0,10) } }];"
+        "jsCode": "const items = $input.all();\nconst arts = items.map(function(i){ return i.json; }).filter(function(a){ return a && (a.title || a.contentSnippet || a.content); });\nconst lines = arts.slice(0,30).map(function(a){\n  var t = (a.title||'').toString();\n  var s = (a.contentSnippet||a.content||'').toString().replace(/\\s+/g,' ').slice(0,200);\n  var u = (a.link||a.url||'').toString();\n  return '- ' + t + ' — ' + s + ' (' + u + ')';\n});\nconst text = lines.length ? lines.join('\\n') : 'No source articles were retrieved this period.';\nreturn [{ json: { articles: text, count: arts.length, date: new Date().toISOString().slice(0,10) } }];"
       },
       "onError": "continueErrorOutput"
     },
@@ -137,7 +137,7 @@
         "url": "={{ $env.OLLAMA_BASE_URL || 'http://jarvis-ollama:11434' }}/api/chat",
         "sendBody": true,
         "specifyBody": "json",
-        "jsonBody": "={\n  \"model\": \"{{ $env.OLLAMA_DEFAULT_MODEL || 'llama3.1:8b' }}\",\n  \"stream\": false,\n  \"keep_alive\": \"10m\",\n  \"options\": { \"temperature\": 0.2, \"num_predict\": 1500, \"num_ctx\": 4096 },\n  \"messages\": [\n    {\"role\":\"system\",\"content\":\"You are a senior energy-sector intelligence analyst at a top consultancy, producing a weekly regional energy summary for executives covering Middle East national oil companies (NOCs) and supermajor international oil companies (IOCs). Use ONLY facts found in the provided article digest; never invent companies, names, numbers, deals or quotes. Write in a precise, analytical consulting voice. Output a SINGLE valid JSON object and nothing else (no markdown, no preamble, no code fences). Keys: weekOf (string); intro (2-3 sentences framing the week); noc (array up to 6; focus ADNOC and its entities, QatarEnergy, Saudi Aramco, Kuwait Petroleum); ioc (array up to 6; focus Shell, TotalEnergies, ExxonMobil, BP, Chevron); each noc/ioc item has keys company, development (the concrete development in 1-2 sentences), theme (short strategic theme), signals (what it signals, 1-2 sentences), risk (begin with Low, Medium or High then a short rationale), watch (a forward-looking watch point). movers (array up to 6 with keys company, individual, previous, current, date, why describing leadership or board changes). bonus (object with keys title and body; body is 3 short paragraphs of original strategic analysis grounded in the digest). Omit any company with no relevant news. Output ONLY the JSON object.\"},\n    {\"role\":\"user\",\"content\": {{ JSON.stringify('Article digest for ' + ($json.date||'') + ' (' + ($json.count||0) + ' items):\\n' + ($json.articles||'')) }} }\n  ]\n}",
+        "jsonBody": "={\n  \"model\": \"{{ $env.OLLAMA_DEFAULT_MODEL || 'llama3.1:8b' }}\",\n  \"stream\": false,\n  \"keep_alive\": \"10m\",\n  \"options\": { \"temperature\": 0.2, \"num_predict\": 1800, \"num_ctx\": 8192 },\n  \"messages\": [\n    {\"role\":\"system\",\"content\":\"You are a senior energy-sector intelligence analyst at a top consultancy, producing a weekly regional energy summary for executives covering Middle East national oil companies (NOCs) and supermajor international oil companies (IOCs). Use ONLY facts found in the provided digests; never invent companies, names, numbers, deals or quotes. Write in a precise, analytical consulting voice. Output a SINGLE valid JSON object and nothing else (no markdown, no preamble, no code fences). Keys: weekOf (string); intro (2-3 sentences); noc (array up to 6; focus ADNOC and its entities, QatarEnergy, Saudi Aramco, Kuwait Petroleum); ioc (array up to 6; focus Shell, TotalEnergies, ExxonMobil, BP, Chevron); each noc/ioc item has keys company, development (1-2 sentences), theme, signals (1-2 sentences), risk (begin with Low, Medium or High then a short rationale), watch. movers (array up to 8 with keys company, individual, previous, current, date, why). bonus (object with keys title and body; body is 3 short paragraphs). For the movers array, use the LEADERSHIP/BOARD CHANGES DIGEST section and include every appointment, resignation, promotion or board change found there; only output an empty movers array if that section genuinely contains none. Omit any company with no relevant news. Output ONLY the JSON object.\"},\n    {\"role\":\"user\",\"content\": {{ JSON.stringify('NEWS DIGEST for ' + ($json.date||'') + ' (' + ($json.count||0) + ' items):\\n' + ($json.articles||'') + '\\n\\nLEADERSHIP/BOARD CHANGES DIGEST (' + ($json.moversCount||0) + ' items):\\n' + ($json.moversDigest||'None retrieved.')) }} }\n  ]\n}",
         "options": {
           "timeout": 600000
         }
@@ -312,13 +312,75 @@
         },
         "sendBody": true,
         "specifyBody": "json",
-        "jsonBody": "={\n  \"model\": \"{{ $env.CLAUDE_MODEL || 'claude-sonnet-4-6' }}\",\n  \"max_tokens\": 4000,\n  \"system\": \"You are a senior energy-sector intelligence analyst at a top consultancy, producing a weekly regional energy summary for executives covering Middle East national oil companies (NOCs) and supermajor international oil companies (IOCs). Use ONLY facts found in the provided article digest; never invent companies, names, numbers, deals or quotes. Write in a precise, analytical consulting voice. Output a SINGLE valid JSON object and nothing else (no markdown, no preamble, no code fences). Keys: weekOf (string); intro (2-3 sentences framing the week); noc (array up to 6; focus ADNOC and its entities, QatarEnergy, Saudi Aramco, Kuwait Petroleum); ioc (array up to 6; focus Shell, TotalEnergies, ExxonMobil, BP, Chevron); each noc/ioc item has keys company, development (the concrete development in 1-2 sentences), theme (short strategic theme), signals (what it signals, 1-2 sentences), risk (begin with Low, Medium or High then a short rationale), watch (a forward-looking watch point). movers (array up to 6 with keys company, individual, previous, current, date, why describing leadership or board changes). bonus (object with keys title and body; body is 3 short paragraphs of original strategic analysis grounded in the digest). Omit any company with no relevant news. Output ONLY the JSON object.\",\n  \"messages\": [\n    {\"role\":\"user\",\"content\": {{ JSON.stringify('Article digest for ' + ($json.date||'') + ' (' + ($json.count||0) + ' items):\\n' + ($json.articles||'')) }} }\n  ]\n}",
+        "jsonBody": "={\n  \"model\": \"{{ $env.CLAUDE_MODEL || 'claude-sonnet-4-6' }}\",\n  \"max_tokens\": 4500,\n  \"system\": \"You are a senior energy-sector intelligence analyst at a top consultancy, producing a weekly regional energy summary for executives covering Middle East national oil companies (NOCs) and supermajor international oil companies (IOCs). Use ONLY facts found in the provided digests; never invent companies, names, numbers, deals or quotes. Write in a precise, analytical consulting voice. Output a SINGLE valid JSON object and nothing else (no markdown, no preamble, no code fences). Keys: weekOf (string); intro (2-3 sentences); noc (array up to 6; focus ADNOC and its entities, QatarEnergy, Saudi Aramco, Kuwait Petroleum); ioc (array up to 6; focus Shell, TotalEnergies, ExxonMobil, BP, Chevron); each noc/ioc item has keys company, development (1-2 sentences), theme, signals (1-2 sentences), risk (begin with Low, Medium or High then a short rationale), watch. movers (array up to 8 with keys company, individual, previous, current, date, why). bonus (object with keys title and body; body is 3 short paragraphs). For the movers array, use the LEADERSHIP/BOARD CHANGES DIGEST section and include every appointment, resignation, promotion or board change found there; only output an empty movers array if that section genuinely contains none. Omit any company with no relevant news. Output ONLY the JSON object.\",\n  \"messages\": [\n    {\"role\":\"user\",\"content\": {{ JSON.stringify('NEWS DIGEST for ' + ($json.date||'') + ' (' + ($json.count||0) + ' items):\\n' + ($json.articles||'') + '\\n\\nLEADERSHIP/BOARD CHANGES DIGEST (' + ($json.moversCount||0) + ' items):\\n' + ($json.moversDigest||'None retrieved.')) }} }\n  ]\n}",
         "options": {
           "timeout": 120000
         }
       },
       "onError": "continueErrorOutput",
       "notes": "Anthropic Claude path (AI_PROVIDER=claude). Higher-quality analysis. Requires ANTHROPIC_API_KEY."
+    },
+    {
+      "id": "split-movers",
+      "name": "Load Movers Sources",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        620,
+        460
+      ],
+      "parameters": {
+        "language": "javaScript",
+        "jsCode": "const fs = require('fs');\nlet lines = [];\ntry { lines = fs.readFileSync('/config/energy-movers-sources.txt','utf8').split(/\\r?\\n/); } catch (e) {}\nconst urls = lines.map(function(l){ return l.trim(); }).filter(function(l){ return l && l.charAt(0) !== '#'; });\nif (!urls.length) { return [{ json: { url: '' } }]; }\nreturn urls.map(function(u){ return { json: { url: u } }; });"
+      },
+      "onError": "continueErrorOutput"
+    },
+    {
+      "id": "fetch-movers",
+      "name": "Fetch Movers",
+      "type": "n8n-nodes-base.rssFeedRead",
+      "typeVersion": 1.1,
+      "position": [
+        840,
+        460
+      ],
+      "parameters": {
+        "url": "={{ $json.url }}",
+        "options": {
+          "ignoreSSL": false
+        }
+      },
+      "onError": "continueRegularOutput"
+    },
+    {
+      "id": "agg-movers",
+      "name": "Aggregate Movers",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1060,
+        460
+      ],
+      "parameters": {
+        "language": "javaScript",
+        "jsCode": "const items = $input.all();\nconst arts = items.map(function(i){ return i.json; }).filter(function(a){ return a && (a.title || a.contentSnippet || a.content); });\nconst lines = arts.slice(0,18).map(function(a){\n  var t = (a.title||'').toString();\n  var s = (a.contentSnippet||a.content||'').toString().replace(/\\s+/g,' ').slice(0,220);\n  var u = (a.link||a.url||'').toString();\n  return '- ' + t + ' — ' + s + ' (' + u + ')';\n});\nconst text = lines.length ? lines.join('\\n') : 'No leadership-change articles retrieved.';\nreturn [{ json: { moversDigest: text, moversCount: arts.length } }];"
+      },
+      "onError": "continueErrorOutput"
+    },
+    {
+      "id": "merge-sources",
+      "name": "Merge Sources",
+      "type": "n8n-nodes-base.merge",
+      "typeVersion": 3,
+      "position": [
+        1090,
+        360
+      ],
+      "parameters": {
+        "mode": "combine",
+        "combineBy": "combineByPosition",
+        "options": {}
+      }
     }
   ],
   "connections": {
@@ -338,6 +400,11 @@
         [
           {
             "node": "Load & Split Sources",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Load Movers Sources",
             "type": "main",
             "index": 0
           }
@@ -378,7 +445,7 @@
       "main": [
         [
           {
-            "node": "Use Claude?",
+            "node": "Merge Sources",
             "type": "main",
             "index": 0
           }
@@ -491,6 +558,57 @@
         [
           {
             "node": "Reduced Coverage Notice",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Load Movers Sources": {
+      "main": [
+        [
+          {
+            "node": "Fetch Movers",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Reduced Coverage Notice",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Fetch Movers": {
+      "main": [
+        [
+          {
+            "node": "Aggregate Movers",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Aggregate Movers": {
+      "main": [
+        [
+          {
+            "node": "Merge Sources",
+            "type": "main",
+            "index": 1
+          }
+        ]
+      ]
+    },
+    "Merge Sources": {
+      "main": [
+        [
+          {
+            "node": "Use Claude?",
             "type": "main",
             "index": 0
           }

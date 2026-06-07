@@ -1,0 +1,10 @@
+# =============================================================================
+# energy-movers-sources.txt — dedicated leadership/board-change feeds
+# -----------------------------------------------------------------------------
+# Separate from energy-sources.txt so executive moves get their OWN ingestion
+# channel and always reach the analyst's "Movers & Shakers" table (they were
+# being crowded out of the merged digest). Google News RSS search, last ~21 days.
+# =============================================================================
+https://news.google.com/rss/search?q=(ADNOC+OR+%22Saudi+Aramco%22+OR+Shell+OR+BP+OR+Chevron+OR+TotalEnergies+OR+QatarEnergy+OR+ExxonMobil+OR+TAQA+OR+Masdar+OR+%22Mubadala+Energy%22)+(appoints+OR+appointed+OR+%22new+CEO%22+OR+%22steps+down%22+OR+resigns+OR+chairman+OR+%22board+of+directors%22+OR+%22named+as%22)+when:21d&hl=en-US&gl=US&ceid=US:en
+https://news.google.com/rss/search?q=(energy+OR+oil+OR+gas)+(CEO+OR+%22chief+executive%22+OR+chairman+OR+%22board+member%22+OR+%22managing+director%22)+(appointed+OR+resigns+OR+%22steps+down%22+OR+%22to+lead%22)+(Gulf+OR+UAE+OR+%22Middle+East%22+OR+ADNOC)+when:21d&hl=en-US&gl=US&ceid=US:en
+https://news.google.com/rss/search?q=(ADNOC+OR+Aramco+OR+QatarEnergy+OR+TAQA+OR+Masdar)+(executive+OR+leadership+OR+%22senior+appointment%22+OR+promotion)+when:21d&hl=en-US&gl=US&ceid=US:en
