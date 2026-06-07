@@ -88,6 +88,8 @@ services:
       ANTHROPIC_API_KEY: ${ANTHROPIC_API_KEY:-}
       CLAUDE_MODEL: ${CLAUDE_MODEL:-claude-sonnet-4-6}
       CLAUDE_BASE_URL: ${CLAUDE_BASE_URL:-https://api.anthropic.com}
+      # Gotenberg HTML->PDF service (used by intelligence briefs to emit PDF)
+      GOTENBERG_URL: ${GOTENBERG_URL:-http://jarvis-gotenberg:3000}
       # Telegram (primary interface) — workflows read these via $env
       TELEGRAM_BOT_TOKEN: ${TELEGRAM_BOT_TOKEN:-}
       TELEGRAM_ALLOWED_CHAT_IDS: ${TELEGRAM_ALLOWED_CHAT_IDS:-}
@@ -167,6 +169,24 @@ services:
     #         - driver: nvidia
     #           count: all
     #           capabilities: [gpu]
+
+  # ---------------------------------------------------------------------------
+  # gotenberg — stateless HTML/Markdown -> PDF engine (headless Chromium).
+  # Used by the intelligence briefs to emit a branded PDF from the rendered HTML.
+  # ---------------------------------------------------------------------------
+  gotenberg:
+    image: ${GOTENBERG_IMAGE:-gotenberg/gotenberg:8}
+    container_name: ${GOTENBERG_CONTAINER_NAME:-jarvis-gotenberg}
+    restart: unless-stopped
+    networks: [jarvis-net]
+    command: ["gotenberg", "--api-timeout=120s"]
+    healthcheck:
+      test: ["CMD-SHELL", "curl -fsS http://localhost:3000/health || exit 1"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+      start_period: 15s
+    logging: *default-logging
 
   # ---------------------------------------------------------------------------
   # qdrant — FUTURE vector database for knowledge base / long-term memory.

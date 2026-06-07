@@ -3,7 +3,7 @@
   "name": "Jarvis · Energy Intelligence Brief",
   "meta": {
     "jarvisModule": "energy-intelligence",
-    "jarvisVersion": "1.6.0",
+    "jarvisVersion": "2.0.0",
     "intelligenceProduct": true,
     "description": "Daily UAE/ADNOC-focused energy intelligence. Splits config/energy-sources.txt into feeds, fetches them, aggregates real articles, analyses with local Ollama, renders HTML and writes report + archive via fs. Cover image is an optional side branch (Image Provider Abstraction). Every external step has a failure path.",
     "prompts": [
@@ -119,7 +119,7 @@
       ],
       "parameters": {
         "language": "javaScript",
-        "jsCode": "const items = $input.all();\nconst arts = items.map(function(i){ return i.json; }).filter(function(a){ return a && (a.title || a.contentSnippet || a.content); });\nconst lines = arts.slice(0,30).map(function(a){\n  var t = (a.title||'').toString();\n  var s = (a.contentSnippet||a.content||'').toString().replace(/\\s+/g,' ').slice(0,200);\n  var u = (a.link||a.url||'').toString();\n  return '- ' + t + ' — ' + s + ' (' + u + ')';\n});\nconst text = lines.length ? lines.join('\\n') : 'No source articles were retrieved this period.';\nreturn [{ json: { articles: text, count: arts.length, date: new Date().toISOString().slice(0,10) } }];"
+        "jsCode": "const items = $input.all();\nconst arts = items.map(function(i){ return i.json; }).filter(function(a){ return a && (a.title || a.contentSnippet || a.content); });\nconst companies = [\n  ['ADNOC', /adnoc|borouge|ta.?ziz|upper zakum|\\bxrg\\b/i],\n  ['Saudi Aramco', /aramco/i],\n  ['QatarEnergy', /qatarenergy|qatar energy/i],\n  ['Kuwait Petroleum', /kuwait petroleum|\\bkpc\\b|kuwait oil/i],\n  ['TAQA / Masdar / Mubadala', /\\btaqa\\b|masdar|mubadala/i],\n  ['Shell', /\\bshell\\b/i],\n  ['BP', /\\bbp\\b/i],\n  ['Chevron', /chevron/i],\n  ['ExxonMobil', /exxon/i],\n  ['TotalEnergies', /totalenergies|total energies/i]\n];\nfunction detect(a){ var s=((a.title||'')+' '+(a.contentSnippet||a.content||'')).toString(); for(var i=0;i<companies.length;i++){ if(companies[i][1].test(s)) return companies[i][0]; } return 'Other'; }\nfunction fmt(a){ var t=(a.title||'').toString(); var s=(a.contentSnippet||a.content||'').toString().replace(/\\s+/g,' ').slice(0,200); var u=(a.link||a.url||'').toString(); return '- ' + t + ' — ' + s + ' (' + u + ')'; }\nvar buckets={};\narts.forEach(function(a){ var k=detect(a); (buckets[k]=buckets[k]||[]).push(a); });\nvar order=Object.keys(buckets);\nvar perCompany=4; var lines=[];\nfor(var r=0;r<perCompany;r++){ for(var c=0;c<order.length;c++){ var arr=buckets[order[c]]; if(arr[r]){ lines.push('['+order[c]+'] '+fmt(arr[r])); } } }\nvar text = lines.length ? lines.join('\\n') : 'No source articles were retrieved this period.';\nvar previous='';\ntry {\n  var fs=require('fs'); var dir='/reports/archive/energy-intelligence';\n  var today=new Date().toISOString().slice(0,10);\n  var files=fs.readdirSync(dir).filter(function(fn){ return /energy-intelligence-\\d{4}-\\d{2}-\\d{2}\\.json$/.test(fn) && fn.indexOf(today)===-1; }).sort();\n  if(files.length){\n    var prev=JSON.parse(fs.readFileSync(dir+'/'+files[files.length-1],'utf8'));\n    var ple=[];\n    ['noc','ioc'].forEach(function(sec){ (prev[sec]||[]).forEach(function(row){ ple.push('- '+(row.company||'')+': '+((row.development||'').toString().slice(0,160))); }); });\n    previous='From '+files[files.length-1].replace('energy-intelligence-','').replace('.json','')+':\\n'+ple.join('\\n');\n  }\n} catch(e){ previous=''; }\nreturn [{ json: { articles: text, count: arts.length, date: new Date().toISOString().slice(0,10), previous: previous } }];"
       },
       "onError": "continueErrorOutput"
     },
@@ -137,7 +137,7 @@
         "url": "={{ $env.OLLAMA_BASE_URL || 'http://jarvis-ollama:11434' }}/api/chat",
         "sendBody": true,
         "specifyBody": "json",
-        "jsonBody": "={\n  \"model\": \"{{ $env.OLLAMA_DEFAULT_MODEL || 'llama3.1:8b' }}\",\n  \"stream\": false,\n  \"keep_alive\": \"10m\",\n  \"options\": { \"temperature\": 0.2, \"num_predict\": 1800, \"num_ctx\": 8192 },\n  \"messages\": [\n    {\"role\":\"system\",\"content\":\"You are a senior energy-sector intelligence analyst at a top consultancy, producing a weekly regional energy summary for executives covering Middle East national oil companies (NOCs) and supermajor international oil companies (IOCs). Use ONLY facts found in the provided digests; never invent companies, names, numbers, deals or quotes. Write in a precise, analytical consulting voice. Output a SINGLE valid JSON object and nothing else (no markdown, no preamble, no code fences). Keys: weekOf (string); intro (2-3 sentences); noc (array up to 6; focus ADNOC and its entities, QatarEnergy, Saudi Aramco, Kuwait Petroleum); ioc (array up to 6; focus Shell, TotalEnergies, ExxonMobil, BP, Chevron); each noc/ioc item has keys company, development (1-2 sentences), theme, signals (1-2 sentences), risk (begin with Low, Medium or High then a short rationale), watch. movers (array up to 8 with keys company, individual, previous, current, date, why). bonus (object with keys title and body; body is 3 short paragraphs). For the movers array, use the LEADERSHIP/BOARD CHANGES DIGEST section and include every appointment, resignation, promotion or board change found there; only output an empty movers array if that section genuinely contains none. When a mover's individual name, previous role, new role or effective date is not explicitly stated in the digest, set that field to 'Not specified' rather than guessing or repeating placeholder text; use the actual date from the article when stated. Omit any company with no relevant news. Output ONLY the JSON object.\"},\n    {\"role\":\"user\",\"content\": {{ JSON.stringify('NEWS DIGEST for ' + ($json.date||'') + ' (' + ($json.count||0) + ' items):\\n' + ($json.articles||'') + '\\n\\nLEADERSHIP/BOARD CHANGES DIGEST (' + ($json.moversCount||0) + ' items):\\n' + ($json.moversDigest||'None retrieved.')) }} }\n  ]\n}",
+        "jsonBody": "={\n  \"model\": \"{{ $env.OLLAMA_DEFAULT_MODEL || 'llama3.1:8b' }}\",\n  \"stream\": false,\n  \"keep_alive\": \"10m\",\n  \"options\": { \"temperature\": 0.2, \"num_predict\": 2400, \"num_ctx\": 8192 },\n  \"messages\": [\n    {\"role\":\"system\",\"content\":\"You are a senior energy-sector intelligence analyst at a top consultancy, producing a weekly regional energy summary for executives covering Middle East national oil companies (NOCs) and supermajor international oil companies (IOCs). Use ONLY facts found in the provided digests; never invent companies, names, numbers, deals or quotes. Write in a precise, analytical consulting voice. Output a SINGLE valid JSON object and nothing else (no markdown, no preamble, no code fences). Keys: weekOf (string); intro (2-3 sentences); weekOverWeek (a short string, 1-2 sentences, summarising the most important changes since the previous edition; empty string if no previous edition is provided); noc (array; item keys company, development, theme, signals, risk, watch); ioc (same item shape); movers (array up to 8 with keys company, individual, previous, current, date, why); bonus (object with keys title and body of 3 short paragraphs). ALWAYS include a row for EVERY one of these companies, even if quiet: NOC rows must cover ADNOC, Saudi Aramco, QatarEnergy and Kuwait Petroleum (KPC); IOC rows must cover Shell, BP, Chevron, ExxonMobil and TotalEnergies. If a company has no material news in the digest, still include its row with development 'No material developments this week.', theme 'Quiet week', signals 'Not specified', risk 'Low - no notable activity.' and watch 'Not specified.'. The news digest is labelled by company in square brackets; use those labels to attribute developments correctly. risk must begin with Low, Medium or High then a short rationale. For movers, use the LEADERSHIP/BOARD CHANGES DIGEST and include every appointment, resignation, promotion or board change; when a mover's name, previous role, new role or date is not stated, set that field to 'Not specified'. If a PREVIOUS EDITION SUMMARY is provided, make the brief week-over-week aware: populate weekOverWeek with the key changes since then and reflect momentum versus last edition in signals where relevant. Output ONLY the JSON object.\"},\n    {\"role\":\"user\",\"content\": {{ JSON.stringify('NEWS DIGEST for ' + ($json.date||'') + ' (' + ($json.count||0) + ' items):\\n' + ($json.articles||'') + '\\n\\nLEADERSHIP/BOARD CHANGES DIGEST (' + ($json.moversCount||0) + ' items):\\n' + ($json.moversDigest||'None retrieved.') + '\\n\\nPREVIOUS EDITION SUMMARY:\\n' + ($json.previous||'No previous edition available.')) }} }\n  ]\n}",
         "options": {
           "timeout": 600000
         }
@@ -201,7 +201,7 @@
       ],
       "parameters": {
         "language": "javaScript",
-        "jsCode": "let raw = ($json && $json.markdown) || '';\nlet data = null;\ntry { data = JSON.parse(raw); } catch (e) {\n  try { var m = raw.match(/\\{[\\s\\S]*\\}/); if (m) { data = JSON.parse(m[0]); } } catch (e2) { data = null; }\n}\nconst date = ($json && $json.date) || new Date().toISOString().slice(0,10);\nconst fs = require('fs');\nfunction imgDataUri(base){\n  var tries = [['/config/branding/'+base+'.png','image/png'], ['/config/branding/'+base+'.jpg','image/jpeg'], ['/config/branding/'+base+'.jpeg','image/jpeg']];\n  for (var i=0;i<tries.length;i++){ try { var b = fs.readFileSync(tries[i][0]); return 'data:'+tries[i][1]+';base64,'+b.toString('base64'); } catch (e) {} }\n  return '';\n}\n// Build logo map from config/branding/logos/<key>.(png|jpg)\nvar logoMap = {};\ntry {\n  var files = fs.readdirSync('/config/branding/logos');\n  files.forEach(function(fn){\n    var mt = fn.match(/^(.+)\\.(png|jpe?g)$/i);\n    if (!mt) return;\n    var key = mt[1].toLowerCase();\n    var mime = /png$/i.test(fn) ? 'image/png' : 'image/jpeg';\n    try { logoMap[key] = 'data:'+mime+';base64,'+fs.readFileSync('/config/branding/logos/'+fn).toString('base64'); } catch (e) {}\n  });\n} catch (e) {}\nfunction logoFor(company){\n  var c = (company||'').toLowerCase().replace(/[^a-z0-9]/g,'');\n  var keys = Object.keys(logoMap);\n  for (var i=0;i<keys.length;i++){ if (c.indexOf(keys[i]) !== -1) return logoMap[keys[i]]; }\n  return '';\n}\nconst coverSrc = imgDataUri('cover');\nconst bannerSrc = imgDataUri('banner');\nconst avatarSrc = imgDataUri('jarvis-avatar');\nfunction esc(s){ return (s==null?'':String(s)).replace(/[&<>]/g, function(c){ return ({ '&':'&amp;', '<':'&lt;', '>':'&gt;' })[c]; }); }\nfunction riskColor(r){ r=(r||'').toString().toLowerCase(); if(r.indexOf('high')===0) return '#B02525'; if(r.indexOf('med')===0) return '#B8860B'; if(r.indexOf('low')===0) return '#1E8E5A'; return '#5A6472'; }\nfunction companyCell(company){\n  var l = logoFor(company);\n  var img = l ? ('<img src=\"'+l+'\" style=\"height:22px;width:auto;vertical-align:middle;margin-right:6px\"/>') : '';\n  return '<td style=\"padding:8px;font-weight:600;white-space:nowrap\">'+img+esc(company)+'</td>';\n}\nfunction devTable(rows){\n  if(!rows || !rows.length) return '<p style=\"color:#5A6472\">No data available for this period.</p>';\n  var th = '<tr style=\"background:#0A1A2F;color:#E7C76A\">' + ['Company','Key Development','Strategic Theme','What It Signals','Market Impact / Risk','Watch Point'].map(function(h){ return '<th style=\"padding:8px;text-align:left;font-size:12px\">'+h+'</th>'; }).join('') + '</tr>';\n  var trs = rows.map(function(r){ return '<tr style=\"border-bottom:1px solid #E2E6EC;vertical-align:top\">' +\n    companyCell(r.company) +\n    '<td style=\"padding:8px\">'+esc(r.development)+'</td>' +\n    '<td style=\"padding:8px\">'+esc(r.theme)+'</td>' +\n    '<td style=\"padding:8px\">'+esc(r.signals)+'</td>' +\n    '<td style=\"padding:8px;color:'+riskColor(r.risk)+';font-weight:600\">'+esc(r.risk)+'</td>' +\n    '<td style=\"padding:8px;font-style:italic\">'+esc(r.watch)+'</td></tr>'; }).join('');\n  return '<table style=\"border-collapse:collapse;width:100%;font-size:13px;margin:8px 0\">'+th+trs+'</table>';\n}\nfunction moversTable(rows){\n  if(!rows || !rows.length) return '<p style=\"color:#5A6472\">No notable leadership changes this period.</p>';\n  var th = '<tr style=\"background:#0A1A2F;color:#E7C76A\">' + ['Company','Individual','Previous role','New role','Effective','Why it matters'].map(function(h){ return '<th style=\"padding:8px;text-align:left;font-size:12px\">'+h+'</th>'; }).join('') + '</tr>';\n  var trs = rows.map(function(r){ return '<tr style=\"border-bottom:1px solid #E2E6EC;vertical-align:top\">' +\n    companyCell(r.company) +\n    '<td style=\"padding:8px\">'+esc(r.individual)+'</td>' +\n    '<td style=\"padding:8px\">'+esc(r.previous)+'</td>' +\n    '<td style=\"padding:8px\">'+esc(r.current)+'</td>' +\n    '<td style=\"padding:8px\">'+esc(r.date)+'</td>' +\n    '<td style=\"padding:8px;font-style:italic\">'+esc(r.why)+'</td></tr>'; }).join('');\n  return '<table style=\"border-collapse:collapse;width:100%;font-size:13px;margin:8px 0\">'+th+trs+'</table>';\n}\nfunction h2(t){ return '<h2 style=\"color:#0A1A2F;border-left:4px solid #C9A24B;padding-left:10px;font-family:Georgia,serif;font-size:18px;margin-top:26px\">'+t+'</h2>'; }\nlet body;\nif (data) {\n  var bonus = data.bonus || {};\n  body = '<p style=\"font-size:15px\">'+esc(data.intro||'')+'</p>' +\n    h2('This week — Middle East NOCs') + devTable(data.noc) +\n    h2('This week — Supermajor IOCs') + devTable(data.ioc) +\n    h2('Movers &amp; Shakers') + moversTable(data.movers) +\n    h2('Bonus Read' + (bonus.title ? (': ' + esc(bonus.title)) : '')) +\n    '<div style=\"font-size:14px;line-height:1.6\">'+esc(bonus.body||'').replace(/\\n/g,'<br/>')+'</div>';\n} else {\n  body = '<div style=\"padding:12px;background:#FDECEC;border:1px solid #B02525;color:#7a1a1a;border-radius:4px\">The analyst did not return structured data this run. Raw output below.</div><pre style=\"white-space:pre-wrap;font-family:inherit\">'+esc(raw)+'</pre>';\n}\nconst weekOf = (data && data.weekOf) ? data.weekOf : date;\nconst frontCover = coverSrc ? ('<img src=\"'+coverSrc+'\" style=\"width:100%;display:block\"/>') : '';\nconst masthead = bannerSrc ? ('<img src=\"'+bannerSrc+'\" style=\"width:100%;display:block\"/>') : ('<div style=\"background:#0A1A2F;color:#E7C76A;padding:18px;font-family:Georgia,serif;font-size:20px\">JARVIS INTELLIGENCE — Weekly Energy Intelligence Brief</div>');\nconst signoff = avatarSrc ? ('<div style=\"text-align:center;padding:20px;border-top:3px solid #C9A24B;margin-top:16px\"><img src=\"'+avatarSrc+'\" style=\"width:104px;height:104px;border-radius:50%;border:2px solid #C9A24B\"/><div style=\"font-family:Georgia,serif;color:#0A1A2F;margin-top:8px;font-size:14px\">Jarvis — AI News Reporter</div></div>') : '';\nconst html = '<!doctype html><meta charset=\"utf-8\"><title>Energy Intelligence Brief — '+esc(weekOf)+'</title>' +\n  '<div style=\"font-family:-apple-system,Segoe UI,Arial,sans-serif;color:#11151c;max-width:980px;margin:0 auto\">' +\n  frontCover + masthead +\n  '<div style=\"background:#05101F;color:#cdd5e0;padding:6px 18px;font-size:13px\">'+esc(weekOf)+' &nbsp;·&nbsp; Confidential</div>' +\n  '<div style=\"padding:18px\">'+body+'</div>' +\n  signoff + '</div>';\nreturn [{ json: { date: date, html: html, markdown: raw } }];"
+        "jsCode": "let raw = ($json && $json.markdown) || '';\nlet data = null;\ntry { data = JSON.parse(raw); } catch (e) {\n  try { var m = raw.match(/\\{[\\s\\S]*\\}/); if (m) { data = JSON.parse(m[0]); } } catch (e2) { data = null; }\n}\nconst date = ($json && $json.date) || new Date().toISOString().slice(0,10);\nconst fs = require('fs');\nfunction imgDataUri(base){\n  var tries = [['/config/branding/'+base+'.png','image/png'], ['/config/branding/'+base+'.jpg','image/jpeg'], ['/config/branding/'+base+'.jpeg','image/jpeg']];\n  for (var i=0;i<tries.length;i++){ try { var b = fs.readFileSync(tries[i][0]); return 'data:'+tries[i][1]+';base64,'+b.toString('base64'); } catch (e) {} }\n  return '';\n}\n// Build logo map from config/branding/logos/<key>.(png|jpg)\nvar logoMap = {};\ntry {\n  var files = fs.readdirSync('/config/branding/logos');\n  files.forEach(function(fn){\n    var mt = fn.match(/^(.+)\\.(png|jpe?g)$/i);\n    if (!mt) return;\n    var key = mt[1].toLowerCase();\n    var mime = /png$/i.test(fn) ? 'image/png' : 'image/jpeg';\n    try { logoMap[key] = 'data:'+mime+';base64,'+fs.readFileSync('/config/branding/logos/'+fn).toString('base64'); } catch (e) {}\n  });\n} catch (e) {}\nfunction logoFor(company){\n  var c = (company||'').toLowerCase().replace(/[^a-z0-9]/g,'');\n  var keys = Object.keys(logoMap);\n  for (var i=0;i<keys.length;i++){ if (c.indexOf(keys[i]) !== -1) return logoMap[keys[i]]; }\n  return '';\n}\nconst coverSrc = imgDataUri('cover');\nconst bannerSrc = imgDataUri('banner');\nconst avatarSrc = imgDataUri('jarvis-avatar');\nfunction esc(s){ return (s==null?'':String(s)).replace(/[&<>]/g, function(c){ return ({ '&':'&amp;', '<':'&lt;', '>':'&gt;' })[c]; }); }\nfunction riskColor(r){ r=(r||'').toString().toLowerCase(); if(r.indexOf('high')===0) return '#B02525'; if(r.indexOf('med')===0) return '#B8860B'; if(r.indexOf('low')===0) return '#1E8E5A'; return '#5A6472'; }\nfunction companyCell(company){\n  var l = logoFor(company);\n  var img = l ? ('<img src=\"'+l+'\" style=\"height:22px;width:auto;vertical-align:middle;margin-right:6px\"/>') : '';\n  return '<td style=\"padding:8px;font-weight:600;white-space:nowrap\">'+img+esc(company)+'</td>';\n}\nfunction devTable(rows){\n  if(!rows || !rows.length) return '<p style=\"color:#5A6472\">No data available for this period.</p>';\n  var th = '<tr style=\"background:#0A1A2F;color:#FFFFFF\">' + ['Company','Key Development','Strategic Theme','What It Signals','Market Impact / Risk','Watch Point'].map(function(h){ return '<th style=\"padding:8px;text-align:left;font-size:12px\">'+h+'</th>'; }).join('') + '</tr>';\n  var trs = rows.map(function(r){ return '<tr style=\"border-bottom:1px solid #E2E6EC;vertical-align:top\">' +\n    companyCell(r.company) +\n    '<td style=\"padding:8px\">'+esc(r.development)+'</td>' +\n    '<td style=\"padding:8px\">'+esc(r.theme)+'</td>' +\n    '<td style=\"padding:8px\">'+esc(r.signals)+'</td>' +\n    '<td style=\"padding:8px;color:'+riskColor(r.risk)+';font-weight:600\">'+esc(r.risk)+'</td>' +\n    '<td style=\"padding:8px;font-style:italic\">'+esc(r.watch)+'</td></tr>'; }).join('');\n  return '<table style=\"border-collapse:collapse;width:100%;font-size:13px;margin:8px 0\">'+th+trs+'</table>';\n}\nfunction moversTable(rows){\n  if(!rows || !rows.length) return '<p style=\"color:#5A6472\">No notable leadership changes this period.</p>';\n  var th = '<tr style=\"background:#0A1A2F;color:#FFFFFF\">' + ['Company','Individual','Previous role','New role','Effective','Why it matters'].map(function(h){ return '<th style=\"padding:8px;text-align:left;font-size:12px\">'+h+'</th>'; }).join('') + '</tr>';\n  var trs = rows.map(function(r){ return '<tr style=\"border-bottom:1px solid #E2E6EC;vertical-align:top\">' +\n    companyCell(r.company) +\n    '<td style=\"padding:8px\">'+esc(r.individual)+'</td>' +\n    '<td style=\"padding:8px\">'+esc(r.previous)+'</td>' +\n    '<td style=\"padding:8px\">'+esc(r.current)+'</td>' +\n    '<td style=\"padding:8px\">'+esc(r.date)+'</td>' +\n    '<td style=\"padding:8px;font-style:italic\">'+esc(r.why)+'</td></tr>'; }).join('');\n  return '<table style=\"border-collapse:collapse;width:100%;font-size:13px;margin:8px 0\">'+th+trs+'</table>';\n}\nfunction h2(t){ return '<h2 style=\"color:#0A1A2F;border-left:4px solid #2E9BE6;padding-left:10px;font-family:Georgia,serif;font-size:18px;margin-top:26px\">'+t+'</h2>'; }\nlet body;\nif (data) {\n  var bonus = data.bonus || {};\n  body = '<p style=\"font-size:15px\">'+esc(data.intro||'')+'</p>' + (data.weekOverWeek ? ('<div style=\"background:#EAF4FC;border-left:4px solid #2E9BE6;padding:10px 12px;margin:12px 0;font-size:14px\"><strong>What changed since last edition:</strong> '+esc(data.weekOverWeek)+'</div>') : '') +\n    h2('This week — Middle East NOCs') + devTable(data.noc) +\n    h2('This week — Supermajor IOCs') + devTable(data.ioc) +\n    h2('Movers &amp; Shakers') + moversTable(data.movers) +\n    h2('Bonus Read' + (bonus.title ? (': ' + esc(bonus.title)) : '')) +\n    '<div style=\"font-size:14px;line-height:1.6\">'+esc(bonus.body||'').replace(/\\n/g,'<br/>')+'</div>';\n} else {\n  body = '<div style=\"padding:12px;background:#FDECEC;border:1px solid #B02525;color:#7a1a1a;border-radius:4px\">The analyst did not return structured data this run. Raw output below.</div><pre style=\"white-space:pre-wrap;font-family:inherit\">'+esc(raw)+'</pre>';\n}\nconst weekOf = (data && data.weekOf) ? data.weekOf : date;\nconst frontCover = coverSrc ? ('<img src=\"'+coverSrc+'\" style=\"width:100%;display:block\"/>') : '';\nconst masthead = bannerSrc ? ('<img src=\"'+bannerSrc+'\" style=\"width:100%;display:block\"/>') : ('<div style=\"background:#0A1A2F;color:#FFFFFF;padding:18px;font-family:Georgia,serif;font-size:20px\">JARVIS INTELLIGENCE — Weekly Energy Intelligence Brief</div>');\nconst signoff = avatarSrc ? ('<div style=\"text-align:center;padding:20px;border-top:3px solid #2E9BE6;margin-top:16px\"><img src=\"'+avatarSrc+'\" style=\"width:104px;height:104px;border-radius:50%;border:2px solid #2E9BE6\"/><div style=\"font-family:Georgia,serif;color:#0A1A2F;margin-top:8px;font-size:14px\">Jarvis — AI News Reporter</div></div>') : '';\nconst html = '<!doctype html><meta charset=\"utf-8\"><title>Energy Intelligence Brief — '+esc(weekOf)+'</title>' +\n  '<div style=\"font-family:-apple-system,Segoe UI,Arial,sans-serif;color:#11151c;max-width:980px;margin:0 auto\">' +\n  frontCover + masthead +\n  '<div style=\"background:#05101F;color:#cdd5e0;padding:6px 18px;font-size:13px\">'+esc(weekOf)+' &nbsp;·&nbsp; Confidential</div>' +\n  '<div style=\"padding:18px\">'+body+'</div>' +\n  signoff + '</div>';\nreturn [{ json: { date: date, html: html, markdown: raw } }];"
       },
       "onError": "continueErrorOutput"
     },
@@ -216,7 +216,7 @@
       ],
       "parameters": {
         "language": "javaScript",
-        "jsCode": "const fs = require('fs');\nconst date = $json.date;\nconst html = $json.html;\nconst dirs = ['/reports/energy-intelligence', '/reports/archive/energy-intelligence'];\nfor (var k = 0; k < dirs.length; k++) {\n  try { fs.mkdirSync(dirs[k], { recursive: true }); fs.writeFileSync(dirs[k] + '/energy-intelligence-' + date + '.html', html); } catch (e) {}\n}\ntry { fs.writeFileSync('/logs/last-run-success.txt', new Date().toISOString() + ' energy-intelligence'); } catch (e) {}\nreturn [{ json: $json }];"
+        "jsCode": "const fs = require('fs');\nconst date = $json.date;\nconst html = $json.html;\nconst md = $json.markdown || '';\nconst dirs = ['/reports/energy-intelligence', '/reports/archive/energy-intelligence'];\nfor (var k = 0; k < dirs.length; k++) {\n  try { fs.mkdirSync(dirs[k], { recursive: true }); fs.writeFileSync(dirs[k] + '/energy-intelligence-' + date + '.html', html); } catch (e) {}\n}\ntry { fs.writeFileSync('/reports/archive/energy-intelligence/energy-intelligence-' + date + '.json', md); } catch (e) {}\ntry { fs.writeFileSync('/logs/last-run-success.txt', new Date().toISOString() + ' energy-intelligence'); } catch (e) {}\nreturn [{ json: $json }];"
       },
       "onError": "continueErrorOutput",
       "notes": "Writes via fs (NODE_FUNCTION_ALLOW_BUILTIN=fs) to avoid the Read/Write File node's binary requirement."
@@ -227,15 +227,17 @@
       "type": "n8n-nodes-base.emailSend",
       "typeVersion": 2.1,
       "position": [
-        2160,
-        280
+        2600,
+        420
       ],
       "parameters": {
         "fromEmail": "={{ $env.EMAIL_FROM }}",
         "toEmail": "={{ $env.EMAIL_TO }}",
-        "subject": "=Energy Intelligence Brief — {{ $json.date }}",
-        "html": "={{ $json.html }}",
-        "options": {}
+        "subject": "=Energy Intelligence Brief — {{ $('Render HTML').first().json.date }}",
+        "html": "={{ $('Render HTML').first().json.html }}",
+        "options": {
+          "attachments": "data"
+        }
       },
       "onError": "continueRegularOutput",
       "notes": "Email provider selected via EMAIL_PROVIDER; fails gracefully if SMTP not configured."
@@ -312,7 +314,7 @@
         },
         "sendBody": true,
         "specifyBody": "json",
-        "jsonBody": "={\n  \"model\": \"{{ $env.CLAUDE_MODEL || 'claude-sonnet-4-6' }}\",\n  \"max_tokens\": 4500,\n  \"system\": \"You are a senior energy-sector intelligence analyst at a top consultancy, producing a weekly regional energy summary for executives covering Middle East national oil companies (NOCs) and supermajor international oil companies (IOCs). Use ONLY facts found in the provided digests; never invent companies, names, numbers, deals or quotes. Write in a precise, analytical consulting voice. Output a SINGLE valid JSON object and nothing else (no markdown, no preamble, no code fences). Keys: weekOf (string); intro (2-3 sentences); noc (array up to 6; focus ADNOC and its entities, QatarEnergy, Saudi Aramco, Kuwait Petroleum); ioc (array up to 6; focus Shell, TotalEnergies, ExxonMobil, BP, Chevron); each noc/ioc item has keys company, development (1-2 sentences), theme, signals (1-2 sentences), risk (begin with Low, Medium or High then a short rationale), watch. movers (array up to 8 with keys company, individual, previous, current, date, why). bonus (object with keys title and body; body is 3 short paragraphs). For the movers array, use the LEADERSHIP/BOARD CHANGES DIGEST section and include every appointment, resignation, promotion or board change found there; only output an empty movers array if that section genuinely contains none. When a mover's individual name, previous role, new role or effective date is not explicitly stated in the digest, set that field to 'Not specified' rather than guessing or repeating placeholder text; use the actual date from the article when stated. Omit any company with no relevant news. Output ONLY the JSON object.\",\n  \"messages\": [\n    {\"role\":\"user\",\"content\": {{ JSON.stringify('NEWS DIGEST for ' + ($json.date||'') + ' (' + ($json.count||0) + ' items):\\n' + ($json.articles||'') + '\\n\\nLEADERSHIP/BOARD CHANGES DIGEST (' + ($json.moversCount||0) + ' items):\\n' + ($json.moversDigest||'None retrieved.')) }} }\n  ]\n}",
+        "jsonBody": "={\n  \"model\": \"{{ $env.CLAUDE_MODEL || 'claude-sonnet-4-6' }}\",\n  \"max_tokens\": 6000,\n  \"system\": \"You are a senior energy-sector intelligence analyst at a top consultancy, producing a weekly regional energy summary for executives covering Middle East national oil companies (NOCs) and supermajor international oil companies (IOCs). Use ONLY facts found in the provided digests; never invent companies, names, numbers, deals or quotes. Write in a precise, analytical consulting voice. Output a SINGLE valid JSON object and nothing else (no markdown, no preamble, no code fences). Keys: weekOf (string); intro (2-3 sentences); weekOverWeek (a short string, 1-2 sentences, summarising the most important changes since the previous edition; empty string if no previous edition is provided); noc (array; item keys company, development, theme, signals, risk, watch); ioc (same item shape); movers (array up to 8 with keys company, individual, previous, current, date, why); bonus (object with keys title and body of 3 short paragraphs). ALWAYS include a row for EVERY one of these companies, even if quiet: NOC rows must cover ADNOC, Saudi Aramco, QatarEnergy and Kuwait Petroleum (KPC); IOC rows must cover Shell, BP, Chevron, ExxonMobil and TotalEnergies. If a company has no material news in the digest, still include its row with development 'No material developments this week.', theme 'Quiet week', signals 'Not specified', risk 'Low - no notable activity.' and watch 'Not specified.'. The news digest is labelled by company in square brackets; use those labels to attribute developments correctly. risk must begin with Low, Medium or High then a short rationale. For movers, use the LEADERSHIP/BOARD CHANGES DIGEST and include every appointment, resignation, promotion or board change; when a mover's name, previous role, new role or date is not stated, set that field to 'Not specified'. If a PREVIOUS EDITION SUMMARY is provided, make the brief week-over-week aware: populate weekOverWeek with the key changes since then and reflect momentum versus last edition in signals where relevant. Output ONLY the JSON object.\",\n  \"messages\": [\n    {\"role\":\"user\",\"content\": {{ JSON.stringify('NEWS DIGEST for ' + ($json.date||'') + ' (' + ($json.count||0) + ' items):\\n' + ($json.articles||'') + '\\n\\nLEADERSHIP/BOARD CHANGES DIGEST (' + ($json.moversCount||0) + ' items):\\n' + ($json.moversDigest||'None retrieved.') + '\\n\\nPREVIOUS EDITION SUMMARY:\\n' + ($json.previous||'No previous edition available.')) }} }\n  ]\n}",
         "options": {
           "timeout": 120000
         }
@@ -381,6 +383,95 @@
         "combineBy": "combineByPosition",
         "options": {}
       }
+    },
+    {
+      "id": "html-to-file",
+      "name": "HTML to File",
+      "type": "n8n-nodes-base.convertToFile",
+      "typeVersion": 1.1,
+      "position": [
+        1940,
+        420
+      ],
+      "parameters": {
+        "operation": "toText",
+        "sourceProperty": "html",
+        "options": {
+          "fileName": "index.html",
+          "mimeType": "text/html"
+        }
+      }
+    },
+    {
+      "id": "gotenberg",
+      "name": "Gotenberg PDF",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        2160,
+        420
+      ],
+      "parameters": {
+        "method": "POST",
+        "url": "={{ $env.GOTENBERG_URL || 'http://jarvis-gotenberg:3000' }}/forms/chromium/convert/html",
+        "contentType": "multipart-form-data",
+        "sendBody": true,
+        "bodyParameters": {
+          "parameters": [
+            {
+              "parameterType": "formBinaryData",
+              "name": "files",
+              "inputDataFieldName": "data"
+            }
+          ]
+        },
+        "options": {
+          "response": {
+            "response": {
+              "responseFormat": "file",
+              "outputPropertyName": "data"
+            }
+          },
+          "timeout": 120000
+        }
+      },
+      "onError": "continueErrorOutput",
+      "notes": "HTML -> PDF via Gotenberg (headless Chromium). Failure path: PDF skipped; HTML archive already written."
+    },
+    {
+      "id": "write-pdf",
+      "name": "Write PDF",
+      "type": "n8n-nodes-base.readWriteFile",
+      "typeVersion": 1,
+      "position": [
+        2380,
+        420
+      ],
+      "parameters": {
+        "operation": "write",
+        "fileName": "=/reports/energy-intelligence/energy-intelligence-{{ $('Render HTML').first().json.date }}.pdf",
+        "dataPropertyName": "data",
+        "options": {}
+      },
+      "onError": "continueRegularOutput",
+      "notes": "Saves the branded PDF (binary). Permissions on reports/ allow the container uid to write."
+    },
+    {
+      "id": "archive-pdf",
+      "name": "Archive PDF",
+      "type": "n8n-nodes-base.readWriteFile",
+      "typeVersion": 1,
+      "position": [
+        2380,
+        560
+      ],
+      "parameters": {
+        "operation": "write",
+        "fileName": "=/reports/archive/energy-intelligence/energy-intelligence-{{ $('Render HTML').first().json.date }}.pdf",
+        "dataPropertyName": "data",
+        "options": {}
+      },
+      "onError": "continueRegularOutput"
     }
   ],
   "connections": {
@@ -488,6 +579,11 @@
             "node": "Write Report + Archive",
             "type": "main",
             "index": 0
+          },
+          {
+            "node": "HTML to File",
+            "type": "main",
+            "index": 0
           }
         ],
         [
@@ -501,13 +597,7 @@
     },
     "Write Report + Archive": {
       "main": [
-        [
-          {
-            "node": "Email Brief (provider-abstracted)",
-            "type": "main",
-            "index": 0
-          }
-        ]
+        []
       ]
     },
     "Use Claude?": {
@@ -609,6 +699,51 @@
         [
           {
             "node": "Use Claude?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "HTML to File": {
+      "main": [
+        [
+          {
+            "node": "Gotenberg PDF",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Gotenberg PDF": {
+      "main": [
+        [
+          {
+            "node": "Write PDF",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        []
+      ]
+    },
+    "Write PDF": {
+      "main": [
+        [
+          {
+            "node": "Archive PDF",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Archive PDF": {
+      "main": [
+        [
+          {
+            "node": "Email Brief (provider-abstracted)",
             "type": "main",
             "index": 0
           }
