@@ -201,7 +201,7 @@
       ],
       "parameters": {
         "language": "javaScript",
-        "jsCode": "let raw = ($json && $json.markdown) || '';\nlet data = null;\ntry { data = JSON.parse(raw); } catch (e) { try { var m = raw.match(/\\{[\\s\\S]*\\}/); if (m) data = JSON.parse(m[0]); } catch (e2) { data = null; } }\nconst date = ($json && $json.date) || new Date().toISOString().slice(0,10);\nconst fs = require('fs');\nfunction fileUri(base){ var t=[['/config/branding/'+base+'.png','image/png'],['/config/branding/'+base+'.jpg','image/jpeg'],['/config/branding/'+base+'.jpeg','image/jpeg']]; for(var i=0;i<t.length;i++){ try { return 'data:'+t[i][1]+';base64,'+fs.readFileSync(t[i][0]).toString('base64'); } catch(e){} } return ''; }\nconst cover=fileUri('cover'), banner=fileUri('banner'), avatar=fileUri('jarvis-avatar');\nlet hero=''; try { var hb=$('Generate Cover (Image Provider)').first().json.data[0].b64_json; if(hb) hero='data:image/png;base64,'+hb; } catch(e){ hero=''; }\nfunction ord(n){ var s=['th','st','nd','rd'], v=n%100; return n+(s[(v-20)%10]||s[v]||s[0]); }\nfunction prettyDate(d){ try { var p=(d||'').split('-'); var dt=new Date(Number(p[0]),Number(p[1])-1,Number(p[2])); var M=['January','February','March','April','May','June','July','August','September','October','November','December']; return M[dt.getMonth()]+' '+ord(dt.getDate())+' '+dt.getFullYear(); } catch(e){ return d; } }\nconst dateStr=prettyDate(date);\nconst weekOf=(data && data.weekOf) ? data.weekOf : dateStr;\n\nfunction esc(s){ return (s==null?'':String(s)).replace(/[&<>]/g,function(c){return({'&':'&amp;','<':'&lt;','>':'&gt;'})[c];}); }\nfunction riskColor(r){ r=(r||'').toString().toLowerCase(); if(r.indexOf('high')===0)return '#B02525'; if(r.indexOf('med')===0)return '#B8860B'; if(r.indexOf('low')===0)return '#1E8E5A'; return '#5A6472'; }\n\nvar CSS = '*{box-sizing:border-box} '\n + 'body{margin:0;font-family:-apple-system,\"Segoe UI\",Arial,sans-serif;color:#11151c;font-size:14px;line-height:1.55} '\n + '.cover{height:100vh;background-image:url('+cover+');background-size:cover;background-position:center;page-break-after:always;position:relative} '\n + '.cover .date{position:absolute;top:24px;right:30px;color:#fff;font-family:Georgia,serif;font-size:23px;font-weight:700;text-shadow:0 2px 6px rgba(0,0,0,.75)} '\n + '.banner{width:100%;display:block} '\n + '.issuebar{background:#0A1A2F;color:#cfe0f0;padding:9px 40px;font-size:11px;letter-spacing:2px;text-transform:uppercase} '\n + '.issuebar .r{float:right;color:#5BB6F0} '\n + '.hero{height:280px;background-image:url('+hero+');background-size:cover;background-position:center;background-color:#0A1A2F;border-bottom:4px solid #2E9BE6} '\n + '.wrap{padding:26px 40px 10px} '\n + '.lead{font-size:16px;line-height:1.75;margin:0 0 4px} '\n + '.lead .dc{float:left;font-family:Georgia,serif;font-size:56px;line-height:44px;padding:6px 12px 0 0;color:#2E9BE6;font-weight:700} '\n + '.callout{background:#EAF4FC;border-left:4px solid #2E9BE6;padding:12px 16px;margin:18px 0;font-size:14px} '\n + 'h2.sec{font-family:Georgia,serif;font-size:21px;color:#0A1A2F;margin:34px 0 10px;padding-bottom:8px;border-bottom:2px solid #0A1A2F} '\n + 'h2.sec .kick{display:block;font-family:Arial;font-size:10.5px;letter-spacing:2px;color:#2E9BE6;text-transform:uppercase;margin-bottom:3px;font-weight:700} '\n + '.feature{border:1px solid #E2E6EC;border-radius:8px;overflow:hidden;margin:16px 0;page-break-inside:avoid} '\n + '.feature .ph{height:190px;background-size:cover;background-position:center;background-color:#0A1A2F} '\n + '.feature .fb{padding:14px 18px} '\n + '.feature h3{font-family:Georgia,serif;font-size:19px;color:#0A1A2F;margin:0 0 7px;line-height:1.3} '\n + '.feature p{margin:0 0 9px;font-size:14px;line-height:1.62;color:#2b3340} '\n + '.feature a{color:#2E9BE6;text-decoration:none;font-size:12.5px;font-weight:700} '\n + '.co{border:1px solid #E2E6EC;border-radius:8px;margin:14px 0;page-break-inside:avoid;overflow:hidden} '\n + '.co .hd{background:#0A1A2F;color:#fff;padding:9px 14px;font-family:Georgia,serif;font-size:16px;font-weight:700} '\n + '.co .hd img{height:20px;vertical-align:middle;margin-right:8px} '\n + '.co .bd{padding:8px 16px} '\n + '.co .row{margin:7px 0;font-size:13.5px;line-height:1.5} '\n + '.co .row .lab{display:inline-block;min-width:128px;padding-right:10px;color:#0A1A2F;font-weight:700;vertical-align:top} '\n + 'table.mv{width:100%;border-collapse:collapse;font-size:13px;margin:8px 0} '\n + 'table.mv th{background:#0A1A2F;color:#fff;text-align:left;padding:8px;font-size:11.5px} '\n + 'table.mv td{padding:8px;border-bottom:1px solid #E2E6EC;vertical-align:top} '\n + 'table.mv tr:nth-child(even) td{background:#F4F6F9} '\n + '.bonus p{font-size:14px;line-height:1.72;margin:0 0 10px} ';\n\nfunction secH(kick,title){ return '<h2 class=\"sec\"><span class=\"kick\">'+esc(kick)+'</span>'+esc(title)+'</h2>'; }\nfunction lead(t){ t=(t||'').toString(); if(!t) return ''; return '<p class=\"lead\"><span class=\"dc\">'+esc(t.charAt(0))+'</span>'+esc(t.slice(1))+'</p>'; }\nfunction feature(s){ var im=(s.image||'').toString(); var ph=(/^https?:\\/\\//.test(im)||im.indexOf('data:')===0)?'<div class=\"ph\" style=\"background-image:url('+im+')\"></div>':''; var src=(s.source||'').toString(); var link=/^https?:\\/\\//.test(src)?'<a href=\"'+src+'\">Read the source &rsaquo;</a>':(src?'<span style=\"color:#5A6472;font-size:12.5px\">Source: '+esc(src)+'</span>':''); return '<div class=\"feature\">'+ph+'<div class=\"fb\"><h3>'+esc(s.headline)+'</h3><p>'+esc(s.story)+'</p>'+link+'</div></div>'; }\nfunction coCard(r){ function row(lab,val,color){ if(val==null||val==='')val='Not specified'; var v=color?('<span style=\"color:'+color+';font-weight:700\">'+esc(val)+'</span>'):esc(val); return '<div class=\"row\"><span class=\"lab\">'+lab+'</span>'+v+'</div>'; } return '<div class=\"co\"><div class=\"hd\">'+esc(r.company)+'</div><div class=\"bd\">'+row('Key Development',r.development)+row('Strategic Theme',r.theme)+row('What It Signals',r.signals)+row('Market Impact / Risk',r.risk,riskColor(r.risk))+row('Watch Point',r.watch)+'</div></div>'; }\nfunction movers(rows){ if(!rows||!rows.length) return '<p style=\"color:#5A6472\">No notable leadership changes this period.</p>'; var h='<tr>'+['Company','Individual','Previous role','New role','Effective','Why it matters'].map(function(x){return '<th>'+x+'</th>';}).join('')+'</tr>'; var b=rows.map(function(r){return '<tr><td><b>'+esc(r.company)+'</b></td><td>'+esc(r.individual)+'</td><td>'+esc(r.previous)+'</td><td>'+esc(r.current)+'</td><td>'+esc(r.date)+'</td><td>'+esc(r.why)+'</td></tr>';}).join(''); return '<table class=\"mv\">'+h+b+'</table>'; }\n\nconst coverHtml = cover ? ('<div class=\"cover\"><div class=\"date\">'+esc(dateStr)+'</div></div>') : '';\nconst bannerHtml = banner ? ('<img class=\"banner\" src=\"'+banner+'\"/>') : '<div class=\"issuebar\" style=\"font-size:18px;font-family:Georgia,serif;text-transform:none\">JARVIS INTELLIGENCE — Energy Brief</div>';\nconst heroHtml = hero ? '<div class=\"hero\"></div>' : '';\nconst signoff = avatar ? ('<div style=\"text-align:center;padding:22px;border-top:3px solid #2E9BE6;margin-top:18px\"><img src=\"'+avatar+'\" style=\"width:96px;height:96px;border-radius:50%;border:2px solid #2E9BE6\"/><div style=\"font-family:Georgia,serif;color:#0A1A2F;margin-top:8px;font-size:14px\">Jarvis — AI News Reporter</div></div>') : '';\n\nvar body;\nif (data) {\n  var bonus=data.bonus||{}; var feats=data.featured||[]; var noc=data.noc||[]; var ioc=data.ioc||[];\n  body = lead(data.intro)\n    + (data.weekOverWeek ? ('<div class=\"callout\"><b>What changed since last edition:</b> '+esc(data.weekOverWeek)+'</div>') : '')\n    + (feats.length ? (secH('In focus','Featured Stories')+feats.map(feature).join('')) : '')\n    + secH('Regional','Middle East NOCs') + noc.map(coCard).join('')\n    + secH('Global','Supermajor IOCs') + ioc.map(coCard).join('')\n    + secH('People','Movers & Shakers') + movers(data.movers)\n    + secH('Analysis','Bonus Read'+(bonus.title?': '+esc(bonus.title):'')) + '<div class=\"bonus\">'+(bonus.body?esc(bonus.body).split('\\n').map(function(p){return '<p>'+p+'</p>';}).join(''):'')+'</div>';\n} else {\n  body = '<div class=\"callout\" style=\"background:#FDECEC;border-color:#B02525\">The analyst did not return structured data this run. Raw output below.</div><pre style=\"white-space:pre-wrap;font-family:inherit;font-size:12px\">'+esc(raw)+'</pre>';\n}\n\nconst html = '<!doctype html><html><head><meta charset=\"utf-8\"><title>Energy Intelligence Brief — '+esc(weekOf)+'</title><style>'+CSS+'</style></head><body>'\n  + coverHtml + bannerHtml\n  + '<div class=\"issuebar\">Weekly Energy Intelligence &nbsp;&middot;&nbsp; '+esc(weekOf)+'<span class=\"r\">Confidential</span></div>'\n  + heroHtml\n  + '<div class=\"wrap\">'+body+'</div>'\n  + signoff + '</body></html>';\nreturn [{ json: { date: date, html: html, markdown: raw } }];"
+        "jsCode": "let raw = ($json && $json.markdown) || '';\nlet data = null;\ntry { data = JSON.parse(raw); } catch (e) { try { var m = raw.match(/\\{[\\s\\S]*\\}/); if (m) data = JSON.parse(m[0]); } catch (e2) { data = null; } }\nconst date = ($json && $json.date) || new Date().toISOString().slice(0,10);\nconst fs = require('fs');\nfunction fileUri(base){ var t=[['/config/branding/'+base+'.png','image/png'],['/config/branding/'+base+'.jpg','image/jpeg'],['/config/branding/'+base+'.jpeg','image/jpeg']]; for(var i=0;i<t.length;i++){ try { return 'data:'+t[i][1]+';base64,'+fs.readFileSync(t[i][0]).toString('base64'); } catch(e){} } return ''; }\nconst cover=fileUri('cover'), banner=fileUri('banner'), avatar=fileUri('jarvis-avatar');\nlet hero=''; try { var hb=$('Generate Cover (Image Provider)').first().json.data[0].b64_json; if(hb) hero='data:image/png;base64,'+hb; } catch(e){ hero=''; }\nfunction ord(n){ var s=['th','st','nd','rd'], v=n%100; return n+(s[(v-20)%10]||s[v]||s[0]); }\nfunction prettyDate(d){ try { var p=(d||'').split('-'); var dt=new Date(Number(p[0]),Number(p[1])-1,Number(p[2])); var M=['January','February','March','April','May','June','July','August','September','October','November','December']; return M[dt.getMonth()]+' '+ord(dt.getDate())+' '+dt.getFullYear(); } catch(e){ return d; } }\nconst dateStr=prettyDate(date), weekOf=(data&&data.weekOf)?data.weekOf:dateStr;\nfunction esc(s){ return (s==null?'':String(s)).replace(/[&<>]/g,function(c){return({'&':'&amp;','<':'&lt;','>':'&gt;'})[c];}); }\nfunction riskColor(r){ r=(r||'').toString().toLowerCase(); if(r.indexOf('high')===0)return '#B02525'; if(r.indexOf('med')===0)return '#B8860B'; if(r.indexOf('low')===0)return '#1E8E5A'; return '#5A6472'; }\n\nvar BCSS='*{box-sizing:border-box} body{margin:0;font-family:-apple-system,\"Segoe UI\",Arial,sans-serif;color:#11151c;font-size:14px;line-height:1.55} '\n + '.wrap{padding:22px 40px 10px} '\n + '.lead{font-size:16px;line-height:1.75;margin:0 0 4px} .lead .dc{float:left;font-family:Georgia,serif;font-size:56px;line-height:44px;padding:6px 12px 0 0;color:#2E9BE6;font-weight:700} '\n + '.callout{background:#EAF4FC;border-left:4px solid #2E9BE6;padding:12px 16px;margin:18px 0;font-size:14px} '\n + '.sec{page-break-before:always} .sec.first{page-break-before:avoid} '\n + 'h2.h{font-family:Georgia,serif;font-size:21px;color:#0A1A2F;margin:6px 0 12px;padding-bottom:8px;border-bottom:2px solid #0A1A2F} '\n + 'h2.h .kick{display:block;font-family:Arial;font-size:10.5px;letter-spacing:2px;color:#2E9BE6;text-transform:uppercase;margin-bottom:3px;font-weight:700} '\n + '.feature{border:1px solid #E2E6EC;border-radius:8px;overflow:hidden;margin:16px 0;page-break-inside:avoid} '\n + '.feature .ph{height:200px;background-size:cover;background-position:center;background-color:#0A1A2F} .feature .fb{padding:14px 18px} '\n + '.feature h3{font-family:Georgia,serif;font-size:19px;color:#0A1A2F;margin:0 0 7px;line-height:1.3} .feature p{margin:0 0 9px;font-size:14px;line-height:1.62;color:#2b3340} .feature a{color:#2E9BE6;text-decoration:none;font-size:12.5px;font-weight:700} '\n + '.co{border:1px solid #E2E6EC;border-radius:8px;margin:14px 0;page-break-inside:avoid;overflow:hidden} .co .hd{background:#0A1A2F;color:#fff;padding:9px 14px;font-family:Georgia,serif;font-size:16px;font-weight:700} .co .bd{padding:8px 16px} .co .row{margin:7px 0;font-size:13.5px;line-height:1.5} .co .row .lab{display:inline-block;min-width:128px;padding-right:10px;color:#0A1A2F;font-weight:700;vertical-align:top} '\n + 'table.mv{width:100%;border-collapse:collapse;font-size:13px;margin:8px 0} table.mv th{background:#0A1A2F;color:#fff;text-align:left;padding:8px;font-size:11.5px} table.mv td{padding:8px;border-bottom:1px solid #E2E6EC;vertical-align:top} table.mv tr:nth-child(even) td{background:#F4F6F9} '\n + '.bonus p{font-size:14px;line-height:1.72;margin:0 0 10px} .endbanner{margin-top:26px} .endbanner img{width:100%;display:block} ';\n\nfunction secH(kick,title,first){ return '<div class=\"sec'+(first?' first':'')+'\"><h2 class=\"h\"><span class=\"kick\">'+esc(kick)+'</span>'+esc(title)+'</h2>'; }\nfunction lead(t){ t=(t||'').toString(); if(!t)return''; return '<p class=\"lead\"><span class=\"dc\">'+esc(t.charAt(0))+'</span>'+esc(t.slice(1))+'</p>'; }\nfunction feature(s){ var im=(s.image||'').toString(); var ph=(/^https?:\\/\\//.test(im)||im.indexOf('data:')===0)?'<div class=\"ph\" style=\"background-image:url('+im+')\"></div>':''; var src=(s.source||'').toString(); var link=/^https?:\\/\\//.test(src)?'<a href=\"'+src+'\">Read the source &rsaquo;</a>':(src?'<span style=\"color:#5A6472;font-size:12.5px\">Source: '+esc(src)+'</span>':''); return '<div class=\"feature\">'+ph+'<div class=\"fb\"><h3>'+esc(s.headline)+'</h3><p>'+esc(s.story)+'</p>'+link+'</div></div>'; }\nfunction co(r){ function row(l,v,c){ if(v==null||v==='')v='Not specified'; var x=c?('<span style=\"color:'+c+';font-weight:700\">'+esc(v)+'</span>'):esc(v); return '<div class=\"row\"><span class=\"lab\">'+l+'</span>'+x+'</div>'; } return '<div class=\"co\"><div class=\"hd\">'+esc(r.company)+'</div><div class=\"bd\">'+row('Key Development',r.development)+row('Strategic Theme',r.theme)+row('What It Signals',r.signals)+row('Market Impact / Risk',r.risk,riskColor(r.risk))+row('Watch Point',r.watch)+'</div></div>'; }\nfunction movers(rows){ if(!rows||!rows.length)return '<p style=\"color:#5A6472\">No notable leadership changes this period.</p>'; var h='<tr>'+['Company','Individual','Previous role','New role','Effective','Why it matters'].map(function(x){return '<th>'+x+'</th>';}).join('')+'</tr>'; var b=rows.map(function(r){return '<tr><td><b>'+esc(r.company)+'</b></td><td>'+esc(r.individual)+'</td><td>'+esc(r.previous)+'</td><td>'+esc(r.current)+'</td><td>'+esc(r.date)+'</td><td>'+esc(r.why)+'</td></tr>';}).join(''); return '<table class=\"mv\">'+h+b+'</table>'; }\n\nfunction bodyInner(){\n  if(!data){ return '<div class=\"wrap\"><div class=\"callout\" style=\"background:#FDECEC;border-color:#B02525\">The analyst did not return structured data this run. Raw output below.</div><pre style=\"white-space:pre-wrap;font-size:12px\">'+esc(raw)+'</pre></div>'; }\n  var bonus=data.bonus||{}, feats=data.featured||[], noc=data.noc||[], ioc=data.ioc||[];\n  var endbanner=banner?('<div class=\"endbanner\"><img src=\"'+banner+'\"/></div>'):'';\n  var signoff=avatar?('<div style=\"text-align:center;padding:22px 0 6px;border-top:3px solid #2E9BE6;margin-top:22px\"><img src=\"'+avatar+'\" style=\"width:96px;height:96px;border-radius:50%;border:2px solid #2E9BE6\"/><div style=\"font-family:Georgia,serif;color:#0A1A2F;margin-top:8px;font-size:14px\">Jarvis — AI News Reporter</div></div>'):'';\n  var h='<div class=\"wrap\">';\n  h+='<div class=\"sec first\">'+lead(data.intro)+(data.weekOverWeek?('<div class=\"callout\"><b>What changed since last edition:</b> '+esc(data.weekOverWeek)+'</div>'):'')+'</div>';\n  if(feats.length){ h+=secH('In focus','Featured Stories')+feats.map(feature).join('')+'</div>'; }\n  h+=secH('Regional','Middle East NOCs')+noc.map(co).join('')+'</div>';\n  h+=secH('Global','Supermajor IOCs')+ioc.map(co).join('')+'</div>';\n  h+=secH('People','Movers & Shakers')+movers(data.movers)+'</div>';\n  h+=secH('Analysis','Bonus Read'+(bonus.title?': '+esc(bonus.title):''))+'<div class=\"bonus\">'+(bonus.body?esc(bonus.body).split('\\n').map(function(p){return '<p>'+p+'</p>';}).join(''):'')+'</div>'+signoff+endbanner+'</div>';\n  h+='</div>'; return h;\n}\n\nvar coverCSS='*{margin:0}@page{margin:0} html,body{height:100%} .cover{height:100vh;background:#0A1A2F url('+cover+') center/contain no-repeat;position:relative} .cover .date{position:absolute;top:24px;right:30px;color:#fff;font-family:Georgia,serif;font-size:23px;font-weight:700;text-shadow:0 2px 6px rgba(0,0,0,.8)}';\nvar coverHtml='<!doctype html><html><head><meta charset=\"utf-8\"><style>'+coverCSS+'</style></head><body><div class=\"cover\">'+(cover?'<div class=\"date\">'+esc(dateStr)+'</div>':'')+'</div></body></html>';\nvar bodyHtml='<!doctype html><html><head><meta charset=\"utf-8\"><style>'+BCSS+'</style></head><body>'+bodyInner()+'</body></html>';\nvar headerInner = hero ? ('<div style=\"position:relative;width:100%;height:92px;overflow:hidden;background:#0A1A2F\"><img src=\"'+hero+'\" style=\"position:absolute;top:50%;left:0;width:100%;transform:translateY(-50%)\"/><div style=\"position:absolute;top:0;left:0;right:0;bottom:0;background:linear-gradient(90deg,rgba(10,26,47,.82),rgba(10,26,47,.10) 60%,rgba(10,26,47,0))\"></div><div style=\"position:absolute;left:40px;bottom:12px;color:#fff;font-family:Georgia,serif;font-size:15px;letter-spacing:.5px;text-shadow:0 1px 3px rgba(0,0,0,.6)\">JARVIS INTELLIGENCE &middot; Weekly Energy Brief</div></div>') : ('<div style=\"height:56px;width:100%;background:#0A1A2F;color:#E7F2FB;font-family:Georgia,serif;font-size:16px;text-align:center;line-height:56px\">JARVIS INTELLIGENCE &middot; Weekly Energy Brief</div>');\nvar headerHtml='<!doctype html><html><head><meta charset=\"utf-8\"></head><body style=\"margin:0\">'+headerInner+'</body></html>';\nvar footerHtml='<!doctype html><html><head><meta charset=\"utf-8\"></head><body style=\"margin:0\"><div style=\"font-size:9px;color:#5A6472;font-family:Arial,Helvetica,sans-serif;width:100%;padding:0 14mm;box-sizing:border-box\"><span style=\"float:left\">JARVIS INTELLIGENCE &middot; AI-generated — always verify findings</span><span style=\"float:right\">Page <span class=\"pageNumber\"></span></span></div></body></html>';\n// combined single-doc for the HTML archive / quick view (browser)\nvar archiveCSS='.cover{height:100vh;background:#0A1A2F url('+cover+') center/contain no-repeat;position:relative} .cover .date{position:absolute;top:24px;right:30px;color:#fff;font-family:Georgia,serif;font-size:23px;font-weight:700} '+BCSS;\nvar html='<!doctype html><html><head><meta charset=\"utf-8\"><title>Energy Intelligence Brief — '+esc(weekOf)+'</title><style>'+archiveCSS+'</style></head><body>'+(cover?'<div class=\"cover\"><div class=\"date\">'+esc(dateStr)+'</div></div>':'')+headerInner+bodyInner()+'</body></html>';\n\nreturn [{ json: { date: date, weekOf: weekOf, coverHtml: coverHtml, bodyHtml: bodyHtml, headerHtml: headerHtml, footerHtml: footerHtml, html: html, markdown: raw } }];"
       },
       "onError": "continueErrorOutput"
     },
@@ -227,7 +227,7 @@
       "type": "n8n-nodes-base.emailSend",
       "typeVersion": 2.1,
       "position": [
-        2600,
+        3700,
         420
       ],
       "parameters": {
@@ -385,8 +385,8 @@
       }
     },
     {
-      "id": "html-to-file",
-      "name": "Build PDF Inputs",
+      "id": "cover-file",
+      "name": "Build Cover File",
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
       "position": [
@@ -395,13 +395,14 @@
       ],
       "parameters": {
         "language": "javaScript",
-        "jsCode": "const date = $json.date;\nconst html = $json.html;\nconst footer = '<!doctype html><html><head><meta charset=\"utf-8\"></head><body style=\"margin:0;padding:0\">'\n + '<div style=\"font-size:9px;color:#5A6472;font-family:Arial,Helvetica,sans-serif;width:100%;box-sizing:border-box;padding:0 14mm;display:flex;justify-content:space-between;align-items:center\">'\n + '<span>JARVIS INTELLIGENCE &nbsp;&middot;&nbsp; AI-generated &mdash; always verify findings</span>'\n + '<span>Page <span class=\"pageNumber\"></span> of <span class=\"totalPages\"></span></span>'\n + '</div></body></html>';\nreturn [{ json: { date: date },\n  binary: {\n    data:   { data: Buffer.from(html,'utf8').toString('base64'),   mimeType: 'text/html', fileName: 'index.html' },\n    footer: { data: Buffer.from(footer,'utf8').toString('base64'), mimeType: 'text/html', fileName: 'footer.html' }\n  } }];"
+        "jsCode": "const r = $('Render HTML').first().json;\nconst html = r.coverHtml || r.html || '';\nreturn [{ json: { date: r.date }, binary: { data: { data: Buffer.from(html,'utf8').toString('base64'), mimeType: 'text/html', fileName: 'index.html' } } }];"
       },
-      "onError": "continueErrorOutput"
+      "onError": "continueErrorOutput",
+      "notes": "Cover page is its own PDF: full-bleed, no header/footer, no page number."
     },
     {
-      "id": "gotenberg",
-      "name": "Gotenberg PDF",
+      "id": "gotenberg-cover",
+      "name": "Gotenberg Cover",
       "type": "n8n-nodes-base.httpRequest",
       "typeVersion": 4.2,
       "position": [
@@ -421,11 +422,6 @@
               "inputDataFieldName": "data"
             },
             {
-              "parameterType": "formBinaryData",
-              "name": "files",
-              "inputDataFieldName": "footer"
-            },
-            {
               "parameterType": "formData",
               "name": "marginTop",
               "value": "0"
@@ -433,7 +429,7 @@
             {
               "parameterType": "formData",
               "name": "marginBottom",
-              "value": "0.6"
+              "value": "0"
             },
             {
               "parameterType": "formData",
@@ -458,7 +454,162 @@
         }
       },
       "onError": "continueErrorOutput",
-      "notes": "HTML -> PDF via Gotenberg (headless Chromium). Failure path: PDF skipped; HTML archive already written."
+      "notes": "Cover HTML -> single full-bleed PDF page (margins 0, no header/footer)."
+    },
+    {
+      "id": "stash-cover",
+      "name": "Stash Cover",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        2380,
+        420
+      ],
+      "parameters": {
+        "language": "javaScript",
+        "jsCode": "let b64 = '';\ntry { b64 = $input.first().binary.data.data; } catch (e) {}\nconst date = $('Render HTML').first().json.date;\nreturn [{ json: { date: date, coverB64: b64 } }];"
+      },
+      "onError": "continueErrorOutput",
+      "notes": "Carry the cover PDF as base64 in JSON so it survives the body conversion HTTP call."
+    },
+    {
+      "id": "body-files",
+      "name": "Build Body Files",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        2600,
+        420
+      ],
+      "parameters": {
+        "language": "javaScript",
+        "jsCode": "const r = $('Render HTML').first().json;\nconst enc = function(s){ return Buffer.from(String(s||''),'utf8').toString('base64'); };\nreturn [{ json: { date: r.date },\n  binary: {\n    index:  { data: enc(r.bodyHtml),   mimeType: 'text/html', fileName: 'index.html' },\n    header: { data: enc(r.headerHtml), mimeType: 'text/html', fileName: 'header.html' },\n    footer: { data: enc(r.footerHtml), mimeType: 'text/html', fileName: 'footer.html' }\n  } }];"
+      },
+      "onError": "continueErrorOutput",
+      "notes": "Body PDF inputs: content + Gotenberg-recognised header.html (running hero banner) + footer.html (page number)."
+    },
+    {
+      "id": "gotenberg-body",
+      "name": "Gotenberg Body",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        2820,
+        420
+      ],
+      "parameters": {
+        "method": "POST",
+        "url": "={{ $env.GOTENBERG_URL || 'http://jarvis-gotenberg:3000' }}/forms/chromium/convert/html",
+        "contentType": "multipart-form-data",
+        "sendBody": true,
+        "bodyParameters": {
+          "parameters": [
+            {
+              "parameterType": "formBinaryData",
+              "name": "files",
+              "inputDataFieldName": "index"
+            },
+            {
+              "parameterType": "formBinaryData",
+              "name": "files",
+              "inputDataFieldName": "header"
+            },
+            {
+              "parameterType": "formBinaryData",
+              "name": "files",
+              "inputDataFieldName": "footer"
+            },
+            {
+              "parameterType": "formData",
+              "name": "marginTop",
+              "value": "1.15"
+            },
+            {
+              "parameterType": "formData",
+              "name": "marginBottom",
+              "value": "0.55"
+            },
+            {
+              "parameterType": "formData",
+              "name": "marginLeft",
+              "value": "0"
+            },
+            {
+              "parameterType": "formData",
+              "name": "marginRight",
+              "value": "0"
+            }
+          ]
+        },
+        "options": {
+          "response": {
+            "response": {
+              "responseFormat": "file",
+              "outputPropertyName": "data"
+            }
+          },
+          "timeout": 120000
+        }
+      },
+      "onError": "continueErrorOutput",
+      "notes": "Body HTML -> PDF with running hero banner header on every page + page-number footer."
+    },
+    {
+      "id": "assemble",
+      "name": "Assemble PDFs",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        3040,
+        420
+      ],
+      "parameters": {
+        "language": "javaScript",
+        "jsCode": "const coverB64 = ($('Stash Cover').first().json.coverB64) || '';\nlet bodyB64 = '';\ntry { bodyB64 = $input.first().binary.data.data; } catch (e) {}\nconst date = $('Render HTML').first().json.date;\nreturn [{ json: { date: date },\n  binary: {\n    cover: { data: coverB64, mimeType: 'application/pdf', fileName: '01-cover.pdf' },\n    body:  { data: bodyB64,  mimeType: 'application/pdf', fileName: '02-body.pdf' }\n  } }];"
+      },
+      "onError": "continueErrorOutput",
+      "notes": "Place cover + body PDFs on one item with order-prefixed filenames for the merge."
+    },
+    {
+      "id": "gotenberg-merge",
+      "name": "Gotenberg Merge",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        3260,
+        420
+      ],
+      "parameters": {
+        "method": "POST",
+        "url": "={{ $env.GOTENBERG_URL || 'http://jarvis-gotenberg:3000' }}/forms/pdfengines/merge",
+        "contentType": "multipart-form-data",
+        "sendBody": true,
+        "bodyParameters": {
+          "parameters": [
+            {
+              "parameterType": "formBinaryData",
+              "name": "files",
+              "inputDataFieldName": "cover"
+            },
+            {
+              "parameterType": "formBinaryData",
+              "name": "files",
+              "inputDataFieldName": "body"
+            }
+          ]
+        },
+        "options": {
+          "response": {
+            "response": {
+              "responseFormat": "file",
+              "outputPropertyName": "data"
+            }
+          },
+          "timeout": 120000
+        }
+      },
+      "onError": "continueErrorOutput",
+      "notes": "Merge clean cover (page 1) in front of the banner+numbered body (pages 2+) into the final brief."
     },
     {
       "id": "write-pdf",
@@ -466,7 +617,7 @@
       "type": "n8n-nodes-base.readWriteFile",
       "typeVersion": 1,
       "position": [
-        2380,
+        3480,
         420
       ],
       "parameters": {
@@ -484,7 +635,7 @@
       "type": "n8n-nodes-base.readWriteFile",
       "typeVersion": 1,
       "position": [
-        2380,
+        3480,
         560
       ],
       "parameters": {
@@ -603,7 +754,7 @@
             "index": 0
           },
           {
-            "node": "Build PDF Inputs",
+            "node": "Build Cover File",
             "type": "main",
             "index": 0
           }
@@ -727,7 +878,79 @@
         ]
       ]
     },
-    "Gotenberg PDF": {
+    "Build Cover File": {
+      "main": [
+        [
+          {
+            "node": "Gotenberg Cover",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        []
+      ]
+    },
+    "Gotenberg Cover": {
+      "main": [
+        [
+          {
+            "node": "Stash Cover",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        []
+      ]
+    },
+    "Stash Cover": {
+      "main": [
+        [
+          {
+            "node": "Build Body Files",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        []
+      ]
+    },
+    "Build Body Files": {
+      "main": [
+        [
+          {
+            "node": "Gotenberg Body",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        []
+      ]
+    },
+    "Gotenberg Body": {
+      "main": [
+        [
+          {
+            "node": "Assemble PDFs",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        []
+      ]
+    },
+    "Assemble PDFs": {
+      "main": [
+        [
+          {
+            "node": "Gotenberg Merge",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        []
+      ]
+    },
+    "Gotenberg Merge": {
       "main": [
         [
           {
@@ -755,17 +978,6 @@
         [
           {
             "node": "Email Brief (provider-abstracted)",
-            "type": "main",
-            "index": 0
-          }
-        ]
-      ]
-    },
-    "Build PDF Inputs": {
-      "main": [
-        [
-          {
-            "node": "Gotenberg PDF",
             "type": "main",
             "index": 0
           }
