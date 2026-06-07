@@ -29,3 +29,9 @@ https://news.google.com/rss/search?q=(ADNOC+OR+Aramco+OR+Shell+OR+BP+OR+Chevron+
 
 # --- Sector context (energy security, AI, digital, OT cyber) ----------------
 https://news.google.com/rss/search?q=(energy+OR+oil+OR+gas)+(%22energy+security%22+OR+%22digital+transformation%22+OR+%22AI%22+OR+%22cybersecurity%22)+Gulf+OR+UAE+when:7d&hl=en-US&gl=US&ceid=US:en
+
+# --- Publisher-direct feeds (carry article images for the magazine layout) ---
+https://www.rigzone.com/news/rss/rigzone_latest.aspx
+https://oilprice.com/rss/main
+https://www.energyvoice.com/feed/
+https://www.offshore-technology.com/feed/
