@@ -43,17 +43,44 @@ source "${__common_dir}/state.sh"
 # ---------------------------------------------------------------------------
 JARVIS_ENV_FILE="${JARVIS_ENV_FILE:-${JARVIS_ROOT}/.env}"
 
+# The path argument is optional (defaults to JARVIS_ENV_FILE); callers normally
+# pass nothing. Silence shellcheck's "args never passed" note (SC2120/SC2119).
+# shellcheck disable=SC2120
 load_env() {
   local file="${1:-${JARVIS_ENV_FILE}}"
-  if [[ -f "${file}" ]]; then
-    log_debug "Loading environment from ${file}"
-    set -o allexport
-    # shellcheck disable=SC1090
-    source "${file}"
-    set +o allexport
+  if [[ ! -f "${file}" ]]; then
+    log_debug "No env file at ${file} (this is expected before install)"
     return 0
   fi
-  log_debug "No env file at ${file} (this is expected before install)"
+  log_debug "Loading environment from ${file}"
+  # Parse KEY=VALUE lines WITHOUT sourcing. Sourcing would execute unquoted
+  # values (e.g. cron "0 6 * * *", lists with spaces, an apostrophe in TA'ZIZ)
+  # and is a code-execution risk for a config file (Security by default,
+  # Fail-safe defaults). This parser handles quoted and unquoted values,
+  # inline comments, leading 'export', and Windows CRLF line endings.
+  local line key val
+  while IFS= read -r line || [[ -n "${line}" ]]; do
+    line="${line%$'\r'}"                       # strip trailing CR (WSL/Windows)
+    [[ -z "${line}" ]] && continue             # blank
+    [[ "${line}" =~ ^[[:space:]]*# ]] && continue   # comment
+    line="${line#export }"                     # optional 'export ' prefix
+    [[ "${line}" == *"="* ]] || continue       # must be KEY=VALUE
+    key="${line%%=*}"
+    val="${line#*=}"
+    key="${key#"${key%%[![:space:]]*}"}"       # trim key whitespace
+    key="${key%"${key##*[![:space:]]}"}"
+    [[ "${key}" =~ ^[A-Za-z_][A-Za-z0-9_]*$ ]] || continue
+    val="${val#"${val%%[![:space:]]*}"}"       # trim leading value whitespace
+    if [[ "${val:0:1}" == '"' ]]; then         # double-quoted: take inside
+      val="${val#\"}"; val="${val%%\"*}"
+    elif [[ "${val:0:1}" == "'" ]]; then       # single-quoted: take inside
+      val="${val#\'}"; val="${val%%\'*}"
+    else                                        # bare: drop inline " #comment"
+      val="${val%%[[:space:]]#*}"
+      val="${val%"${val##*[![:space:]]}"}"     # trim trailing whitespace
+    fi
+    export "${key}=${val}"
+  done <"${file}"
   return 0
 }
 
