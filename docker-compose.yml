@@ -64,6 +64,9 @@ services:
       N8N_SECURE_COOKIE: ${N8N_SECURE_COOKIE:-false}
       N8N_DIAGNOSTICS_ENABLED: "false"
       N8N_PERSONALIZATION_ENABLED: "false"
+      # Allow workflow expressions to read $env (e.g. the Telegram allow-list,
+      # brief schedules). Values come only from this stack's .env.
+      N8N_BLOCK_ENV_ACCESS_IN_NODE: "false"
       # Observability
       N8N_LOG_LEVEL: ${N8N_LOG_LEVEL:-info}
       N8N_LOG_OUTPUT: "console,file"
