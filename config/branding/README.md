@@ -1,10 +1,25 @@
 # Branding assets (local)
 
-Drop your **sign-off avatar** here as:
+These files live here, are **git-ignored** (public repo), are mounted into n8n at
+`/config/branding/`, and are included in `./backup.sh`.
 
-    config/branding/jarvis-avatar.png
+## Report chrome
+| File | Role |
+|------|------|
+| `cover.png` | full front-cover image at the very top of the brief |
+| `banner.png` | masthead header |
+| `jarvis-avatar.png` | circular sign-off footer |
 
-The intelligence briefs embed it (base64) as a footer sign-off automatically on
-every run. The image is **git-ignored** (this is a public repo) but is mounted
-into n8n at `/config/branding/` and is included in `./backup.sh`, so it survives
-restores. Keep it small (≈256×256) so emails stay light.
+`.png` or `.jpg` both work; each is optional (graceful if absent). Keep them
+reasonably sized (banner/cover ≈ ≤1 MB, avatar ≈256 px) so emails stay light.
+
+## Company logos (NOC/IOC tables)
+Drop small logo files in `config/branding/logos/` named by a short key the
+company name contains, e.g.:
+
+    adnoc.png  aramco.png  shell.png  bp.png  total.png  exxon.png
+    chevron.png  qatarenergy.png  taqa.png  masdar.png  kuwait.png
+
+The renderer matches a row's company to a logo when the company name contains
+the key (e.g. "Saudi Aramco" → `aramco.png`, "TotalEnergies" → `total.png`).
+Missing logos simply show the company name as text.
