@@ -1,0 +1,10 @@
+# =============================================================================
+# defence-regional-sources.txt — Middle East MODs & threat-actor channel
+# -----------------------------------------------------------------------------
+# Feeds the "Middle East Defence Cyber" and "Threat Actors Targeting Defence"
+# sections. OSINT only.
+# =============================================================================
+https://news.google.com/rss/search?q=(%22Saudi+Arabia%22+OR+UAE+OR+Qatar+OR+GCC+OR+Bahrain+OR+Kuwait+OR+Oman)+(defence+OR+military+OR+MOD+OR+armed+forces)+cyber+when:14d&hl=en-US&gl=US&ceid=US:en
+https://news.google.com/rss/search?q=(Israel+OR+Iran+OR+Egypt+OR+Jordan+OR+Turkey+OR+T%C3%BCrkiye)+(military+OR+defence)+cyber+when:14d&hl=en-US&gl=US&ceid=US:en
+https://news.google.com/rss/search?q=Iran+(APT+OR+%22cyber+espionage%22+OR+hacking+OR+%22threat+actor%22)+(defence+OR+military+OR+government)+when:14d&hl=en-US&gl=US&ceid=US:en
+https://news.google.com/rss/search?q=(%22Middle+East%22+OR+Gulf)+(cyberattack+OR+%22critical+infrastructure%22)+(defence+OR+military+OR+government)+when:14d&hl=en-US&gl=US&ceid=US:en

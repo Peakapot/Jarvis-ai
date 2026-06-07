@@ -17,7 +17,12 @@
       "reportDir": "reports/cyber-brief",
       "archiveDir": "reports/archive/cyber-brief",
       "template": "templates/report/cyber-brief.html.tpl",
-      "outputs": ["html", "pdf", "email", "archive"],
+      "outputs": [
+        "html",
+        "pdf",
+        "email",
+        "archive"
+      ],
       "coverImage": true,
       "telegramCommand": "/cyber"
     },
@@ -36,7 +41,12 @@
       "reportDir": "reports/cyber-opportunities",
       "archiveDir": "reports/archive/cyber-opportunities",
       "template": "templates/report/cyber-opportunities.html.tpl",
-      "outputs": ["html", "pdf", "email", "archive"],
+      "outputs": [
+        "html",
+        "pdf",
+        "email",
+        "archive"
+      ],
       "coverImage": true,
       "telegramCommand": "/opportunities"
     },
@@ -55,9 +65,38 @@
       "reportDir": "reports/energy-intelligence",
       "archiveDir": "reports/archive/energy-intelligence",
       "template": "templates/report/energy-intelligence.html.tpl",
-      "outputs": ["html", "pdf", "email", "archive"],
+      "outputs": [
+        "html",
+        "pdf",
+        "email",
+        "archive"
+      ],
       "coverImage": true,
       "telegramCommand": "/energy"
+    },
+    {
+      "id": "defence-cyber",
+      "name": "Cyber Defence Watch",
+      "module": "core",
+      "status": "active",
+      "enabledEnv": "DEFENCE_BRIEF_ENABLED",
+      "enabledDefault": "true",
+      "scheduleEnv": "DEFENCE_BRIEF_SCHEDULE_CRON",
+      "scheduleDefault": "30 5 * * 1",
+      "workflow": "workflows/core/defence-cyber.json",
+      "prompt": "defence-cyber.analyst",
+      "sourcesFile": "config/defence-sources.txt",
+      "reportDir": "reports/defence-cyber",
+      "archiveDir": "reports/archive/defence-cyber",
+      "template": "templates/report/defence-cyber.html.tpl",
+      "outputs": [
+        "html",
+        "pdf",
+        "telegram",
+        "archive"
+      ],
+      "coverImage": true,
+      "telegramCommand": "/defence"
     }
   ]
 }

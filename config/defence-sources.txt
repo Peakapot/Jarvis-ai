@@ -1,0 +1,19 @@
+# =============================================================================
+# defence-sources.txt — "Cyber Defence Watch" main channel (allied/global)
+# -----------------------------------------------------------------------------
+# OSINT only. Allied policy & capability (US, UK, Five Eyes, NATO), military
+# cyber doctrine/budget/commands, defence-impacting breaches, and capability/
+# technology. Google News search feeds + publisher feeds (depth + images).
+# =============================================================================
+https://news.google.com/rss/search?q=(%22US+Cyber+Command%22+OR+%22Cyber+National+Mission%22+OR+%22Pentagon+cyber%22+OR+%22DoD+cyber%22)+when:14d&hl=en-US&gl=US&ceid=US:en
+https://news.google.com/rss/search?q=(%22National+Cyber+Force%22+OR+%22NCSC%22+OR+%22Ministry+of+Defence%22+cyber)+(UK+OR+Britain)+when:14d&hl=en-US&gl=US&ceid=US:en
+https://news.google.com/rss/search?q=(%22NATO+cyber%22+OR+%22Five+Eyes%22+cyber+OR+%22allied+cyber%22)+when:14d&hl=en-US&gl=US&ceid=US:en
+https://news.google.com/rss/search?q=(military+OR+defence+OR+defense)+cyber+(strategy+OR+doctrine+OR+policy+OR+budget+OR+command+OR+capability)+when:14d&hl=en-US&gl=US&ceid=US:en
+https://news.google.com/rss/search?q=(defense+contractor+OR+military+OR+defence)+(breach+OR+hacked+OR+cyberattack+OR+%22data+stolen%22+OR+ransomware)+when:7d&hl=en-US&gl=US&ceid=US:en
+https://news.google.com/rss/search?q=(%22zero+trust%22+OR+%22artificial+intelligence%22+OR+quantum)+(military+OR+defense+OR+defence)+cyber+when:14d&hl=en-US&gl=US&ceid=US:en
+# Publisher-direct feeds (depth + images)
+https://breakingdefense.com/feed/
+https://therecord.media/feed/
+https://www.infosecurity-magazine.com/rss/news/
+https://feeds.feedburner.com/TheHackersNews
+https://www.bleepingcomputer.com/feed/

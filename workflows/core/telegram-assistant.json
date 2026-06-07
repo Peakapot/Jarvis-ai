@@ -5,8 +5,14 @@
     "jarvisModule": "telegram-assistant",
     "jarvisVersion": "1.0.0",
     "description": "Primary interface. Receives Telegram messages, authorises the chat, routes commands (/help /status /research /emails /image /cyber) and replies. New commands are added by extending the Command Router switch — easy to add (Telegram Assistant Requirements). Every external call has a failure path (Error Handling).",
-    "prompts": ["telegram.router", "system.jarvis-core"],
-    "envVars": ["TELEGRAM_BOT_TOKEN", "TELEGRAM_ALLOWED_CHAT_IDS"]
+    "prompts": [
+      "telegram.router",
+      "system.jarvis-core"
+    ],
+    "envVars": [
+      "TELEGRAM_BOT_TOKEN",
+      "TELEGRAM_ALLOWED_CHAT_IDS"
+    ]
   },
   "settings": {
     "executionOrder": "v1",
@@ -20,8 +26,15 @@
       "name": "Telegram Trigger",
       "type": "n8n-nodes-base.telegramTrigger",
       "typeVersion": 1,
-      "position": [240, 300],
-      "parameters": { "updates": ["message"] },
+      "position": [
+        240,
+        300
+      ],
+      "parameters": {
+        "updates": [
+          "message"
+        ]
+      },
       "notes": "Inbound message entry point. Credentials configured in n8n (no token in repo)."
     },
     {
@@ -29,16 +42,25 @@
       "name": "Authorise Chat",
       "type": "n8n-nodes-base.if",
       "typeVersion": 2,
-      "position": [480, 300],
+      "position": [
+        480,
+        300
+      ],
       "parameters": {
         "conditions": {
-          "options": { "caseSensitive": true, "typeValidation": "loose" },
+          "options": {
+            "caseSensitive": true,
+            "typeValidation": "loose"
+          },
           "combinator": "and",
           "conditions": [
             {
               "leftValue": "={{ $env.TELEGRAM_ALLOWED_CHAT_IDS }}",
               "rightValue": "={{ String($json.message.chat.id) }}",
-              "operator": { "type": "string", "operation": "contains" }
+              "operator": {
+                "type": "string",
+                "operation": "contains"
+              }
             }
           ]
         }
@@ -50,21 +72,153 @@
       "name": "Command Router",
       "type": "n8n-nodes-base.switch",
       "typeVersion": 3,
-      "position": [760, 240],
+      "position": [
+        760,
+        240
+      ],
       "parameters": {
         "rules": {
           "values": [
-            { "outputKey": "help",     "conditions": { "conditions": [ { "leftValue": "={{ $json.message.text }}", "rightValue": "/help", "operator": { "type": "string", "operation": "startsWith" } } ] } },
-            { "outputKey": "status",   "conditions": { "conditions": [ { "leftValue": "={{ $json.message.text }}", "rightValue": "/status", "operator": { "type": "string", "operation": "startsWith" } } ] } },
-            { "outputKey": "research", "conditions": { "conditions": [ { "leftValue": "={{ $json.message.text }}", "rightValue": "/research", "operator": { "type": "string", "operation": "startsWith" } } ] } },
-            { "outputKey": "emails",   "conditions": { "conditions": [ { "leftValue": "={{ $json.message.text }}", "rightValue": "/emails", "operator": { "type": "string", "operation": "startsWith" } } ] } },
-            { "outputKey": "image",    "conditions": { "conditions": [ { "leftValue": "={{ $json.message.text }}", "rightValue": "/image", "operator": { "type": "string", "operation": "startsWith" } } ] } },
-            { "outputKey": "cyber",    "conditions": { "conditions": [ { "leftValue": "={{ $json.message.text }}", "rightValue": "/cyber", "operator": { "type": "string", "operation": "startsWith" } } ] } },
-            { "outputKey": "opportunities", "conditions": { "conditions": [ { "leftValue": "={{ $json.message.text }}", "rightValue": "/opportunities", "operator": { "type": "string", "operation": "startsWith" } } ] } },
-            { "outputKey": "energy",   "conditions": { "conditions": [ { "leftValue": "={{ $json.message.text }}", "rightValue": "/energy", "operator": { "type": "string", "operation": "startsWith" } } ] } }
+            {
+              "outputKey": "help",
+              "conditions": {
+                "conditions": [
+                  {
+                    "leftValue": "={{ $json.message.text }}",
+                    "rightValue": "/help",
+                    "operator": {
+                      "type": "string",
+                      "operation": "startsWith"
+                    }
+                  }
+                ]
+              }
+            },
+            {
+              "outputKey": "status",
+              "conditions": {
+                "conditions": [
+                  {
+                    "leftValue": "={{ $json.message.text }}",
+                    "rightValue": "/status",
+                    "operator": {
+                      "type": "string",
+                      "operation": "startsWith"
+                    }
+                  }
+                ]
+              }
+            },
+            {
+              "outputKey": "research",
+              "conditions": {
+                "conditions": [
+                  {
+                    "leftValue": "={{ $json.message.text }}",
+                    "rightValue": "/research",
+                    "operator": {
+                      "type": "string",
+                      "operation": "startsWith"
+                    }
+                  }
+                ]
+              }
+            },
+            {
+              "outputKey": "emails",
+              "conditions": {
+                "conditions": [
+                  {
+                    "leftValue": "={{ $json.message.text }}",
+                    "rightValue": "/emails",
+                    "operator": {
+                      "type": "string",
+                      "operation": "startsWith"
+                    }
+                  }
+                ]
+              }
+            },
+            {
+              "outputKey": "image",
+              "conditions": {
+                "conditions": [
+                  {
+                    "leftValue": "={{ $json.message.text }}",
+                    "rightValue": "/image",
+                    "operator": {
+                      "type": "string",
+                      "operation": "startsWith"
+                    }
+                  }
+                ]
+              }
+            },
+            {
+              "outputKey": "cyber",
+              "conditions": {
+                "conditions": [
+                  {
+                    "leftValue": "={{ $json.message.text }}",
+                    "rightValue": "/cyber",
+                    "operator": {
+                      "type": "string",
+                      "operation": "startsWith"
+                    }
+                  }
+                ]
+              }
+            },
+            {
+              "outputKey": "opportunities",
+              "conditions": {
+                "conditions": [
+                  {
+                    "leftValue": "={{ $json.message.text }}",
+                    "rightValue": "/opportunities",
+                    "operator": {
+                      "type": "string",
+                      "operation": "startsWith"
+                    }
+                  }
+                ]
+              }
+            },
+            {
+              "outputKey": "energy",
+              "conditions": {
+                "conditions": [
+                  {
+                    "leftValue": "={{ $json.message.text }}",
+                    "rightValue": "/energy",
+                    "operator": {
+                      "type": "string",
+                      "operation": "startsWith"
+                    }
+                  }
+                ]
+              }
+            },
+            {
+              "outputKey": "defence",
+              "conditions": {
+                "conditions": [
+                  {
+                    "leftValue": "={{ $json.message.text }}",
+                    "rightValue": "/defence",
+                    "operator": {
+                      "type": "string",
+                      "operation": "startsWith"
+                    }
+                  }
+                ]
+              }
+            }
           ]
         },
-        "options": { "fallbackOutput": "extra" }
+        "options": {
+          "fallbackOutput": "extra"
+        }
       },
       "notes": "Add a new command by adding an output here and wiring a handler. Intelligence commands (/cyber, /opportunities, /energy) are registry-driven; the same Latest Intelligence handler serves any product. Fallback routes to the AI assistant for natural-language intent."
     },
@@ -73,22 +227,40 @@
       "name": "Help Text",
       "type": "n8n-nodes-base.set",
       "typeVersion": 3,
-      "position": [1040, 80],
-      "parameters": { "assignments": { "assignments": [ { "name": "reply", "type": "string", "value": "Jarvis commands:\n/help — this message\n/status — system status\n/research <topic>\n/emails — inbox summary\n/image <prompt>\n/cyber — latest cyber threat brief\n/opportunities [org|date] — latest cyber opportunities brief (+ history/search)\n/energy [org|date] — latest energy intelligence brief (+ history/search)" } ] } }
+      "position": [
+        1040,
+        80
+      ],
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "name": "reply",
+              "type": "string",
+              "value": "Jarvis commands:\n/help — this message\n/status — system status\n/research <topic>\n/emails — inbox summary\n/image <prompt>\n/cyber — latest cyber threat brief\n/opportunities [org|date] — latest cyber opportunities brief (+ history/search)\n/energy [org|date] — latest energy intelligence brief (+ history/search)"
+            }
+          ]
+        }
+      }
     },
     {
       "id": "handler-ai",
       "name": "AI Assistant (provider-abstracted)",
       "type": "n8n-nodes-base.httpRequest",
       "typeVersion": 4.2,
-      "position": [1040, 420],
+      "position": [
+        1040,
+        420
+      ],
       "parameters": {
         "method": "POST",
         "url": "={{ $env.OLLAMA_BASE_URL || 'http://jarvis-ollama:11434' }}/api/chat",
         "sendBody": true,
         "specifyBody": "json",
         "jsonBody": "={\n  \"model\": \"{{ $env.OLLAMA_DEFAULT_MODEL || 'llama3.1:8b' }}\",\n  \"stream\": false,\n  \"messages\": [{\"role\":\"user\",\"content\": {{ JSON.stringify($json.message.text) }} }]\n}",
-        "options": { "timeout": 60000 }
+        "options": {
+          "timeout": 60000
+        }
       },
       "onError": "continueErrorOutput",
       "notes": "Default provider is Ollama. Switching AI_PROVIDER points this at the resolved endpoint (AI Provider Abstraction)."
@@ -98,10 +270,13 @@
       "name": "Latest Intelligence Brief",
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
-      "position": [1040, 240],
+      "position": [
+        1040,
+        240
+      ],
       "parameters": {
         "language": "javaScript",
-        "jsCode": "// Serve intelligence products to Telegram: latest edition, recent history,\n// or an organisation/date search. Registry-agnostic: the command maps to a\n// product archive directory under /reports/archive/<id> (mounted). Reading the\n// directory requires the n8n env NODE_FUNCTION_ALLOW_BUILTIN=fs (set in\n// docker-compose). Fails safe: if listing is unavailable, returns guidance.\nconst text = ($('Telegram Trigger').item.json.message.text || '').trim();\nconst cmd = text.split(/\\s+/)[0].toLowerCase();\nconst query = text.split(/\\s+/).slice(1).join(' ').toLowerCase();\nconst map = {\n  '/opportunities': { id: 'cyber-opportunities', name: 'Cyber Opportunities Brief' },\n  '/energy': { id: 'energy-intelligence', name: 'Energy Intelligence Brief' },\n  '/cyber': { id: 'cyber-brief', name: 'Cyber Threat Brief' }\n};\nconst p = map[cmd] || map['/opportunities'];\nlet reply;\ntry {\n  const fs = require('fs');\n  const dir = `/reports/archive/${p.id}`;\n  let files = fs.readdirSync(dir).filter(f => f.endsWith('.html')).sort();\n  if (query) files = files.filter(f => f.toLowerCase().includes(query));\n  if (!files.length) {\n    reply = `No ${p.name} editions found${query ? ` matching \\\"${query}\\\"` : ''} yet. Briefings are generated on schedule and emailed automatically.`;\n  } else {\n    const latest = files[files.length - 1];\n    const recent = files.slice(-5).reverse().map(f => ` • ${f}`).join('\\n');\n    reply = `📰 ${p.name}\\nLatest: ${latest}\\nRecent editions:\\n${recent}\\n\\nStored under reports/archive/${p.id}/. Reply with an org or date to search (e.g. \\\"${cmd} adnoc\\\").`;\n  }\n} catch (e) {\n  reply = `📰 ${p.name}: the latest edition is delivered by email and stored under reports/archive/${p.id}/. (Live listing unavailable: ${e.message})`;\n}\nreturn [{ json: { reply } }];"
+        "jsCode": "// Serve intelligence products to Telegram: latest edition, recent history,\n// or an organisation/date search. Registry-agnostic: the command maps to a\n// product archive directory under /reports/archive/<id> (mounted). Reading the\n// directory requires the n8n env NODE_FUNCTION_ALLOW_BUILTIN=fs (set in\n// docker-compose). Fails safe: if listing is unavailable, returns guidance.\nconst text = ($('Telegram Trigger').item.json.message.text || '').trim();\nconst cmd = text.split(/\\s+/)[0].toLowerCase();\nconst query = text.split(/\\s+/).slice(1).join(' ').toLowerCase();\nconst map = {\n  '/opportunities': { id: 'cyber-opportunities', name: 'Cyber Opportunities Brief' },\n  '/energy': { id: 'energy-intelligence', name: 'Energy Intelligence Brief' },\n  '/cyber': { id: 'cyber-brief', name: 'Cyber Threat Brief' },\n  '/defence': { id: 'defence-cyber', name: 'Cyber Defence Watch' }\n};\nconst p = map[cmd] || map['/opportunities'];\nlet reply;\ntry {\n  const fs = require('fs');\n  const dir = `/reports/archive/${p.id}`;\n  let files = fs.readdirSync(dir).filter(f => f.endsWith('.html')).sort();\n  if (query) files = files.filter(f => f.toLowerCase().includes(query));\n  if (!files.length) {\n    reply = `No ${p.name} editions found${query ? ` matching \\\"${query}\\\"` : ''} yet. Briefings are generated on schedule and emailed automatically.`;\n  } else {\n    const latest = files[files.length - 1];\n    const recent = files.slice(-5).reverse().map(f => ` • ${f}`).join('\\n');\n    reply = `📰 ${p.name}\\nLatest: ${latest}\\nRecent editions:\\n${recent}\\n\\nStored under reports/archive/${p.id}/. Reply with an org or date to search (e.g. \\\"${cmd} adnoc\\\").`;\n  }\n} catch (e) {\n  reply = `📰 ${p.name}: the latest edition is delivered by email and stored under reports/archive/${p.id}/. (Live listing unavailable: ${e.message})`;\n}\nreturn [{ json: { reply } }];"
       },
       "onError": "continueErrorOutput",
       "notes": "Handles /opportunities and /energy (and /cyber). Latest edition, history, or org/date search. Failure path -> Failure Notice."
@@ -111,7 +286,10 @@
       "name": "Send Telegram Reply",
       "type": "n8n-nodes-base.telegram",
       "typeVersion": 1.2,
-      "position": [1360, 240],
+      "position": [
+        1360,
+        240
+      ],
       "parameters": {
         "resource": "message",
         "operation": "sendMessage",
@@ -125,7 +303,10 @@
       "name": "Failure Notice",
       "type": "n8n-nodes-base.telegram",
       "typeVersion": 1.2,
-      "position": [1360, 480],
+      "position": [
+        1360,
+        480
+      ],
       "parameters": {
         "resource": "message",
         "operation": "sendMessage",
@@ -136,32 +317,148 @@
     }
   ],
   "connections": {
-    "Telegram Trigger": { "main": [[{ "node": "Authorise Chat", "type": "main", "index": 0 }]] },
-    "Authorise Chat": { "main": [[{ "node": "Command Router", "type": "main", "index": 0 }], []] },
-    "Command Router": {
+    "Telegram Trigger": {
       "main": [
-        [{ "node": "Help Text", "type": "main", "index": 0 }],
-        [{ "node": "AI Assistant (provider-abstracted)", "type": "main", "index": 0 }],
-        [{ "node": "AI Assistant (provider-abstracted)", "type": "main", "index": 0 }],
-        [{ "node": "AI Assistant (provider-abstracted)", "type": "main", "index": 0 }],
-        [{ "node": "AI Assistant (provider-abstracted)", "type": "main", "index": 0 }],
-        [{ "node": "AI Assistant (provider-abstracted)", "type": "main", "index": 0 }],
-        [{ "node": "Latest Intelligence Brief", "type": "main", "index": 0 }],
-        [{ "node": "Latest Intelligence Brief", "type": "main", "index": 0 }],
-        [{ "node": "AI Assistant (provider-abstracted)", "type": "main", "index": 0 }]
+        [
+          {
+            "node": "Authorise Chat",
+            "type": "main",
+            "index": 0
+          }
+        ]
       ]
     },
-    "Help Text": { "main": [[{ "node": "Send Telegram Reply", "type": "main", "index": 0 }]] },
+    "Authorise Chat": {
+      "main": [
+        [
+          {
+            "node": "Command Router",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        []
+      ]
+    },
+    "Command Router": {
+      "main": [
+        [
+          {
+            "node": "Help Text",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "AI Assistant (provider-abstracted)",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "AI Assistant (provider-abstracted)",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "AI Assistant (provider-abstracted)",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "AI Assistant (provider-abstracted)",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "AI Assistant (provider-abstracted)",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Latest Intelligence Brief",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Latest Intelligence Brief",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Latest Intelligence Brief",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "AI Assistant (provider-abstracted)",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Help Text": {
+      "main": [
+        [
+          {
+            "node": "Send Telegram Reply",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
     "Latest Intelligence Brief": {
       "main": [
-        [{ "node": "Send Telegram Reply", "type": "main", "index": 0 }],
-        [{ "node": "Failure Notice", "type": "main", "index": 0 }]
+        [
+          {
+            "node": "Send Telegram Reply",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Failure Notice",
+            "type": "main",
+            "index": 0
+          }
+        ]
       ]
     },
     "AI Assistant (provider-abstracted)": {
       "main": [
-        [{ "node": "Send Telegram Reply", "type": "main", "index": 0 }],
-        [{ "node": "Failure Notice", "type": "main", "index": 0 }]
+        [
+          {
+            "node": "Send Telegram Reply",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Failure Notice",
+            "type": "main",
+            "index": 0
+          }
+        ]
       ]
     }
   }
