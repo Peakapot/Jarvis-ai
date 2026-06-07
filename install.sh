@@ -109,6 +109,10 @@ stage_scaffold() {
     mkdir -p "${JARVIS_ROOT}/${d}"
   done
   chmod 700 "${JARVIS_ROOT}/state" 2>/dev/null || true
+  # The n8n container writes reports/logs as its own uid (node=1000), which may
+  # differ from the host user's uid. Make these bind-mounted trees writable by
+  # any uid so workflow file-writes succeed (host files stay readable).
+  chmod -R a+rwX "${JARVIS_ROOT}/reports" "${JARVIS_ROOT}/logs" 2>/dev/null || true
   log_ok "Runtime directories ready"
 }
 
@@ -193,8 +197,8 @@ stage_intelligence() {
     archivedir="$(intel_field "${id}" archiveDir)"
     sched_var="$(intel_field "${id}" scheduleEnv)"
     sched_def="$(intel_field "${id}" scheduleDefault)"
-    [[ -n "${reportdir}" ]] && mkdir -p "${JARVIS_ROOT}/${reportdir}"
-    [[ -n "${archivedir}" ]] && mkdir -p "${JARVIS_ROOT}/${archivedir}"
+    [[ -n "${reportdir}" ]] && { mkdir -p "${JARVIS_ROOT}/${reportdir}"; chmod -R a+rwX "${JARVIS_ROOT}/${reportdir}" 2>/dev/null || true; }
+    [[ -n "${archivedir}" ]] && { mkdir -p "${JARVIS_ROOT}/${archivedir}"; chmod -R a+rwX "${JARVIS_ROOT}/${archivedir}" 2>/dev/null || true; }
     if intel_enabled "${id}"; then
       log_ok "Intelligence product '${name}' enabled — schedule ${!sched_var:-${sched_def}}"
     else
