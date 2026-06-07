@@ -111,6 +111,8 @@ services:
       OPENAI_IMAGE_API_KEY: ${OPENAI_IMAGE_API_KEY:-}
       # Intelligence product schedules / focus (workflows read these via $env)
       CYBER_BRIEF_ENABLED: ${CYBER_BRIEF_ENABLED:-true}
+      CYBER_SECTION_IMAGES: ${CYBER_SECTION_IMAGES:-true}
+      IMAGE_SECTION_SIZE: ${IMAGE_SECTION_SIZE:-1536x1024}
       CYBER_BRIEF_SCHEDULE_CRON: ${CYBER_BRIEF_SCHEDULE_CRON:-0 7 * * 1}
       CYBER_BRIEF_OUTPUT_FORMATS: ${CYBER_BRIEF_OUTPUT_FORMATS:-html,pdf,email,archive}
       CYBER_OPPS_ENABLED: ${CYBER_OPPS_ENABLED:-true}
