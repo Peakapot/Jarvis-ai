@@ -52,7 +52,9 @@ if have_cmd docker; then
   if [[ -f "${JARVIS_ROOT}/docker-compose.yml" ]]; then
     while IFS= read -r svc; do
       [[ -z "${svc}" ]] && continue
-      ( cd "${JARVIS_ROOT}" && compose logs --tail=200 "${svc}" >"${OUT_DIR}/compose-log-${svc}.txt" 2>&1 || true )
+      # </dev/null so 'compose logs' can't consume the loop's stdin (the
+      # services list) and skip the remaining services.
+      ( cd "${JARVIS_ROOT}" && compose logs --tail=200 "${svc}" >"${OUT_DIR}/compose-log-${svc}.txt" 2>&1 </dev/null || true )
     done < <( cd "${JARVIS_ROOT}" && compose config --services 2>/dev/null || true )
   fi
 else

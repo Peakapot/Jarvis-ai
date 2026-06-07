@@ -61,21 +61,30 @@ total=0 ok=0 fail=0
 result_log="${JARVIS_ROOT}/logs/workflow-import-result.txt"
 : >"${result_log}"
 
+# Collect all workflow files FIRST, then import. Collecting separately avoids a
+# subtle bug: 'docker compose exec' inside a `while read` loop consumes the
+# loop's own stdin (the find output), so all but the first file per directory
+# were silently skipped. The import commands also read from /dev/null as belt
+# and braces.
+declare -a wf_files=()
 for dir in "${DIRS[@]}"; do
   [[ -d "${dir}" ]] || continue
   while IFS= read -r wf; do
-    [[ -z "${wf}" ]] && continue
-    total=$((total+1))
-    base="$(basename "${wf}")"
-    # Copy into container then import (decoupled from host paths).
-    if docker cp "${wf}" "${cid}:/tmp/${base}" 2>/dev/null \
-       && ( cd "${JARVIS_ROOT}" && compose exec -T "${N8N_SERVICE}" n8n import:workflow --input="/tmp/${base}" >/dev/null 2>&1 ); then
-      ok=$((ok+1)); echo "OK   ${wf}" >>"${result_log}"; log_ok "Imported ${base}"
-    else
-      fail=$((fail+1)); echo "FAIL ${wf}" >>"${result_log}"; log_error "Failed to import ${base}"
-    fi
-    ( cd "${JARVIS_ROOT}" && compose exec -T "${N8N_SERVICE}" rm -f "/tmp/${base}" ) >/dev/null 2>&1 || true
+    [[ -n "${wf}" ]] && wf_files+=("${wf}")
   done < <(find "${dir}" -maxdepth 1 -name '*.json' | sort)
+done
+
+for wf in "${wf_files[@]}"; do
+  total=$((total+1))
+  base="$(basename "${wf}")"
+  # Copy into container then import (decoupled from host paths).
+  if docker cp "${wf}" "${cid}:/tmp/${base}" 2>/dev/null \
+     && ( cd "${JARVIS_ROOT}" && compose exec -T "${N8N_SERVICE}" n8n import:workflow --input="/tmp/${base}" >/dev/null 2>&1 </dev/null ); then
+    ok=$((ok+1)); echo "OK   ${wf}" >>"${result_log}"; log_ok "Imported ${base}"
+  else
+    fail=$((fail+1)); echo "FAIL ${wf}" >>"${result_log}"; log_error "Failed to import ${base}"
+  fi
+  ( cd "${JARVIS_ROOT}" && compose exec -T "${N8N_SERVICE}" rm -f "/tmp/${base}" ) >/dev/null 2>&1 </dev/null || true
 done
 
 log_info "Import summary: ${ok}/${total} succeeded, ${fail} failed"
