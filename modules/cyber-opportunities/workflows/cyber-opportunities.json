@@ -63,7 +63,7 @@
         "url": "={{ $env.OLLAMA_BASE_URL || 'http://jarvis-ollama:11434' }}/api/chat",
         "sendBody": true,
         "specifyBody": "json",
-        "jsonBody": "={\n  \"model\": \"{{ $env.OLLAMA_DEFAULT_MODEL || 'llama3.1:8b' }}\",\n  \"stream\": false,\n  \"messages\": [\n    {\"role\":\"system\",\"content\":\"See modules/cyber-opportunities/prompts/analyst.md. Primary regions: {{ $env.CYBER_OPPS_PRIMARY_REGIONS || 'UAE,Saudi Arabia,Qatar,Oman,Bahrain,Kuwait' }}. Secondary: {{ $env.CYBER_OPPS_SECONDARY_REGIONS || 'United Kingdom,Europe,Global' }}.\"},\n    {\"role\":\"user\",\"content\": {{ JSON.stringify($json) }} }\n  ]\n}",
+        "jsonBody": "={\n  \"model\": \"{{ $env.OLLAMA_DEFAULT_MODEL || 'llama3.1:8b' }}\",\n  \"stream\": false,\n  \"messages\": [\n    {\"role\":\"system\",\"content\":\"See modules/cyber-opportunities/prompts/analyst.md. Primary regions: {{ $env.CYBER_OPPS_PRIMARY_REGIONS || 'UAE,Saudi Arabia,Qatar,Oman,Bahrain,Kuwait' }}. Secondary: {{ $env.CYBER_OPPS_SECONDARY_REGIONS || 'United Kingdom,Europe,Global' }}.\"},\n    {\"role\":\"user\",\"content\": {{ JSON.stringify(JSON.stringify($json)) }} }\n  ]\n}",
         "options": { "timeout": 120000 }
       },
       "onError": "continueErrorOutput",

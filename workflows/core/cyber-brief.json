@@ -53,7 +53,7 @@
         "url": "={{ $env.OLLAMA_BASE_URL || 'http://jarvis-ollama:11434' }}/api/chat",
         "sendBody": true,
         "specifyBody": "json",
-        "jsonBody": "={\n  \"model\": \"{{ $env.OLLAMA_DEFAULT_MODEL || 'llama3.1:8b' }}\",\n  \"stream\": false,\n  \"messages\": [{\"role\":\"system\",\"content\":\"See prompts/cyber-brief/analyst.md\"},{\"role\":\"user\",\"content\": {{ JSON.stringify($json) }} }]\n}",
+        "jsonBody": "={\n  \"model\": \"{{ $env.OLLAMA_DEFAULT_MODEL || 'llama3.1:8b' }}\",\n  \"stream\": false,\n  \"messages\": [{\"role\":\"system\",\"content\":\"See prompts/cyber-brief/analyst.md\"},{\"role\":\"user\",\"content\": {{ JSON.stringify(JSON.stringify($json)) }} }]\n}",
         "options": { "timeout": 120000 }
       },
       "onError": "continueErrorOutput",
