@@ -20,6 +20,11 @@ credentials.json
 *credentials*.json
 *.secret
 
+# ---- Local branding assets (avatar, etc.) — keep out of the public repo -----
+config/branding/*
+!config/branding/.gitkeep
+!config/branding/README.md
+
 # ---- Runtime state & generated data ----------------------------------------
 state/
 data/

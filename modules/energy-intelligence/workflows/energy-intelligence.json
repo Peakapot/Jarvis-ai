@@ -6,33 +6,84 @@
     "jarvisVersion": "1.1.0",
     "intelligenceProduct": true,
     "description": "Daily UAE/ADNOC-focused energy intelligence. Splits config/energy-sources.txt into feeds, fetches them, aggregates real articles, analyses with local Ollama, renders HTML and writes report + archive via fs. Cover image is an optional side branch (Image Provider Abstraction). Every external step has a failure path.",
-    "prompts": ["energy-intelligence.analyst", "intelligence.cover-image", "system.jarvis-core"],
-    "envVars": ["ENERGY_BRIEF_ENABLED", "ENERGY_BRIEF_SCHEDULE_CRON", "OLLAMA_BASE_URL", "OLLAMA_DEFAULT_MODEL", "EMAIL_TO", "IMAGE_PROVIDER"]
+    "prompts": [
+      "energy-intelligence.analyst",
+      "intelligence.cover-image",
+      "system.jarvis-core"
+    ],
+    "envVars": [
+      "ENERGY_BRIEF_ENABLED",
+      "ENERGY_BRIEF_SCHEDULE_CRON",
+      "OLLAMA_BASE_URL",
+      "OLLAMA_DEFAULT_MODEL",
+      "EMAIL_TO",
+      "IMAGE_PROVIDER"
+    ]
   },
-  "settings": { "executionOrder": "v1", "saveDataErrorExecution": "all", "errorWorkflow": "Jarvis · Error Handler" },
+  "settings": {
+    "executionOrder": "v1",
+    "saveDataErrorExecution": "all",
+    "errorWorkflow": "Jarvis · Error Handler"
+  },
   "nodes": [
     {
       "id": "schedule",
       "name": "Daily Schedule",
       "type": "n8n-nodes-base.scheduleTrigger",
       "typeVersion": 1.2,
-      "position": [200, 300],
-      "parameters": { "rule": { "interval": [{ "field": "cronExpression", "expression": "={{ $env.ENERGY_BRIEF_SCHEDULE_CRON || '30 6 * * *' }}" }] } }
+      "position": [
+        200,
+        300
+      ],
+      "parameters": {
+        "rule": {
+          "interval": [
+            {
+              "field": "cronExpression",
+              "expression": "={{ $env.ENERGY_BRIEF_SCHEDULE_CRON || '30 6 * * *' }}"
+            }
+          ]
+        }
+      }
     },
     {
       "id": "gate",
       "name": "Enabled?",
       "type": "n8n-nodes-base.if",
       "typeVersion": 2,
-      "position": [400, 300],
-      "parameters": { "conditions": { "options": { "caseSensitive": false, "typeValidation": "loose" }, "combinator": "and", "conditions": [ { "leftValue": "={{ $env.ENERGY_BRIEF_ENABLED || 'true' }}", "rightValue": "true", "operator": { "type": "string", "operation": "equals" } } ] } }
+      "position": [
+        400,
+        300
+      ],
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": false,
+            "typeValidation": "loose"
+          },
+          "combinator": "and",
+          "conditions": [
+            {
+              "leftValue": "={{ $env.ENERGY_BRIEF_ENABLED || 'true' }}",
+              "rightValue": "true",
+              "operator": {
+                "type": "string",
+                "operation": "equals"
+              }
+            }
+          ]
+        }
+      }
     },
     {
       "id": "split",
       "name": "Load & Split Sources",
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
-      "position": [620, 280],
+      "position": [
+        620,
+        280
+      ],
       "parameters": {
         "language": "javaScript",
         "jsCode": "const fs = require('fs');\nlet lines = [];\ntry { lines = fs.readFileSync('/config/energy-sources.txt','utf8').split(/\\r?\\n/); } catch (e) {}\nconst urls = lines.map(function(l){ return l.trim(); }).filter(function(l){ return l && l.charAt(0) !== '#'; });\nif (!urls.length) { return [{ json: { url: '' } }]; }\nreturn urls.map(function(u){ return { json: { url: u } }; });"
@@ -44,8 +95,16 @@
       "name": "Fetch Energy Sources",
       "type": "n8n-nodes-base.rssFeedRead",
       "typeVersion": 1.1,
-      "position": [840, 240],
-      "parameters": { "url": "={{ $json.url }}", "options": { "ignoreSSL": false } },
+      "position": [
+        840,
+        240
+      ],
+      "parameters": {
+        "url": "={{ $json.url }}",
+        "options": {
+          "ignoreSSL": false
+        }
+      },
       "onError": "continueRegularOutput",
       "notes": "Runs once per feed URL. Non-RSS or unreachable sources are skipped, not fatal."
     },
@@ -54,7 +113,10 @@
       "name": "Aggregate Articles",
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
-      "position": [1060, 240],
+      "position": [
+        1060,
+        240
+      ],
       "parameters": {
         "language": "javaScript",
         "jsCode": "const items = $input.all();\nconst arts = items.map(function(i){ return i.json; }).filter(function(a){ return a && (a.title || a.contentSnippet || a.content); });\nconst lines = arts.slice(0,15).map(function(a){\n  var t = (a.title||'').toString();\n  var s = (a.contentSnippet||a.content||'').toString().replace(/\\s+/g,' ').slice(0,160);\n  var u = (a.link||a.url||'').toString();\n  return '- ' + t + ' — ' + s + ' (' + u + ')';\n});\nconst text = lines.length ? lines.join('\\n') : 'No source articles were retrieved today.';\nreturn [{ json: { articles: text, count: arts.length, date: new Date().toISOString().slice(0,10) } }];"
@@ -66,14 +128,19 @@
       "name": "AI Analyst (provider-abstracted)",
       "type": "n8n-nodes-base.httpRequest",
       "typeVersion": 4.2,
-      "position": [1280, 240],
+      "position": [
+        1280,
+        240
+      ],
       "parameters": {
         "method": "POST",
         "url": "={{ $env.OLLAMA_BASE_URL || 'http://jarvis-ollama:11434' }}/api/chat",
         "sendBody": true,
         "specifyBody": "json",
         "jsonBody": "={\n  \"model\": \"{{ $env.OLLAMA_DEFAULT_MODEL || 'llama3.1:8b' }}\",\n  \"stream\": false,\n  \"keep_alive\": \"10m\",\n  \"options\": { \"temperature\": 0.3, \"num_predict\": 1500, \"num_ctx\": 8192 },\n  \"messages\": [\n    {\"role\":\"system\",\"content\":\"You are a senior energy-sector intelligence analyst. Using ONLY the provided source digest, write a concise Daily Energy Intelligence Brief with a heavy focus on the UAE and the ADNOC ecosystem (ADNOC, ADNOC Gas, ADNOC Drilling, TA'ZIZ, Borouge, TAQA, Masdar, Mubadala Energy), then regional (Saudi Aramco, QatarEnergy) and global majors (Shell, BP, Chevron, ExxonMobil, TotalEnergies). Use these Markdown section headers exactly and in this order: ## Executive Summary, ## Top Stories, ## ADNOC Focus, ## UAE Focus, ## Regional Focus, ## Global Focus, ## Strategic Implications, ## Investment Activity, ## Digital Transformation Activity, ## Cybersecurity Activity, ## Emerging Trends. Cite source links inline. Do not fabricate; if the digest lacks data for a section, write 'No data available for this period.' under it. Output Markdown only, no preamble.\"},\n    {\"role\":\"user\",\"content\": {{ JSON.stringify('Source digest for ' + ($json.date||'') + ' (' + ($json.count||0) + ' articles):\\n' + ($json.articles||'')) }} }\n  ]\n}",
-        "options": { "timeout": 600000 }
+        "options": {
+          "timeout": 600000
+        }
       },
       "onError": "continueErrorOutput"
     },
@@ -82,7 +149,10 @@
       "name": "Build Cover Image Prompt",
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
-      "position": [1500, 200],
+      "position": [
+        1500,
+        200
+      ],
       "parameters": {
         "language": "javaScript",
         "jsCode": "const md = ($json && $json.message && $json.message.content) ? $json.message.content : '';\nconst top = md.split(/\\n/).filter(function(l){ return /adnoc|energy|oil|gas|lng|masdar|taqa/i.test(l); }).slice(0,4).join('; ') || 'UAE and ADNOC energy sector developments';\nconst style = 'Premium editorial intelligence-report cover. Deep navy (#0A1A2F) background with refined gold (#C9A24B) accents. Abstract professional energy motifs (flowing light, geometric grids, subtle infrastructure silhouettes). NO text, NO logos, NO faces. Cinematic, restrained, high-end consultancy aesthetic.';\nreturn [{ json: { markdown: md || 'No data available for this period.', date: new Date().toISOString().slice(0,10), coverPrompt: style + ' Visual theme inspired by: ' + top } }];"
@@ -94,16 +164,28 @@
       "name": "Generate Cover (Image Provider)",
       "type": "n8n-nodes-base.httpRequest",
       "typeVersion": 4.2,
-      "position": [1720, 120],
+      "position": [
+        1720,
+        120
+      ],
       "parameters": {
         "method": "POST",
         "url": "={{ $env.OPENAI_BASE_URL || 'https://api.openai.com/v1' }}/images/generations",
         "sendHeaders": true,
-        "headerParameters": { "parameters": [ { "name": "Authorization", "value": "=Bearer {{ $env.OPENAI_IMAGE_API_KEY || $env.OPENAI_API_KEY }}" } ] },
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Authorization",
+              "value": "=Bearer {{ $env.OPENAI_IMAGE_API_KEY || $env.OPENAI_API_KEY }}"
+            }
+          ]
+        },
         "sendBody": true,
         "specifyBody": "json",
         "jsonBody": "={\n  \"model\": \"{{ $env.IMAGE_MODEL || 'gpt-image-1' }}\",\n  \"prompt\": {{ JSON.stringify($json.coverPrompt) }},\n  \"size\": \"{{ $env.IMAGE_SIZE || '1536x1024' }}\",\n  \"n\": 1\n}",
-        "options": { "timeout": 120000 }
+        "options": {
+          "timeout": 120000
+        }
       },
       "onError": "continueErrorOutput",
       "notes": "Optional cover via Image Provider Abstraction. Dead-end side branch: failure (e.g. no API key) never affects the brief."
@@ -113,10 +195,13 @@
       "name": "Render HTML",
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
-      "position": [1720, 280],
+      "position": [
+        1720,
+        280
+      ],
       "parameters": {
         "language": "javaScript",
-        "jsCode": "const md = ($json && $json.markdown) || 'No data available for this period.';\nconst date = ($json && $json.date) || new Date().toISOString().slice(0,10);\nlet coverUrl = '';\ntry { coverUrl = $('Generate Cover (Image Provider)').first().json.data[0].url || ''; } catch (e) { coverUrl = ''; }\nconst esc = md.replace(/[&<>]/g, function(c){ return ({ '&':'&amp;', '<':'&lt;', '>':'&gt;' })[c]; });\nconst img = coverUrl ? ('<img src=\\\"' + coverUrl + '\\\" style=\\\"width:100%;max-height:280px;object-fit:cover\\\"/>') : '';\nconst html = '<!doctype html><meta charset=\\\"utf-8\\\"><title>Daily Energy Intelligence Brief — ' + date + '</title>' +\n  '<div style=\\\"font-family:Georgia,serif;color:#11151c\\\">' +\n  '<div style=\\\"background:#0A1A2F;color:#E7C76A;padding:18px;font-size:18px\\\">JARVIS INTELLIGENCE — Daily Energy Intelligence Brief — ' + date + '</div>' +\n  img +\n  '<div style=\\\"padding:18px\\\"><pre style=\\\"white-space:pre-wrap;font-family:inherit;font-size:15px;line-height:1.55\\\">' + esc + '</pre></div></div>';\nreturn [{ json: { date: date, html: html, markdown: md } }];"
+        "jsCode": "const md = ($json && $json.markdown) || 'No data available for this period.';\nconst date = ($json && $json.date) || new Date().toISOString().slice(0,10);\nlet coverUrl = '';\ntry { coverUrl = $('Generate Cover (Image Provider)').first().json.data[0].url || ''; } catch (e) { coverUrl = ''; }\nlet signoff = '';\ntry {\n  const fs = require('fs');\n  const b64 = fs.readFileSync('/config/branding/jarvis-avatar.png').toString('base64');\n  signoff = '<div style=\"text-align:center;padding:20px;border-top:3px solid #C9A24B;margin-top:8px\">' +\n    '<img src=\"data:image/png;base64,' + b64 + '\" style=\"width:104px;height:104px;border-radius:50%;border:2px solid #C9A24B\"/>' +\n    '<div style=\"font-family:Georgia,serif;color:#0A1A2F;margin-top:8px;font-size:14px\">Jarvis — AI News Reporter</div></div>';\n} catch (e) { signoff = ''; }\nconst esc = md.replace(/[&<>]/g, function(c){ return ({ '&':'&amp;', '<':'&lt;', '>':'&gt;' })[c]; });\nconst img = coverUrl ? ('<img src=\"' + coverUrl + '\" style=\"width:100%;max-height:280px;object-fit:cover\"/>') : '';\nconst html = '<!doctype html><meta charset=\"utf-8\"><title>Daily Energy Intelligence Brief — ' + date + '</title>' +\n  '<div style=\"font-family:Georgia,serif;color:#11151c;max-width:860px;margin:0 auto\">' +\n  '<div style=\"background:#0A1A2F;color:#E7C76A;padding:18px;font-size:18px\">JARVIS INTELLIGENCE — Daily Energy Intelligence Brief — ' + date + '</div>' +\n  img +\n  '<div style=\"padding:18px\"><pre style=\"white-space:pre-wrap;font-family:inherit;font-size:15px;line-height:1.55\">' + esc + '</pre></div>' +\n  signoff +\n  '</div>';\nreturn [{ json: { date: date, html: html, markdown: md } }];"
       },
       "onError": "continueErrorOutput"
     },
@@ -125,7 +210,10 @@
       "name": "Write Report + Archive",
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
-      "position": [1940, 280],
+      "position": [
+        1940,
+        280
+      ],
       "parameters": {
         "language": "javaScript",
         "jsCode": "const fs = require('fs');\nconst date = $json.date;\nconst html = $json.html;\nconst dirs = ['/reports/energy-intelligence', '/reports/archive/energy-intelligence'];\nfor (var k = 0; k < dirs.length; k++) {\n  try { fs.mkdirSync(dirs[k], { recursive: true }); fs.writeFileSync(dirs[k] + '/energy-intelligence-' + date + '.html', html); } catch (e) {}\n}\ntry { fs.writeFileSync('/logs/last-run-success.txt', new Date().toISOString() + ' energy-intelligence'); } catch (e) {}\nreturn [{ json: $json }];"
@@ -138,8 +226,17 @@
       "name": "Email Brief (provider-abstracted)",
       "type": "n8n-nodes-base.emailSend",
       "typeVersion": 2.1,
-      "position": [2160, 280],
-      "parameters": { "fromEmail": "={{ $env.EMAIL_FROM }}", "toEmail": "={{ $env.EMAIL_TO }}", "subject": "=Energy Intelligence Brief — {{ $json.date }}", "html": "={{ $json.html }}", "options": {} },
+      "position": [
+        2160,
+        280
+      ],
+      "parameters": {
+        "fromEmail": "={{ $env.EMAIL_FROM }}",
+        "toEmail": "={{ $env.EMAIL_TO }}",
+        "subject": "=Energy Intelligence Brief — {{ $json.date }}",
+        "html": "={{ $json.html }}",
+        "options": {}
+      },
       "onError": "continueRegularOutput",
       "notes": "Email provider selected via EMAIL_PROVIDER; fails gracefully if SMTP not configured."
     },
@@ -148,21 +245,153 @@
       "name": "Reduced Coverage Notice",
       "type": "n8n-nodes-base.noOp",
       "typeVersion": 1,
-      "position": [1280, 460],
+      "position": [
+        1280,
+        460
+      ],
       "parameters": {},
       "notes": "Failure path: emit a reduced-coverage notice + log instead of producing nothing."
     }
   ],
   "connections": {
-    "Daily Schedule": { "main": [[{ "node": "Enabled?", "type": "main", "index": 0 }]] },
-    "Enabled?": { "main": [[{ "node": "Load & Split Sources", "type": "main", "index": 0 }], []] },
-    "Load & Split Sources": { "main": [[{ "node": "Fetch Energy Sources", "type": "main", "index": 0 }], [{ "node": "Reduced Coverage Notice", "type": "main", "index": 0 }]] },
-    "Fetch Energy Sources": { "main": [[{ "node": "Aggregate Articles", "type": "main", "index": 0 }]] },
-    "Aggregate Articles": { "main": [[{ "node": "AI Analyst (provider-abstracted)", "type": "main", "index": 0 }], [{ "node": "Reduced Coverage Notice", "type": "main", "index": 0 }]] },
-    "AI Analyst (provider-abstracted)": { "main": [[{ "node": "Build Cover Image Prompt", "type": "main", "index": 0 }], [{ "node": "Reduced Coverage Notice", "type": "main", "index": 0 }]] },
-    "Build Cover Image Prompt": { "main": [[{ "node": "Generate Cover (Image Provider)", "type": "main", "index": 0 }, { "node": "Render HTML", "type": "main", "index": 0 }]] },
-    "Generate Cover (Image Provider)": { "main": [[], []] },
-    "Render HTML": { "main": [[{ "node": "Write Report + Archive", "type": "main", "index": 0 }], [{ "node": "Reduced Coverage Notice", "type": "main", "index": 0 }]] },
-    "Write Report + Archive": { "main": [[{ "node": "Email Brief (provider-abstracted)", "type": "main", "index": 0 }]] }
+    "Daily Schedule": {
+      "main": [
+        [
+          {
+            "node": "Enabled?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Enabled?": {
+      "main": [
+        [
+          {
+            "node": "Load & Split Sources",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        []
+      ]
+    },
+    "Load & Split Sources": {
+      "main": [
+        [
+          {
+            "node": "Fetch Energy Sources",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Reduced Coverage Notice",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Fetch Energy Sources": {
+      "main": [
+        [
+          {
+            "node": "Aggregate Articles",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Aggregate Articles": {
+      "main": [
+        [
+          {
+            "node": "AI Analyst (provider-abstracted)",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Reduced Coverage Notice",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "AI Analyst (provider-abstracted)": {
+      "main": [
+        [
+          {
+            "node": "Build Cover Image Prompt",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Reduced Coverage Notice",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Build Cover Image Prompt": {
+      "main": [
+        [
+          {
+            "node": "Generate Cover (Image Provider)",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Render HTML",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Generate Cover (Image Provider)": {
+      "main": [
+        [],
+        []
+      ]
+    },
+    "Render HTML": {
+      "main": [
+        [
+          {
+            "node": "Write Report + Archive",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Reduced Coverage Notice",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Write Report + Archive": {
+      "main": [
+        [
+          {
+            "node": "Email Brief (provider-abstracted)",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
   }
 }
