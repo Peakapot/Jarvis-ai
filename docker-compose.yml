@@ -75,6 +75,35 @@ services:
       NODE_FUNCTION_ALLOW_BUILTIN: ${N8N_ALLOW_BUILTIN:-fs}
       # Provider endpoints reachable from inside the network
       OLLAMA_BASE_URL: http://${OLLAMA_CONTAINER_NAME:-jarvis-ollama}:11434
+      OLLAMA_DEFAULT_MODEL: ${OLLAMA_DEFAULT_MODEL:-llama3.1:8b}
+      AI_PROVIDER: ${AI_PROVIDER:-ollama}
+      # Telegram (primary interface) — workflows read these via $env
+      TELEGRAM_BOT_TOKEN: ${TELEGRAM_BOT_TOKEN:-}
+      TELEGRAM_ALLOWED_CHAT_IDS: ${TELEGRAM_ALLOWED_CHAT_IDS:-}
+      # Email delivery
+      EMAIL_PROVIDER: ${EMAIL_PROVIDER:-smtp}
+      EMAIL_FROM: ${EMAIL_FROM:-}
+      EMAIL_TO: ${EMAIL_TO:-}
+      # Image provider (intelligence cover images)
+      IMAGE_PROVIDER: ${IMAGE_PROVIDER:-openai}
+      IMAGE_MODEL: ${IMAGE_MODEL:-gpt-image-1}
+      IMAGE_SIZE: ${IMAGE_SIZE:-1536x1024}
+      OPENAI_BASE_URL: ${OPENAI_BASE_URL:-https://api.openai.com/v1}
+      OPENAI_API_KEY: ${OPENAI_API_KEY:-}
+      OPENAI_IMAGE_API_KEY: ${OPENAI_IMAGE_API_KEY:-}
+      # Intelligence product schedules / focus (workflows read these via $env)
+      CYBER_BRIEF_SCHEDULE_CRON: ${CYBER_BRIEF_SCHEDULE_CRON:-0 6 * * *}
+      CYBER_BRIEF_OUTPUT_FORMATS: ${CYBER_BRIEF_OUTPUT_FORMATS:-html,pdf,email,archive}
+      CYBER_OPPS_ENABLED: ${CYBER_OPPS_ENABLED:-true}
+      CYBER_OPPS_SCHEDULE_CRON: ${CYBER_OPPS_SCHEDULE_CRON:-15 6 * * *}
+      CYBER_OPPS_PRIMARY_REGIONS: ${CYBER_OPPS_PRIMARY_REGIONS:-}
+      CYBER_OPPS_SECONDARY_REGIONS: ${CYBER_OPPS_SECONDARY_REGIONS:-}
+      CYBER_OPPS_OUTPUT_FORMATS: ${CYBER_OPPS_OUTPUT_FORMATS:-html,pdf,email,archive}
+      ENERGY_BRIEF_ENABLED: ${ENERGY_BRIEF_ENABLED:-true}
+      ENERGY_BRIEF_SCHEDULE_CRON: ${ENERGY_BRIEF_SCHEDULE_CRON:-30 6 * * *}
+      ENERGY_BRIEF_PRIMARY_FOCUS: ${ENERGY_BRIEF_PRIMARY_FOCUS:-}
+      ENERGY_BRIEF_SECONDARY_FOCUS: ${ENERGY_BRIEF_SECONDARY_FOCUS:-}
+      ENERGY_BRIEF_OUTPUT_FORMATS: ${ENERGY_BRIEF_OUTPUT_FORMATS:-html,pdf,email,archive}
     volumes:
       - n8n_data:/home/node/.n8n
       - ./logs:/home/node/.n8n/logs
