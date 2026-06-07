@@ -1,12 +1,25 @@
 {
   "id": "jarvisCyberBrf01",
-  "name": "Jarvis · Cyber Brief",
+  "name": "Jarvis · Cyber Intelligence Brief",
   "meta": {
     "jarvisModule": "cyber-brief",
-    "jarvisVersion": "1.0.0",
-    "description": "Scheduled daily threat-intelligence product. Pulls RSS sources, summarises with the provider-abstracted AI, renders HTML/PDF/email versions, stores outputs to reports/ and the historical archive, and emails it. Each source/step has a failure path so one bad feed never breaks the brief (Error Handling). See prompts/cyber-brief/analyst.md.",
-    "prompts": ["cyber-brief.analyst", "system.jarvis-core"],
-    "envVars": ["CYBER_BRIEF_SCHEDULE_CRON", "CYBER_BRIEF_REGION_FOCUS", "EMAIL_TO"]
+    "jarvisVersion": "2.0.0",
+    "intelligenceProduct": true,
+    "description": "Weekly cyber threat-intelligence magazine. Aggregates real cyber news + incident feeds, enriches with the live CISA Known Exploited Vulnerabilities catalog, analyses with the provider-abstracted AI (Claude/Ollama), and renders a branded magazine PDF (clean cover + hero feature band + sections + KEV table) which it archives and emails. Every external step has a failure path.",
+    "prompts": [
+      "cyber-brief.analyst",
+      "intelligence.cover-image",
+      "system.jarvis-core"
+    ],
+    "envVars": [
+      "CYBER_BRIEF_ENABLED",
+      "CYBER_BRIEF_SCHEDULE_CRON",
+      "OLLAMA_BASE_URL",
+      "OLLAMA_DEFAULT_MODEL",
+      "AI_PROVIDER",
+      "EMAIL_TO",
+      "IMAGE_PROVIDER"
+    ]
   },
   "settings": {
     "executionOrder": "v1",
@@ -19,104 +32,985 @@
       "name": "Daily Schedule",
       "type": "n8n-nodes-base.scheduleTrigger",
       "typeVersion": 1.2,
-      "position": [220, 300],
-      "parameters": { "rule": { "interval": [{ "field": "cronExpression", "expression": "={{ $env.CYBER_BRIEF_SCHEDULE_CRON || '0 6 * * *' }}" }] } }
+      "position": [
+        200,
+        300
+      ],
+      "parameters": {
+        "rule": {
+          "interval": [
+            {
+              "field": "cronExpression",
+              "expression": "={{ $env.CYBER_BRIEF_SCHEDULE_CRON || '0 7 * * 1' }}"
+            }
+          ]
+        }
+      }
     },
     {
-      "id": "load-feeds",
-      "name": "Load Feed List",
-      "type": "n8n-nodes-base.readWriteFile",
-      "typeVersion": 1,
-      "position": [440, 300],
-      "parameters": { "fileSelector": "/config/rss-feeds.txt", "options": {} },
-      "onError": "continueErrorOutput",
-      "notes": "Feeds come from config/rss-feeds.txt (Configuration over hard coding)."
+      "id": "gate",
+      "name": "Enabled?",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2,
+      "position": [
+        400,
+        300
+      ],
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": false,
+            "typeValidation": "loose"
+          },
+          "combinator": "and",
+          "conditions": [
+            {
+              "leftValue": "={{ $env.CYBER_BRIEF_ENABLED || 'true' }}",
+              "rightValue": "true",
+              "operator": {
+                "type": "string",
+                "operation": "equals"
+              }
+            }
+          ]
+        }
+      }
     },
     {
-      "id": "fetch-rss",
-      "name": "Fetch RSS Sources",
+      "id": "split",
+      "name": "Load & Split Sources",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        620,
+        280
+      ],
+      "parameters": {
+        "language": "javaScript",
+        "jsCode": "const fs = require('fs');\nlet lines = [];\ntry { lines = fs.readFileSync('/config/cyber-sources.txt','utf8').split(/\\r?\\n/); } catch (e) {}\nconst urls = lines.map(function(l){ return l.trim(); }).filter(function(l){ return l && l.charAt(0) !== '#'; });\nif (!urls.length) { return [{ json: { url: '' } }]; }\nreturn urls.map(function(u){ return { json: { url: u } }; });"
+      },
+      "onError": "continueErrorOutput"
+    },
+    {
+      "id": "fetch",
+      "name": "Fetch Energy Sources",
       "type": "n8n-nodes-base.rssFeedRead",
       "typeVersion": 1.1,
-      "position": [680, 240],
-      "parameters": { "url": "={{ $json.url }}", "options": { "ignoreSSL": false } },
+      "position": [
+        840,
+        240
+      ],
+      "parameters": {
+        "url": "={{ $json.url }}",
+        "options": {
+          "ignoreSSL": false
+        }
+      },
       "onError": "continueRegularOutput",
-      "notes": "Failure path: an unreachable RSS source is skipped, not fatal (continueRegularOutput)."
+      "notes": "Runs once per feed URL. Non-RSS or unreachable sources are skipped, not fatal."
     },
     {
-      "id": "analyst",
-      "name": "AI Analyst (provider-abstracted)",
+      "id": "aggregate",
+      "name": "Aggregate Articles",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1060,
+        240
+      ],
+      "parameters": {
+        "language": "javaScript",
+        "jsCode": "const items = $input.all();\nconst arts = items.map(function(i){ return i.json; }).filter(function(a){ return a && (a.title || a.contentSnippet || a.content); });\nconst companies = [\n  ['Ransomware', /ransomware|ransom|lockbit|alphv|blackcat|cl0p|akira|ryuk|extort/i],\n  ['Nation-State / APT', /\\bapt\\b|nation.?state|state.sponsor|lazarus|sandworm|fancy bear|volt typhoon|salt typhoon|espionage/i],\n  ['Data Breach', /breach|data leak|leaked|exposed|stolen data|exfiltrat/i],\n  ['Vulnerability / Exploit', /vulnerab|zero.?day|\\bcve\\b|exploit|patch|\\brce\\b|flaw/i],\n  ['Critical Infra / OT', /critical infrastructure|\\bics\\b|scada|power grid|\\bwater\\b|pipeline|hospital/i],\n  ['Cloud / SaaS', /\\bcloud\\b|\\bsaas\\b|azure|\\baws\\b|google cloud|okta|microsoft 365|\\bm365\\b/i],\n  ['Phishing / Identity', /phishing|credential|identity|\\bmfa\\b|account takeover|social engineer/i],\n  ['Malware', /malware|trojan|botnet|infostealer|loader|backdoor|wiper/i],\n  ['Regulation / Policy', /regulation|compliance|gdpr|\\bfine\\b|lawsuit|policy|\\bcisa\\b|enisa/i],\n  ['Middle East / Gulf', /\\buae\\b|dubai|abu dhabi|saudi|qatar|gulf|middle east|emirat/i]\n];\nfunction detect(a){ var s=((a.title||'')+' '+(a.contentSnippet||a.content||'')).toString(); for(var i=0;i<companies.length;i++){ if(companies[i][1].test(s)) return companies[i][0]; } return 'Other'; }\nfunction getImg(a){ try { if(a.enclosure && a.enclosure.url) return a.enclosure.url; var mc=a['media:content']||a.mediaContent; if(mc){ if(Array.isArray(mc)) mc=mc[0]; if(mc){ if(mc.url) return mc.url; if(mc['$'] && mc['$'].url) return mc['$'].url; } } var mt=a['media:thumbnail']||a.mediaThumbnail; if(mt){ if(Array.isArray(mt)) mt=mt[0]; if(mt){ if(mt.url) return mt.url; if(mt['$'] && mt['$'].url) return mt['$'].url; } } var c=(a.content||a['content:encoded']||'').toString(); var m=c.match(/<img[^>]+src=[\"']([^\"']+)[\"']/i); if(m) return m[1]; } catch(e){} return ''; }\nfunction fmt(a){ var t=(a.title||'').toString(); var s=(a.contentSnippet||a.content||'').toString().replace(/\\s+/g,' ').slice(0,200); var u=(a.link||a.url||'').toString(); var im=getImg(a); return '- ' + t + ' — ' + s + ' (' + u + ')' + (im?(' IMG='+im):''); }\nvar buckets={};\narts.forEach(function(a){ var k=detect(a); (buckets[k]=buckets[k]||[]).push(a); });\nvar order=Object.keys(buckets);\nvar perCompany=4; var lines=[];\nfor(var r=0;r<perCompany;r++){ for(var c=0;c<order.length;c++){ var arr=buckets[order[c]]; if(arr[r]){ lines.push('['+order[c]+'] '+fmt(arr[r])); } } }\nvar text = lines.length ? lines.join('\\n') : 'No source articles were retrieved this period.';\nvar previous='';\ntry {\n  var fs=require('fs'); var dir='/reports/archive/cyber-brief';\n  var today=new Date().toISOString().slice(0,10);\n  var files=fs.readdirSync(dir).filter(function(fn){ return /cyber-brief-\\d{4}-\\d{2}-\\d{2}\\.json$/.test(fn) && fn.indexOf(today)===-1; }).sort();\n  if(files.length){\n    var prev=JSON.parse(fs.readFileSync(dir+'/'+files[files.length-1],'utf8'));\n    var ple=[];\n    ['incidents','actors'].forEach(function(sec){ (prev[sec]||[]).forEach(function(row){ ple.push('- '+(row.company||'')+': '+((row.development||'').toString().slice(0,160))); }); });\n    previous='From '+files[files.length-1].replace('cyber-brief-','').replace('.json','')+':\\n'+ple.join('\\n');\n  }\n} catch(e){ previous=''; }\nreturn [{ json: { articles: text, count: arts.length, date: new Date().toISOString().slice(0,10), previous: previous } }];"
+      },
+      "onError": "continueErrorOutput"
+    },
+    {
+      "id": "analyst-ollama",
+      "name": "AI Analyst (Ollama)",
       "type": "n8n-nodes-base.httpRequest",
       "typeVersion": 4.2,
-      "position": [920, 240],
+      "position": [
+        1320,
+        360
+      ],
       "parameters": {
         "method": "POST",
         "url": "={{ $env.OLLAMA_BASE_URL || 'http://jarvis-ollama:11434' }}/api/chat",
         "sendBody": true,
         "specifyBody": "json",
-        "jsonBody": "={\n  \"model\": \"{{ $env.OLLAMA_DEFAULT_MODEL || 'llama3.1:8b' }}\",\n  \"stream\": false,\n  \"messages\": [{\"role\":\"system\",\"content\":\"See prompts/cyber-brief/analyst.md\"},{\"role\":\"user\",\"content\": {{ JSON.stringify(JSON.stringify($json)) }} }]\n}",
-        "options": { "timeout": 120000 }
-      },
-      "onError": "continueErrorOutput",
-      "notes": "Ollama by default; AI_PROVIDER switches the endpoint without workflow changes."
-    },
-    {
-      "id": "render",
-      "name": "Render HTML / PDF / Email",
-      "type": "n8n-nodes-base.code",
-      "typeVersion": 2,
-      "position": [1160, 240],
-      "parameters": {
-        "language": "javaScript",
-        "jsCode": "// Render the analyst Markdown into the three required output formats.\n// HTML uses templates/report/cyber-brief.html.tpl; PDF is produced downstream.\nconst md = $json.message?.content || $json.body || 'No data available for this period.';\nconst date = new Date().toISOString().slice(0,10);\nreturn [{ json: { date, markdown: md, html: `<!doctype html><meta charset=\\\"utf-8\\\"><title>Cyber Brief ${date}</title><pre>${md}</pre>`, formats: (process.env.CYBER_BRIEF_OUTPUT_FORMATS||'html,pdf,email').split(',') } }];"
+        "jsonBody": "={\n  \"model\": \"{{ $env.OLLAMA_DEFAULT_MODEL || 'llama3.1:8b' }}\",\n  \"stream\": false,\n  \"keep_alive\": \"10m\",\n  \"options\": { \"temperature\": 0.2, \"num_predict\": 7500, \"num_ctx\": 12288 },\n  \"messages\": [\n    {\"role\":\"system\",\"content\":\"You are a senior cyber threat-intelligence analyst at a top consultancy, producing a weekly cyber intelligence magazine for executives. Use ONLY facts found in the provided digests and the live CISA KEV list; never invent organisations, threat actors, CVEs, numbers or quotes. Write in a precise, engaging, magazine-quality editorial voice. Output a SINGLE valid JSON object and nothing else. Keys: weekOf (string); intro (a rich editorial overview of 2-3 paragraphs, about 8-12 sentences total; separate paragraphs with a single newline character; ONE paragraph MUST summarise the overall threat level and the week's dominant trends); weekOverWeek (1-2 sentences on the most important changes since the previous edition, empty string if none); threat (an object with keys: summary (1-2 sentence overview of the threat landscape this week), metrics (array of up to 4 items with keys name, value, change, note - you may leave this empty as live metrics are injected), outlook (2-3 sentences of forward-looking threat predictions), spotlightActor (2-3 sentences profiling the single most significant threat actor or campaign this week), spotlightVuln (2-3 sentences on the single most critical vulnerability this week)); featured (array of the 3-5 most important stories as magazine write-ups, each with keys headline, story which is 3-4 sentences, source which is the article URL or outlet name, and image which is the IMG= URL from the digest if present else an empty string); incidents (array of major incidents and breaches, each with keys org (the affected organisation), development (what happened), theme (sector and business impact), signals (the threat actor or attack vector), risk (MUST begin with Critical, High, Medium or Low then a short rationale), watch (response and what to watch next)); actors (array of active threat actors or campaigns, each with keys name, development (recent activity), theme (origin and type such as nation-state, ransomware or hacktivist), signals (primary targets or sectors), risk (Critical/High/Medium/Low then rationale), watch (TTPs to watch)); vulns (array of notable vulnerabilities each with keys cve, product, vuln, ransomware, date, action - you may leave this empty as live CISA KEV data is injected); featuredIntro, incidentsIntro, actorsIntro, vulnsIntro (each a 1-2 sentence summary paragraph introducing that section); bonus (an object with keys title and body of 3 short paragraphs). Include at least 4 incidents and 4 actors when the digests support it; attribute developments only to entities named in the digests. Keep every text field concise (2-3 sentences maximum) so the COMPLETE JSON is always returned without truncation. Do NOT wrap the output in markdown code fences; your response MUST begin with { and end with }. Output ONLY the JSON object.\"},\n    {\"role\":\"user\",\"content\": {{ JSON.stringify('CYBER NEWS DIGEST for ' + ($json.date||'') + ' (' + ($json.count||0) + ' items):\\n' + ($json.articles||'') + '\\n\\nINCIDENTS & RANSOMWARE DIGEST (' + ($json.moversCount||0) + ' items):\\n' + ($json.moversDigest||'None retrieved.') + '\\n\\nPREVIOUS EDITION SUMMARY:\\n' + ($json.previous||'No previous edition available.') + '\\n\\nLIVE ACTIVELY-EXPLOITED VULNERABILITIES (CISA KEV - use these for the vulnerabilities table and reference the most critical ones in your analysis):\\n' + ($json.threatDigest||'Not available this run.')) }} }\n  ]\n}",
+        "options": {
+          "timeout": 600000
+        }
       },
       "onError": "continueErrorOutput"
     },
     {
-      "id": "store",
-      "name": "Store Outputs + Archive",
-      "type": "n8n-nodes-base.readWriteFile",
-      "typeVersion": 1,
-      "position": [1400, 180],
+      "id": "cover-prompt",
+      "name": "Build Cover Image Prompt",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1500,
+        200
+      ],
       "parameters": {
-        "operation": "write",
-        "fileName": "=/reports/cyber-brief/cyber-brief-{{ $json.date }}.html",
-        "dataPropertyName": "html",
-        "options": { "append": false }
+        "language": "javaScript",
+        "jsCode": "const j = $json || {};\nlet md = '';\nif (j.message && j.message.content) { md = j.message.content; }\nelse if (j.content && j.content[0] && j.content[0].text) { md = j.content[0].text; }\nelse if (typeof j.markdown === 'string') { md = j.markdown; }\nmd = md || '';\nconst top = md.split(/\\n/).filter(function(l){ return /ransomware|breach|cyber|threat|vulnerab|hacker|malware|attack/i.test(l); }).slice(0,4).join('; ') || 'the global cyber threat landscape this week';\nconst style = 'Premium editorial cyber-intelligence report cover. Deep navy (#0A1A2F) background with electric-blue (#2E9BE6) accents. Abstract professional cybersecurity motifs - circuitry, network nodes, digital shields, flowing data streams. NO text, NO logos, NO faces, NO readable code.';\nreturn [{ json: { markdown: md || 'No data available for this period.', date: new Date().toISOString().slice(0,10), coverPrompt: style + ' Visual theme inspired by: ' + top } }];"
+      },
+      "onError": "continueErrorOutput"
+    },
+    {
+      "id": "cover-image",
+      "name": "Generate Cover (Image Provider)",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        1720,
+        120
+      ],
+      "parameters": {
+        "method": "POST",
+        "url": "={{ $env.OPENAI_BASE_URL || 'https://api.openai.com/v1' }}/images/generations",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Authorization",
+              "value": "=Bearer {{ $env.OPENAI_IMAGE_API_KEY || $env.OPENAI_API_KEY }}"
+            }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={\n  \"model\": \"{{ $env.IMAGE_MODEL || 'gpt-image-1' }}\",\n  \"prompt\": {{ JSON.stringify($json.coverPrompt) }},\n  \"size\": \"{{ $env.IMAGE_SIZE || '1536x1024' }}\",\n  \"n\": 1\n}",
+        "options": {
+          "timeout": 120000
+        }
       },
       "onError": "continueErrorOutput",
-      "notes": "Store all outputs; the historical archive lives under reports/archive (Historical Archive)."
+      "notes": "Optional cover via Image Provider Abstraction. Dead-end side branch: failure (e.g. no API key) never affects the brief."
+    },
+    {
+      "id": "render",
+      "name": "Render HTML",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1720,
+        280
+      ],
+      "parameters": {
+        "language": "javaScript",
+        "jsCode": "let raw = ($json && $json.markdown) || '';\nfunction tryParse(s){ try { return JSON.parse(s); } catch(e){ return null; } }\nfunction repair(s){ var i0=s.indexOf('{'); if(i0<0) return null; s=s.slice(i0); var stack=[],inStr=false,esc=false,cut=-1,cutStack=null; for(var i=0;i<s.length;i++){ var ch=s[i]; if(esc){esc=false;continue;} if(ch==='\\\\'){esc=true;continue;} if(ch==='\"'){inStr=!inStr;continue;} if(inStr)continue; if(ch==='{'||ch==='['){stack.push(ch);} else if(ch==='}'||ch===']'){stack.pop(); cut=i+1; cutStack=stack.slice();} } if(cut<0) return null; var out=s.slice(0,cut); for(var k=cutStack.length-1;k>=0;k--){ out += cutStack[k]==='{' ? '}' : ']'; } return out; }\nvar cleaned = raw.replace(/^\\uFEFF/,'').trim().replace(/^```(?:json)?\\s*/i,'').replace(/\\s*```$/i,'').trim();\nvar data = tryParse(cleaned);\nif(!data){ var m = cleaned.match(/\\{[\\s\\S]*\\}/); if(m) data = tryParse(m[0]); }\nif(!data){ var rep = repair(cleaned); if(rep) data = tryParse(rep); }\ntry { if(data){ var _ft=$('Fetch Live Threat Data').first().json; if(_ft){ if(_ft.threatMetrics && _ft.threatMetrics.length){ data.threat=data.threat||{}; data.threat.metrics=_ft.threatMetrics; } if(_ft.kev && _ft.kev.length){ data.vulns=_ft.kev; } } } } catch(e){}\nconst date = ($json && $json.date) || new Date().toISOString().slice(0,10);\nconst fs = require('fs');\nfunction fileUri(base){ var t=[['/config/branding/'+base+'.png','image/png'],['/config/branding/'+base+'.jpg','image/jpeg'],['/config/branding/'+base+'.jpeg','image/jpeg']]; for(var i=0;i<t.length;i++){ try { return 'data:'+t[i][1]+';base64,'+fs.readFileSync(t[i][0]).toString('base64'); } catch(e){} } return ''; }\nconst cover=fileUri('cyber-cover')||fileUri('cover'), banner=fileUri('cyber-banner')||fileUri('banner'), avatar=fileUri('jarvis-avatar');\nlet hero=''; try { var hb=$('Generate Cover (Image Provider)').first().json.data[0].b64_json; if(hb) hero='data:image/png;base64,'+hb; } catch(e){ hero=''; }\nif(!hero){ hero = fileUri('hero') || banner || cover; }\nfunction ord(n){ var s=['th','st','nd','rd'], v=n%100; return n+(s[(v-20)%10]||s[v]||s[0]); }\nfunction prettyDate(d){ try { var p=(d||'').split('-'); var dt=new Date(Number(p[0]),Number(p[1])-1,Number(p[2])); var M=['January','February','March','April','May','June','July','August','September','October','November','December']; return M[dt.getMonth()]+' '+ord(dt.getDate())+' '+dt.getFullYear(); } catch(e){ return d; } }\nconst dateStr=prettyDate(date), weekOf=(data&&data.weekOf)?data.weekOf:dateStr;\nfunction esc(s){ return (s==null?'':String(s)).replace(/[&<>]/g,function(c){return({'&':'&amp;','<':'&lt;','>':'&gt;'})[c];}); }\nfunction riskColor(r){ r=(r||'').toString().toLowerCase(); if(r.indexOf('crit')===0)return '#7A1620'; if(r.indexOf('high')===0)return '#B02525'; if(r.indexOf('med')===0)return '#B8860B'; if(r.indexOf('low')===0)return '#1E8E5A'; return '#5A6472'; }\n\nvar BCSS='*{box-sizing:border-box} body{margin:0;font-family:-apple-system,\"Segoe UI\",Arial,sans-serif;color:#11151c;font-size:14px;line-height:1.55} '\n + '.wrap{padding:22px 40px 10px} '\n + '.lead{font-size:16px;line-height:1.75;margin:0 0 4px} .lead .dc{float:left;font-family:Georgia,serif;font-size:56px;line-height:44px;padding:6px 12px 0 0;color:#2E9BE6;font-weight:700} '\n + '.callout{background:#EAF4FC;border-left:4px solid #2E9BE6;padding:12px 16px;margin:18px 0;font-size:14px} '\n + '.sec{page-break-before:always} .sec.first{page-break-before:avoid} '\n + 'h2.h{font-family:Georgia,serif;font-size:21px;color:#0A1A2F;margin:6px 0 12px;padding-bottom:8px;border-bottom:2px solid #0A1A2F} '\n + 'h2.h .kick{display:block;font-family:Arial;font-size:10.5px;letter-spacing:2px;color:#2E9BE6;text-transform:uppercase;margin-bottom:3px;font-weight:700} '\n + '.feature{border:1px solid #E2E6EC;border-radius:8px;overflow:hidden;margin:16px 0;page-break-inside:avoid} '\n + '.feature .ph{height:200px;background-size:cover;background-position:center;background-color:#0A1A2F} .feature .fb{padding:14px 18px} '\n + '.feature h3{font-family:Georgia,serif;font-size:19px;color:#0A1A2F;margin:0 0 7px;line-height:1.3} .feature p{margin:0 0 9px;font-size:14px;line-height:1.62;color:#2b3340} .feature a{color:#2E9BE6;text-decoration:none;font-size:12.5px;font-weight:700} '\n + '.co{border:1px solid #E2E6EC;border-radius:8px;margin:14px 0;page-break-inside:avoid;overflow:hidden} .co .hd{background:#0A1A2F;color:#fff;padding:9px 14px;font-family:Georgia,serif;font-size:16px;font-weight:700} .co .bd{padding:8px 16px} .co .row{margin:7px 0;font-size:13.5px;line-height:1.5} .co .row .lab{display:inline-block;min-width:128px;padding-right:10px;color:#0A1A2F;font-weight:700;vertical-align:top} '\n + 'table.mv{width:100%;border-collapse:collapse;font-size:13px;margin:8px 0} table.mv th{background:#0A1A2F;color:#fff;text-align:left;padding:8px;font-size:11.5px} table.mv td{padding:8px;border-bottom:1px solid #E2E6EC;vertical-align:top} table.mv tr:nth-child(even) td{background:#F4F6F9} '\n + '.bonus p{font-size:14px;line-height:1.72;margin:0 0 10px} .endbanner{margin-top:26px} .endbanner img{width:100%;display:block} .secintro{font-size:13.5px;line-height:1.62;color:#3a4452;margin:0 0 14px;font-style:italic} .metrics{display:flex;flex-wrap:wrap;gap:10px;margin:8px 0 14px} .metric{flex:1 1 0;min-width:118px;border:1px solid #E2E6EC;border-radius:8px;padding:10px 12px;background:#F4F8FC} .metric .nm{font-size:10px;color:#5A6472;text-transform:uppercase;letter-spacing:.6px} .metric .vl{font-family:Georgia,serif;font-size:21px;font-weight:700;color:#0A1A2F;margin:4px 0 2px} .metric .ch{font-size:12.5px;font-weight:700} .finblock{border:1px solid #E2E6EC;border-left:4px solid #2E9BE6;border-radius:8px;padding:12px 16px;margin:12px 0;page-break-inside:avoid} .finblock h4{margin:0 0 6px;font-family:Georgia,serif;font-size:15px;color:#0A1A2F} .finblock p{margin:0;font-size:13.5px;line-height:1.62;color:#2b3340} ';\n\nfunction secH(kick,title,first){ return '<div class=\"sec'+(first?' first':'')+'\"><h2 class=\"h\"><span class=\"kick\">'+esc(kick)+'</span>'+esc(title)+'</h2>'; }\nfunction lead(t){ t=(t||'').toString().trim(); if(!t)return''; var parts=t.split(/\\n+/).map(function(x){return x.trim();}).filter(function(x){return x;}); if(!parts.length)return''; var h='<p class=\"lead\"><span class=\"dc\">'+esc(parts[0].charAt(0))+'</span>'+esc(parts[0].slice(1))+'</p>'; for(var i=1;i<parts.length;i++){ h+='<p class=\"lead\" style=\"margin-top:10px\">'+esc(parts[i])+'</p>'; } return h; }\nfunction feature(s){ var im=(s.image||'').toString(); var ph=(/^https?:\\/\\//.test(im)||im.indexOf('data:')===0)?'<div class=\"ph\" style=\"background-image:url('+im+')\"></div>':''; var src=(s.source||'').toString(); var link=/^https?:\\/\\//.test(src)?'<a href=\"'+src+'\">Read the source &rsaquo;</a>':(src?'<span style=\"color:#5A6472;font-size:12.5px\">Source: '+esc(src)+'</span>':''); return '<div class=\"feature\">'+ph+'<div class=\"fb\"><h3>'+esc(s.headline)+'</h3><p>'+esc(s.story)+'</p>'+link+'</div></div>'; }\nfunction co(r,L){ L=L||['Key Development','Theme','Signals','Severity','Watch']; function row(l,v,c){ if(v==null||v==='')v='Not specified'; var x=c?('<span style=\"color:'+c+';font-weight:700\">'+esc(v)+'</span>'):esc(v); return '<div class=\"row\"><span class=\"lab\">'+l+'</span>'+x+'</div>'; } return '<div class=\"co\"><div class=\"hd\">'+esc(r.company||r.name||r.org||'')+'</div><div class=\"bd\">'+row(L[0],r.development)+row(L[1],r.theme)+row(L[2],r.signals)+row(L[3],r.risk,riskColor(r.risk))+row(L[4],r.watch)+'</div></div>'; }\nfunction kevTable(rows){ if(!rows||!rows.length)return '<p style=\"color:#5A6472\">No actively-exploited vulnerabilities listed this period.</p>'; var hd=['CVE','Vendor / Product','Vulnerability','Ransomware','Added','Required action']; var h='<tr>'+hd.map(function(x){return '<th>'+x+'</th>';}).join('')+'</tr>'; var b=rows.map(function(r){ var rw=(r.ransomware||'').toString(); var rc=/known/i.test(rw)?'#B02525':'#5A6472'; return '<tr><td><b>'+esc(r.cve||r.company||'')+'</b></td><td>'+esc(r.product||'')+'</td><td>'+esc(r.vuln||r.development||'')+'</td><td style=\"color:'+rc+';font-weight:700\">'+esc(rw||'\\u2014')+'</td><td>'+esc(r.date||'')+'</td><td>'+esc(r.action||'')+'</td></tr>'; }).join(''); return '<table class=\"mv\">'+h+b+'</table>'; }\n\nfunction secIntro(t){ t=(t==null?'':String(t)).trim(); if(!t)return''; return '<p class=\"secintro\">'+esc(t)+'</p>'; }\nfunction chCol(ch){ ch=(ch||'').toString(); if(/(^|\\s)-|down|fell|lower|drop|decline/i.test(ch))return '#B02525'; if(/\\+|up|rose|higher|gain|climb|surge/i.test(ch))return '#1E8E5A'; return '#5A6472'; }\nfunction chArr(ch){ ch=(ch||'').toString(); if(/(^|\\s)-|down|fell|lower|drop|decline/i.test(ch))return '\\u25BC '; if(/\\+|up|rose|higher|gain|climb|surge/i.test(ch))return '\\u25B2 '; return ''; }\nfunction threatSection(t){ if(!t)return''; var ms=t.metrics||[]; var cards=ms.map(function(p){ var col=chCol(p.change); var sub=(p.change&&p.change!=='Not specified')?('<div class=\"ch\" style=\"color:'+col+'\">'+chArr(p.change)+esc(p.change)+'</div>'):(p.note?('<div class=\"ch\" style=\"color:#5A6472\">'+esc(p.note)+'</div>'):''); return '<div class=\"metric\"><div class=\"nm\">'+esc(p.name)+'</div><div class=\"vl\">'+esc(p.value||'\\u2014')+'</div>'+sub+'</div>'; }).join(''); var h=''; if(cards)h+='<div class=\"metrics\">'+cards+'</div>'; if(t.outlook)h+='<div class=\"callout\"><b>Threat outlook &amp; predictions:</b> '+esc(t.outlook)+'</div>'; if(t.spotlightActor)h+='<div class=\"finblock\"><h4>Spotlight: Threat Actor of the Week</h4><p>'+esc(t.spotlightActor)+'</p></div>'; if(t.spotlightVuln)h+='<div class=\"finblock\"><h4>Spotlight: Critical Vulnerability</h4><p>'+esc(t.spotlightVuln)+'</p></div>'; return h; }\nfunction bodyInner(){\n  if(!data){ return '<div class=\"wrap\"><div class=\"callout\" style=\"background:#FDECEC;border-color:#B02525\">The analyst did not return structured data this run. Raw output below.</div><pre style=\"white-space:pre-wrap;font-size:12px\">'+esc(raw)+'</pre></div>'; }\n  var bonus=data.bonus||{}, feats=data.featured||[], incidents=data.incidents||[], actors=data.actors||[]; var INCLBL=['What happened','Sector / impact','Threat actor / vector','Severity','Response & watch']; var ACTLBL=['Recent activity','Origin & type','Primary targets','Threat level','TTPs to watch'];\n  var endbanner='';\n  var heroBand = hero ? ('<div style=\"height:215px;background:#0A1A2F url('+hero+') center/cover no-repeat;border-radius:8px;position:relative;overflow:hidden;margin:0 0 20px\"><div style=\"position:absolute;left:0;right:0;bottom:0;padding:18px 20px 14px;background:linear-gradient(0deg,rgba(10,26,47,.9),rgba(10,26,47,0))\"><div style=\"font-family:Georgia,serif;font-size:24px;font-weight:700;color:#fff;line-height:1.15\">Weekly Cyber Brief</div><div style=\"font-size:13px;color:#CFE3F5;margin-top:3px;letter-spacing:.5px\">'+esc(dateStr)+'</div></div></div>') : '';\n  var signoff=avatar?('<div style=\"text-align:center;padding:22px 0 6px;border-top:3px solid #2E9BE6;margin-top:22px\"><img src=\"'+avatar+'\" style=\"width:96px;height:96px;border-radius:50%;border:2px solid #2E9BE6\"/><div style=\"font-family:Georgia,serif;color:#0A1A2F;margin-top:8px;font-size:14px\">Jarvis — AI News Reporter</div></div>'):'';\n  var h='<div class=\"wrap\">';\n  h+='<div class=\"sec first\">'+heroBand+lead(data.intro)+(data.weekOverWeek?('<div class=\"callout\"><b>What changed since last edition:</b> '+esc(data.weekOverWeek)+'</div>'):'')+'</div>';\n  if(data.threat){ h+=secH('Landscape','Threat Metrics & Exploited Vulnerabilities')+secIntro(data.threat.summary)+threatSection(data.threat)+'</div>'; }\n  if(feats.length){ h+=secH('In focus','Featured Stories')+secIntro(data.featuredIntro)+feats.map(feature).join('')+'</div>'; }\n  h+=secH('Incidents','Major Incidents & Breaches')+secIntro(data.incidentsIntro)+incidents.map(function(r){return co(r,INCLBL);}).join('')+'</div>';\n  h+=secH('Actors','Threat Actors & Campaigns')+secIntro(data.actorsIntro)+actors.map(function(r){return co(r,ACTLBL);}).join('')+'</div>';\n  h+=secH('Vulnerabilities','Actively Exploited Vulnerabilities (CISA KEV)')+secIntro(data.vulnsIntro)+kevTable(data.vulns||[])+'</div>';\n  h+=secH('Analysis','Bonus Read'+(bonus.title?': '+esc(bonus.title):''))+'<div class=\"bonus\">'+(bonus.body?esc(bonus.body).split('\\n').map(function(p){return '<p>'+p+'</p>';}).join(''):'')+'</div>'+signoff+endbanner+'</div>';\n  h+='</div>'; return h;\n}\n\nvar coverCSS='*{margin:0}@page{margin:0} html,body{height:100%;background:#fff} .coverwrap{height:100vh;display:flex;align-items:center;justify-content:center;padding:16px;box-sizing:border-box} .coverbox{position:relative;display:inline-block;max-width:100%;max-height:100%;line-height:0} .coverbox img{display:block;max-width:100%;max-height:calc(100vh - 32px)} .coverbox .date{position:absolute;top:16px;right:18px;color:#fff;font-family:Georgia,serif;font-size:22px;font-weight:700;line-height:1;text-shadow:0 2px 8px rgba(0,0,0,.9)}';\nvar coverHtml='<!doctype html><html><head><meta charset=\"utf-8\"><style>'+coverCSS+'</style></head><body>'+(cover?('<div class=\"coverwrap\"><div class=\"coverbox\"><img src=\"'+cover+'\"/><div class=\"date\">'+esc(dateStr)+'</div></div></div>'):'')+'</body></html>';\nvar bodyHtml='<!doctype html><html><head><meta charset=\"utf-8\"><style>'+BCSS+'</style></head><body>'+bodyInner()+'</body></html>';\nvar headerInner = '<div style=\"height:46px;width:100%;background:#0A1A2F;color:#E7F2FB;font-family:Georgia,serif;font-size:14px;text-align:center;line-height:46px;letter-spacing:1px\">JARVIS INTELLIGENCE &nbsp;&middot;&nbsp; WEEKLY CYBER BRIEF</div>';\nvar headerHtml='<!doctype html><html><head><meta charset=\"utf-8\"></head><body style=\"margin:0\">'+headerInner+'</body></html>';\nvar footerHtml='<!doctype html><html><head><meta charset=\"utf-8\"></head><body style=\"margin:0\"><div style=\"font-size:9px;color:#5A6472;font-family:Arial,Helvetica,sans-serif;width:100%;padding:0 14mm;box-sizing:border-box\"><span style=\"float:left\">JARVIS INTELLIGENCE &middot; AI-generated — always verify findings</span><span style=\"float:right\">Page <span class=\"pageNumber\"></span></span></div></body></html>';\n// combined single-doc for the HTML archive / quick view (browser)\nvar archiveCSS='.cover{height:100vh;background:#0A1A2F url('+cover+') center/contain no-repeat;position:relative} .cover .date{position:absolute;top:24px;right:30px;color:#fff;font-family:Georgia,serif;font-size:23px;font-weight:700} '+BCSS;\nvar html='<!doctype html><html><head><meta charset=\"utf-8\"><title>Cyber Intelligence Brief — '+esc(weekOf)+'</title><style>'+archiveCSS+'</style></head><body>'+(cover?'<div class=\"cover\"><div class=\"date\">'+esc(dateStr)+'</div></div>':'')+headerInner+bodyInner()+'</body></html>';\n\nreturn [{ json: { date: date, weekOf: weekOf, coverHtml: coverHtml, bodyHtml: bodyHtml, headerHtml: headerHtml, footerHtml: footerHtml, html: html, markdown: raw } }];"
+      },
+      "onError": "continueErrorOutput"
+    },
+    {
+      "id": "persist",
+      "name": "Write Report + Archive",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1940,
+        280
+      ],
+      "parameters": {
+        "language": "javaScript",
+        "jsCode": "const fs = require('fs');\nconst date = $json.date;\nconst html = $json.html;\nconst md = $json.markdown || '';\nconst dirs = ['/reports/cyber-brief', '/reports/archive/energy-intelligence'];\nfor (var k = 0; k < dirs.length; k++) {\n  try { fs.mkdirSync(dirs[k], { recursive: true }); fs.writeFileSync(dirs[k] + '/cyber-brief-' + date + '.html', html); } catch (e) {}\n}\ntry { fs.writeFileSync('/reports/archive/energy-intelligence/cyber-brief-' + date + '.json', md); } catch (e) {}\ntry { fs.writeFileSync('/logs/last-run-success.txt', new Date().toISOString() + ' cyber-brief'); } catch (e) {}\nreturn [{ json: $json }];"
+      },
+      "onError": "continueErrorOutput",
+      "notes": "Writes via fs (NODE_FUNCTION_ALLOW_BUILTIN=fs) to avoid the Read/Write File node's binary requirement."
     },
     {
       "id": "email",
       "name": "Email Brief (provider-abstracted)",
       "type": "n8n-nodes-base.emailSend",
       "typeVersion": 2.1,
-      "position": [1400, 360],
+      "position": [
+        3700,
+        420
+      ],
       "parameters": {
         "fromEmail": "={{ $env.EMAIL_FROM }}",
         "toEmail": "={{ $env.EMAIL_TO }}",
-        "subject": "=Cyber Brief — {{ $json.date }}",
-        "html": "={{ $json.html }}",
-        "options": {}
+        "subject": "=Cyber Intelligence Brief — {{ $('Render HTML').first().json.date }}",
+        "html": "={{ $('Render HTML').first().json.html }}",
+        "options": {
+          "attachments": "data"
+        }
       },
-      "onError": "continueErrorOutput",
-      "notes": "Email provider (Gmail/M365/SMTP) is selected via EMAIL_PROVIDER; credentials live in n8n."
+      "onError": "continueRegularOutput",
+      "notes": "Email provider selected via EMAIL_PROVIDER; fails gracefully if SMTP not configured."
     },
     {
-      "id": "fail",
+      "id": "reduced",
       "name": "Reduced Coverage Notice",
       "type": "n8n-nodes-base.noOp",
       "typeVersion": 1,
-      "position": [1160, 460],
+      "position": [
+        1280,
+        460
+      ],
       "parameters": {},
-      "notes": "Failure path: if sources/AI/email fail, emit a reduced-coverage brief and log it instead of producing nothing."
+      "notes": "Failure path: emit a reduced-coverage notice + log instead of producing nothing."
+    },
+    {
+      "id": "use-claude",
+      "name": "Use Claude?",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2,
+      "position": [
+        1090,
+        240
+      ],
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": false,
+            "typeValidation": "loose"
+          },
+          "combinator": "and",
+          "conditions": [
+            {
+              "leftValue": "={{ $env.AI_PROVIDER || 'ollama' }}",
+              "rightValue": "claude",
+              "operator": {
+                "type": "string",
+                "operation": "equals"
+              }
+            }
+          ]
+        }
+      }
+    },
+    {
+      "id": "analyst-claude",
+      "name": "AI Analyst (Claude)",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        1320,
+        140
+      ],
+      "parameters": {
+        "method": "POST",
+        "url": "={{ $env.CLAUDE_BASE_URL || 'https://api.anthropic.com' }}/v1/messages",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "x-api-key",
+              "value": "={{ $env.ANTHROPIC_API_KEY }}"
+            },
+            {
+              "name": "anthropic-version",
+              "value": "2023-06-01"
+            },
+            {
+              "name": "content-type",
+              "value": "application/json"
+            }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={\n  \"model\": \"{{ $env.CLAUDE_MODEL || 'claude-sonnet-4-6' }}\",\n  \"max_tokens\": 16000,\n  \"system\": \"You are a senior cyber threat-intelligence analyst at a top consultancy, producing a weekly cyber intelligence magazine for executives. Use ONLY facts found in the provided digests and the live CISA KEV list; never invent organisations, threat actors, CVEs, numbers or quotes. Write in a precise, engaging, magazine-quality editorial voice. Output a SINGLE valid JSON object and nothing else. Keys: weekOf (string); intro (a rich editorial overview of 2-3 paragraphs, about 8-12 sentences total; separate paragraphs with a single newline character; ONE paragraph MUST summarise the overall threat level and the week's dominant trends); weekOverWeek (1-2 sentences on the most important changes since the previous edition, empty string if none); threat (an object with keys: summary (1-2 sentence overview of the threat landscape this week), metrics (array of up to 4 items with keys name, value, change, note - you may leave this empty as live metrics are injected), outlook (2-3 sentences of forward-looking threat predictions), spotlightActor (2-3 sentences profiling the single most significant threat actor or campaign this week), spotlightVuln (2-3 sentences on the single most critical vulnerability this week)); featured (array of the 3-5 most important stories as magazine write-ups, each with keys headline, story which is 3-4 sentences, source which is the article URL or outlet name, and image which is the IMG= URL from the digest if present else an empty string); incidents (array of major incidents and breaches, each with keys org (the affected organisation), development (what happened), theme (sector and business impact), signals (the threat actor or attack vector), risk (MUST begin with Critical, High, Medium or Low then a short rationale), watch (response and what to watch next)); actors (array of active threat actors or campaigns, each with keys name, development (recent activity), theme (origin and type such as nation-state, ransomware or hacktivist), signals (primary targets or sectors), risk (Critical/High/Medium/Low then rationale), watch (TTPs to watch)); vulns (array of notable vulnerabilities each with keys cve, product, vuln, ransomware, date, action - you may leave this empty as live CISA KEV data is injected); featuredIntro, incidentsIntro, actorsIntro, vulnsIntro (each a 1-2 sentence summary paragraph introducing that section); bonus (an object with keys title and body of 3 short paragraphs). Include at least 4 incidents and 4 actors when the digests support it; attribute developments only to entities named in the digests. Keep every text field concise (2-3 sentences maximum) so the COMPLETE JSON is always returned without truncation. Do NOT wrap the output in markdown code fences; your response MUST begin with { and end with }. Output ONLY the JSON object.\",\n  \"messages\": [\n    {\"role\":\"user\",\"content\": {{ JSON.stringify('CYBER NEWS DIGEST for ' + ($json.date||'') + ' (' + ($json.count||0) + ' items):\\n' + ($json.articles||'') + '\\n\\nINCIDENTS & RANSOMWARE DIGEST (' + ($json.moversCount||0) + ' items):\\n' + ($json.moversDigest||'None retrieved.') + '\\n\\nPREVIOUS EDITION SUMMARY:\\n' + ($json.previous||'No previous edition available.') + '\\n\\nLIVE ACTIVELY-EXPLOITED VULNERABILITIES (CISA KEV - use these for the vulnerabilities table and reference the most critical ones in your analysis):\\n' + ($json.threatDigest||'Not available this run.')) }} }\n  ]\n}",
+        "options": {
+          "timeout": 300000
+        }
+      },
+      "onError": "continueErrorOutput",
+      "notes": "Anthropic Claude path (AI_PROVIDER=claude). Higher-quality analysis. Requires ANTHROPIC_API_KEY."
+    },
+    {
+      "id": "split-movers",
+      "name": "Load Movers Sources",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        620,
+        460
+      ],
+      "parameters": {
+        "language": "javaScript",
+        "jsCode": "const fs = require('fs');\nlet lines = [];\ntry { lines = fs.readFileSync('/config/cyber-incidents-sources.txt','utf8').split(/\\r?\\n/); } catch (e) {}\nconst urls = lines.map(function(l){ return l.trim(); }).filter(function(l){ return l && l.charAt(0) !== '#'; });\nif (!urls.length) { return [{ json: { url: '' } }]; }\nreturn urls.map(function(u){ return { json: { url: u } }; });"
+      },
+      "onError": "continueErrorOutput"
+    },
+    {
+      "id": "fetch-movers",
+      "name": "Fetch Movers",
+      "type": "n8n-nodes-base.rssFeedRead",
+      "typeVersion": 1.1,
+      "position": [
+        840,
+        460
+      ],
+      "parameters": {
+        "url": "={{ $json.url }}",
+        "options": {
+          "ignoreSSL": false
+        }
+      },
+      "onError": "continueRegularOutput"
+    },
+    {
+      "id": "agg-movers",
+      "name": "Aggregate Movers",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1060,
+        460
+      ],
+      "parameters": {
+        "language": "javaScript",
+        "jsCode": "const items = $input.all();\nconst arts = items.map(function(i){ return i.json; }).filter(function(a){ return a && (a.title || a.contentSnippet || a.content); });\nconst lines = arts.slice(0,18).map(function(a){\n  var t = (a.title||'').toString();\n  var s = (a.contentSnippet||a.content||'').toString().replace(/\\s+/g,' ').slice(0,220);\n  var u = (a.link||a.url||'').toString();\n  return '- ' + t + ' — ' + s + ' (' + u + ')';\n});\nconst text = lines.length ? lines.join('\\n') : 'No leadership-change articles retrieved.';\nreturn [{ json: { moversDigest: text, moversCount: arts.length } }];"
+      },
+      "onError": "continueErrorOutput"
+    },
+    {
+      "id": "merge-sources",
+      "name": "Merge Sources",
+      "type": "n8n-nodes-base.merge",
+      "typeVersion": 3,
+      "position": [
+        1090,
+        360
+      ],
+      "parameters": {
+        "mode": "combine",
+        "combineBy": "combineByPosition",
+        "options": {}
+      }
+    },
+    {
+      "id": "cover-file",
+      "name": "Build Cover File",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1940,
+        420
+      ],
+      "parameters": {
+        "language": "javaScript",
+        "jsCode": "const r = $('Render HTML').first().json;\nconst html = r.coverHtml || r.html || '';\nreturn [{ json: { date: r.date }, binary: { data: { data: Buffer.from(html,'utf8').toString('base64'), mimeType: 'text/html', fileName: 'index.html' } } }];"
+      },
+      "onError": "continueErrorOutput",
+      "notes": "Cover page is its own PDF: full-bleed, no header/footer, no page number."
+    },
+    {
+      "id": "gotenberg-cover",
+      "name": "Gotenberg Cover",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        2160,
+        420
+      ],
+      "parameters": {
+        "method": "POST",
+        "url": "={{ $env.GOTENBERG_URL || 'http://jarvis-gotenberg:3000' }}/forms/chromium/convert/html",
+        "contentType": "multipart-form-data",
+        "sendBody": true,
+        "bodyParameters": {
+          "parameters": [
+            {
+              "parameterType": "formBinaryData",
+              "name": "files",
+              "inputDataFieldName": "data"
+            },
+            {
+              "parameterType": "formData",
+              "name": "marginTop",
+              "value": "0"
+            },
+            {
+              "parameterType": "formData",
+              "name": "marginBottom",
+              "value": "0"
+            },
+            {
+              "parameterType": "formData",
+              "name": "marginLeft",
+              "value": "0"
+            },
+            {
+              "parameterType": "formData",
+              "name": "marginRight",
+              "value": "0"
+            }
+          ]
+        },
+        "options": {
+          "response": {
+            "response": {
+              "responseFormat": "file",
+              "outputPropertyName": "data"
+            }
+          },
+          "timeout": 120000
+        }
+      },
+      "onError": "continueErrorOutput",
+      "notes": "Cover HTML -> single full-bleed PDF page (margins 0, no header/footer)."
+    },
+    {
+      "id": "stash-cover",
+      "name": "Stash Cover",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        2380,
+        420
+      ],
+      "parameters": {
+        "language": "javaScript",
+        "jsCode": "const buf = await this.helpers.getBinaryDataBuffer(0, 'data');\nconst b64 = buf ? buf.toString('base64') : '';\nconst date = $('Render HTML').first().json.date;\nreturn [{ json: { date: date, coverB64: b64 } }];"
+      },
+      "onError": "continueErrorOutput",
+      "notes": "Carry the cover PDF as base64 in JSON so it survives the body conversion HTTP call."
+    },
+    {
+      "id": "body-files",
+      "name": "Build Body Files",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        2600,
+        420
+      ],
+      "parameters": {
+        "language": "javaScript",
+        "jsCode": "const r = $('Render HTML').first().json;\nconst enc = function(s){ return Buffer.from(String(s||''),'utf8').toString('base64'); };\nreturn [{ json: { date: r.date },\n  binary: {\n    index:  { data: enc(r.bodyHtml),   mimeType: 'text/html', fileName: 'index.html' },\n    header: { data: enc(r.headerHtml), mimeType: 'text/html', fileName: 'header.html' },\n    footer: { data: enc(r.footerHtml), mimeType: 'text/html', fileName: 'footer.html' }\n  } }];"
+      },
+      "onError": "continueErrorOutput",
+      "notes": "Body PDF inputs: content + Gotenberg-recognised header.html (running hero banner) + footer.html (page number)."
+    },
+    {
+      "id": "gotenberg-body",
+      "name": "Gotenberg Body",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        2820,
+        420
+      ],
+      "parameters": {
+        "method": "POST",
+        "url": "={{ $env.GOTENBERG_URL || 'http://jarvis-gotenberg:3000' }}/forms/chromium/convert/html",
+        "contentType": "multipart-form-data",
+        "sendBody": true,
+        "bodyParameters": {
+          "parameters": [
+            {
+              "parameterType": "formBinaryData",
+              "name": "files",
+              "inputDataFieldName": "index"
+            },
+            {
+              "parameterType": "formBinaryData",
+              "name": "files",
+              "inputDataFieldName": "header"
+            },
+            {
+              "parameterType": "formBinaryData",
+              "name": "files",
+              "inputDataFieldName": "footer"
+            },
+            {
+              "parameterType": "formData",
+              "name": "marginTop",
+              "value": "0.7"
+            },
+            {
+              "parameterType": "formData",
+              "name": "marginBottom",
+              "value": "0.55"
+            },
+            {
+              "parameterType": "formData",
+              "name": "marginLeft",
+              "value": "0"
+            },
+            {
+              "parameterType": "formData",
+              "name": "marginRight",
+              "value": "0"
+            }
+          ]
+        },
+        "options": {
+          "response": {
+            "response": {
+              "responseFormat": "file",
+              "outputPropertyName": "data"
+            }
+          },
+          "timeout": 120000
+        }
+      },
+      "onError": "continueErrorOutput",
+      "notes": "Body HTML -> PDF with running hero banner header on every page + page-number footer."
+    },
+    {
+      "id": "assemble",
+      "name": "Assemble PDFs",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        3040,
+        420
+      ],
+      "parameters": {
+        "language": "javaScript",
+        "jsCode": "const coverB64 = ($('Stash Cover').first().json.coverB64) || '';\nconst bodyBuf = await this.helpers.getBinaryDataBuffer(0, 'data');\nconst coverBuf = Buffer.from(coverB64, 'base64');\nconst cover = await this.helpers.prepareBinaryData(coverBuf, '01-cover.pdf', 'application/pdf');\nconst body  = await this.helpers.prepareBinaryData(bodyBuf,  '02-body.pdf', 'application/pdf');\nconst date = $('Render HTML').first().json.date;\nreturn [{ json: { date: date }, binary: { cover: cover, body: body } }];"
+      },
+      "onError": "continueErrorOutput",
+      "notes": "Place cover + body PDFs on one item with order-prefixed filenames for the merge."
+    },
+    {
+      "id": "gotenberg-merge",
+      "name": "Gotenberg Merge",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        3260,
+        420
+      ],
+      "parameters": {
+        "method": "POST",
+        "url": "={{ $env.GOTENBERG_URL || 'http://jarvis-gotenberg:3000' }}/forms/pdfengines/merge",
+        "contentType": "multipart-form-data",
+        "sendBody": true,
+        "bodyParameters": {
+          "parameters": [
+            {
+              "parameterType": "formBinaryData",
+              "name": "files",
+              "inputDataFieldName": "cover"
+            },
+            {
+              "parameterType": "formBinaryData",
+              "name": "files",
+              "inputDataFieldName": "body"
+            }
+          ]
+        },
+        "options": {
+          "response": {
+            "response": {
+              "responseFormat": "file",
+              "outputPropertyName": "data"
+            }
+          },
+          "timeout": 120000
+        }
+      },
+      "onError": "continueErrorOutput",
+      "notes": "Merge clean cover (page 1) in front of the banner+numbered body (pages 2+) into the final brief."
+    },
+    {
+      "id": "write-pdf",
+      "name": "Write PDF",
+      "type": "n8n-nodes-base.readWriteFile",
+      "typeVersion": 1,
+      "position": [
+        3480,
+        420
+      ],
+      "parameters": {
+        "operation": "write",
+        "fileName": "=/reports/cyber-brief/cyber-brief-{{ $('Render HTML').first().json.date }}.pdf",
+        "dataPropertyName": "data",
+        "options": {}
+      },
+      "onError": "continueRegularOutput",
+      "notes": "Saves the branded PDF (binary). Permissions on reports/ allow the container uid to write."
+    },
+    {
+      "id": "archive-pdf",
+      "name": "Archive PDF",
+      "type": "n8n-nodes-base.readWriteFile",
+      "typeVersion": 1,
+      "position": [
+        3480,
+        560
+      ],
+      "parameters": {
+        "operation": "write",
+        "fileName": "=/reports/archive/cyber-brief/cyber-brief-{{ $('Render HTML').first().json.date }}.pdf",
+        "dataPropertyName": "data",
+        "options": {}
+      },
+      "onError": "continueRegularOutput"
+    },
+    {
+      "id": "fetch-kev",
+      "name": "Fetch Live Threat Data",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1300,
+        540
+      ],
+      "parameters": {
+        "language": "javaScript",
+        "jsCode": "const inp = ($input.first() && $input.first().json) || {};\nlet kev=[]; let metrics=[]; let digest='No live exploited-vulnerability data retrieved this run.';\ntry {\n  const r = await this.helpers.httpRequest({ method:'GET', url:'https://www.cisa.gov/sites/default/files/feeds/known_exploited_vulnerabilities.json', json:true, headers:{ 'User-Agent':'Mozilla/5.0' }, timeout:20000 });\n  const all = (r && r.vulnerabilities) || [];\n  all.sort(function(a,b){ return (b.dateAdded||'').localeCompare(a.dateAdded||''); });\n  const recent = all.slice(0,12);\n  const now=Date.now(), wk=7*24*3600*1000; let new7=0, ransom=0; const vendors={};\n  all.forEach(function(v){ if(v.dateAdded && (now-Date.parse(v.dateAdded))<=wk) new7++; });\n  recent.forEach(function(v){ if(/known/i.test(v.knownRansomwareCampaignUse||'')) ransom++; var vp=v.vendorProject||''; if(vp) vendors[vp]=(vendors[vp]||0)+1; });\n  const topVendor=Object.keys(vendors).sort(function(a,b){return vendors[b]-vendors[a];})[0]||'\\u2014';\n  kev = recent.map(function(v){ return { cve:v.cveID, product:((v.vendorProject||'')+' '+(v.product||'')).trim(), vuln:v.vulnerabilityName||'', ransomware:v.knownRansomwareCampaignUse||'Unknown', date:v.dateAdded||'', action:(v.requiredAction||'').toString().slice(0,90) }; });\n  metrics = [\n    { name:'New KEV (7d)', value:String(new7), change:'', note:'CISA catalog' },\n    { name:'Ransomware-linked', value:String(ransom)+' / '+recent.length, change:'', note:'recent additions' },\n    { name:'Catalog total', value:String(all.length), change:'', note:'all-time KEV' },\n    { name:'Top vendor', value:topVendor, change:'', note:'recent additions' }\n  ];\n  digest = kev.map(function(v){ return '- '+v.cve+' ('+v.product+'): '+v.vuln+(/known/i.test(v.ransomware)?' [ransomware]':'')+' added '+v.date; }).join('\\n');\n} catch(e){ /* non-fatal */ }\nreturn [{ json: Object.assign({}, inp, { kev:kev, threatMetrics:metrics, threatDigest:digest }) }];"
+      },
+      "onError": "continueRegularOutput",
+      "notes": "Live actively-exploited vulnerabilities from the CISA KEV catalog (public, no API key). Non-fatal on failure."
     }
   ],
   "connections": {
-    "Daily Schedule": { "main": [[{ "node": "Load Feed List", "type": "main", "index": 0 }]] },
-    "Load Feed List": { "main": [[{ "node": "Fetch RSS Sources", "type": "main", "index": 0 }], [{ "node": "Reduced Coverage Notice", "type": "main", "index": 0 }]] },
-    "Fetch RSS Sources": { "main": [[{ "node": "AI Analyst (provider-abstracted)", "type": "main", "index": 0 }]] },
-    "AI Analyst (provider-abstracted)": { "main": [[{ "node": "Render HTML / PDF / Email", "type": "main", "index": 0 }], [{ "node": "Reduced Coverage Notice", "type": "main", "index": 0 }]] },
-    "Render HTML / PDF / Email": { "main": [[{ "node": "Store Outputs + Archive", "type": "main", "index": 0 }, { "node": "Email Brief (provider-abstracted)", "type": "main", "index": 0 }], [{ "node": "Reduced Coverage Notice", "type": "main", "index": 0 }]] }
+    "Daily Schedule": {
+      "main": [
+        [
+          {
+            "node": "Enabled?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Enabled?": {
+      "main": [
+        [
+          {
+            "node": "Load & Split Sources",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Load Movers Sources",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        []
+      ]
+    },
+    "Load & Split Sources": {
+      "main": [
+        [
+          {
+            "node": "Fetch Energy Sources",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Reduced Coverage Notice",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Fetch Energy Sources": {
+      "main": [
+        [
+          {
+            "node": "Aggregate Articles",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Aggregate Articles": {
+      "main": [
+        [
+          {
+            "node": "Merge Sources",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Reduced Coverage Notice",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Build Cover Image Prompt": {
+      "main": [
+        [
+          {
+            "node": "Generate Cover (Image Provider)",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Render HTML",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Generate Cover (Image Provider)": {
+      "main": [
+        [],
+        []
+      ]
+    },
+    "Render HTML": {
+      "main": [
+        [
+          {
+            "node": "Write Report + Archive",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Build Cover File",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Reduced Coverage Notice",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Write Report + Archive": {
+      "main": [
+        []
+      ]
+    },
+    "Use Claude?": {
+      "main": [
+        [
+          {
+            "node": "AI Analyst (Claude)",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "AI Analyst (Ollama)",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "AI Analyst (Claude)": {
+      "main": [
+        [
+          {
+            "node": "Build Cover Image Prompt",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Reduced Coverage Notice",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "AI Analyst (Ollama)": {
+      "main": [
+        [
+          {
+            "node": "Build Cover Image Prompt",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Reduced Coverage Notice",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Load Movers Sources": {
+      "main": [
+        [
+          {
+            "node": "Fetch Movers",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Reduced Coverage Notice",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Fetch Movers": {
+      "main": [
+        [
+          {
+            "node": "Aggregate Movers",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Aggregate Movers": {
+      "main": [
+        [
+          {
+            "node": "Merge Sources",
+            "type": "main",
+            "index": 1
+          }
+        ]
+      ]
+    },
+    "Merge Sources": {
+      "main": [
+        [
+          {
+            "node": "Fetch Live Threat Data",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Build Cover File": {
+      "main": [
+        [
+          {
+            "node": "Gotenberg Cover",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        []
+      ]
+    },
+    "Gotenberg Cover": {
+      "main": [
+        [
+          {
+            "node": "Stash Cover",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        []
+      ]
+    },
+    "Stash Cover": {
+      "main": [
+        [
+          {
+            "node": "Build Body Files",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        []
+      ]
+    },
+    "Build Body Files": {
+      "main": [
+        [
+          {
+            "node": "Gotenberg Body",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        []
+      ]
+    },
+    "Gotenberg Body": {
+      "main": [
+        [
+          {
+            "node": "Assemble PDFs",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        []
+      ]
+    },
+    "Assemble PDFs": {
+      "main": [
+        [
+          {
+            "node": "Gotenberg Merge",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        []
+      ]
+    },
+    "Gotenberg Merge": {
+      "main": [
+        [
+          {
+            "node": "Write PDF",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        []
+      ]
+    },
+    "Write PDF": {
+      "main": [
+        [
+          {
+            "node": "Archive PDF",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Archive PDF": {
+      "main": [
+        [
+          {
+            "node": "Email Brief (provider-abstracted)",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Fetch Live Threat Data": {
+      "main": [
+        [
+          {
+            "node": "Use Claude?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
   }
 }

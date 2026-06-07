@@ -1,0 +1,24 @@
+# =============================================================================
+# cyber-sources.txt — sources for the Weekly Cyber Intelligence Brief
+# -----------------------------------------------------------------------------
+# Google News RSS *search* feeds (real, recent, per-topic) plus publisher feeds
+# that carry article images for the magazine layout. One URL per line
+# ('#' = comment). 'when:7d' limits to the last 7 days. Edit freely.
+# =============================================================================
+
+# --- Per-topic threat news ---------------------------------------------------
+https://news.google.com/rss/search?q=ransomware+attack+when:7d&hl=en-US&gl=US&ceid=US:en
+https://news.google.com/rss/search?q=(data+breach+OR+%22data+leak%22)+when:7d&hl=en-US&gl=US&ceid=US:en
+https://news.google.com/rss/search?q=(zero-day+OR+vulnerability+OR+exploit+OR+CVE)+when:7d&hl=en-US&gl=US&ceid=US:en
+https://news.google.com/rss/search?q=(%22nation-state%22+OR+APT+OR+%22state-sponsored%22)+cyber+when:7d&hl=en-US&gl=US&ceid=US:en
+https://news.google.com/rss/search?q=(%22critical+infrastructure%22+OR+ICS+OR+OT)+cyber+when:7d&hl=en-US&gl=US&ceid=US:en
+
+# --- Regional focus (Gulf / Middle East) ------------------------------------
+https://news.google.com/rss/search?q=(UAE+OR+Gulf+OR+%22Middle+East%22+OR+Saudi+OR+Qatar)+(cyber+OR+cybersecurity)+when:7d&hl=en-US&gl=US&ceid=US:en
+
+# --- Publisher-direct feeds (carry article images for the layout) ------------
+https://www.bleepingcomputer.com/feed/
+https://feeds.feedburner.com/TheHackersNews
+https://www.darkreading.com/rss.xml
+https://www.securityweek.com/feed/
+https://krebsonsecurity.com/feed/

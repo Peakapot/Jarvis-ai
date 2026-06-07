@@ -1,0 +1,10 @@
+# =============================================================================
+# cyber-incidents-sources.txt — incidents / breaches / advisories channel
+# -----------------------------------------------------------------------------
+# Feeds the "Major Incidents & Breaches" analysis with concrete victim and
+# advisory items. One URL per line ('#' = comment).
+# =============================================================================
+
+https://news.google.com/rss/search?q=(ransomware+victim+OR+%22claims+responsibility%22+OR+%22hit+by+ransomware%22)+when:7d&hl=en-US&gl=US&ceid=US:en
+https://news.google.com/rss/search?q=(breach+OR+hacked+OR+%22data+stolen%22)+(company+OR+hospital+OR+government+OR+bank+OR+airline)+when:7d&hl=en-US&gl=US&ceid=US:en
+https://www.cisa.gov/cybersecurity-advisories/all.xml
