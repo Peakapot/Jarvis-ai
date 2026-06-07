@@ -33,6 +33,11 @@ https://news.google.com/rss/search?q=(energy+OR+oil+OR+gas)+(%22energy+security%
 # --- MEED (paywalled; surface indexed headlines/links via Google News) ------
 https://news.google.com/rss/search?q=site:meed.com+(ADNOC+OR+QatarEnergy+OR+Aramco+OR+energy+OR+oil+OR+gas+OR+power+OR+LNG)+when:7d&hl=en-US&gl=US&ceid=US:en
 
+# --- Oil & gas prices / markets (feeds the Financial Analysis page) ----------
+https://news.google.com/rss/search?q=(%22Brent+crude%22+OR+%22WTI%22+OR+%22oil+price%22)+(rises+OR+falls+OR+price+OR+%22%24%22)+when:7d&hl=en-US&gl=US&ceid=US:en
+https://news.google.com/rss/search?q=(%22natural+gas+price%22+OR+%22Henry+Hub%22+OR+%22TTF%22+OR+%22JKM%22+OR+%22LNG+price%22)+when:7d&hl=en-US&gl=US&ceid=US:en
+https://news.google.com/rss/search?q=(%22ADNOC+Trading%22+OR+%22ADNOC+Global+Trading%22+OR+%22ADNOC%22+(earnings+OR+capex+OR+dividend+OR+IPO+OR+valuation+OR+trading))+when:14d&hl=en-US&gl=US&ceid=US:en
+
 # --- Publisher-direct feeds (carry article images for the magazine layout) ---
 https://www.rigzone.com/news/rss/rigzone_latest.aspx
 https://oilprice.com/rss/main
