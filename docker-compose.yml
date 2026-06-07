@@ -67,6 +67,10 @@ services:
       # Allow workflow expressions to read $env (e.g. the Telegram allow-list,
       # brief schedules). Values come only from this stack's .env.
       N8N_BLOCK_ENV_ACCESS_IN_NODE: "false"
+      # Allow the Read/Write File node to use the repo folders mounted below
+      # (sources, reports, logs, templates). Without this n8n restricts file
+      # access to /home/node/.n8n-files only.
+      N8N_RESTRICT_FILE_ACCESS_TO: "/config;/reports;/logs;/templates;/prompts;/workflows"
       # Observability
       N8N_LOG_LEVEL: ${N8N_LOG_LEVEL:-info}
       N8N_LOG_OUTPUT: "console,file"
