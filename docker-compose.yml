@@ -84,6 +84,10 @@ services:
       OLLAMA_BASE_URL: http://${OLLAMA_CONTAINER_NAME:-jarvis-ollama}:11434
       OLLAMA_DEFAULT_MODEL: ${OLLAMA_DEFAULT_MODEL:-llama3.1:8b}
       AI_PROVIDER: ${AI_PROVIDER:-ollama}
+      # Claude (Anthropic) — optional AI provider for higher-quality analysis
+      ANTHROPIC_API_KEY: ${ANTHROPIC_API_KEY:-}
+      CLAUDE_MODEL: ${CLAUDE_MODEL:-claude-sonnet-4-6}
+      CLAUDE_BASE_URL: ${CLAUDE_BASE_URL:-https://api.anthropic.com}
       # Telegram (primary interface) — workflows read these via $env
       TELEGRAM_BOT_TOKEN: ${TELEGRAM_BOT_TOKEN:-}
       TELEGRAM_ALLOWED_CHAT_IDS: ${TELEGRAM_ALLOWED_CHAT_IDS:-}

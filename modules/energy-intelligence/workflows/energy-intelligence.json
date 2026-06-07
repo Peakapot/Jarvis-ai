@@ -3,7 +3,7 @@
   "name": "Jarvis · Energy Intelligence Brief",
   "meta": {
     "jarvisModule": "energy-intelligence",
-    "jarvisVersion": "1.3.1",
+    "jarvisVersion": "1.4.0",
     "intelligenceProduct": true,
     "description": "Daily UAE/ADNOC-focused energy intelligence. Splits config/energy-sources.txt into feeds, fetches them, aggregates real articles, analyses with local Ollama, renders HTML and writes report + archive via fs. Cover image is an optional side branch (Image Provider Abstraction). Every external step has a failure path.",
     "prompts": [
@@ -124,20 +124,20 @@
       "onError": "continueErrorOutput"
     },
     {
-      "id": "analyst",
-      "name": "AI Analyst (provider-abstracted)",
+      "id": "analyst-ollama",
+      "name": "AI Analyst (Ollama)",
       "type": "n8n-nodes-base.httpRequest",
       "typeVersion": 4.2,
       "position": [
-        1280,
-        240
+        1320,
+        360
       ],
       "parameters": {
         "method": "POST",
         "url": "={{ $env.OLLAMA_BASE_URL || 'http://jarvis-ollama:11434' }}/api/chat",
         "sendBody": true,
         "specifyBody": "json",
-        "jsonBody": "={\n  \"model\": \"{{ $env.OLLAMA_DEFAULT_MODEL || 'llama3.1:8b' }}\",\n  \"stream\": false,\n  \"keep_alive\": \"10m\",\n  \"options\": { \"temperature\": 0.2, \"num_predict\": 1500, \"num_ctx\": 4096 },\n  \"messages\": [\n    {\"role\":\"system\",\"content\":\"You are a senior energy-sector intelligence analyst producing a weekly regional energy summary for executives, covering Middle East national oil companies (NOCs) and supermajor international oil companies (IOCs). Use ONLY facts found in the provided article digest. Output a SINGLE valid JSON object and nothing else (no markdown, no preamble). The JSON keys are: weekOf (string, the period covered); intro (string, one or two sentences); noc (array of up to 6 objects, focus on ADNOC and its entities, QatarEnergy, Saudi Aramco, Kuwait Petroleum); ioc (array of up to 6 objects, focus on Shell, TotalEnergies, ExxonMobil, BP, Chevron); each noc/ioc object has keys company, development, theme, signals, risk, watch. For risk, begin the value with Low, Medium or High followed by a short rationale. movers (array of up to 6 objects with keys company, individual, previous, current, date, why) describing leadership or board changes. bonus (object with keys title and body; body is 3 short paragraphs of strategic analysis). Omit any company that has no news in the digest. Do not fabricate names, numbers or quotes. Output ONLY the JSON object.\"},\n    {\"role\":\"user\",\"content\": {{ JSON.stringify('Article digest for ' + ($json.date||'') + ' (' + ($json.count||0) + ' items):\\n' + ($json.articles||'')) }} }\n  ]\n}",
+        "jsonBody": "={\n  \"model\": \"{{ $env.OLLAMA_DEFAULT_MODEL || 'llama3.1:8b' }}\",\n  \"stream\": false,\n  \"keep_alive\": \"10m\",\n  \"options\": { \"temperature\": 0.2, \"num_predict\": 1500, \"num_ctx\": 4096 },\n  \"messages\": [\n    {\"role\":\"system\",\"content\":\"You are a senior energy-sector intelligence analyst at a top consultancy, producing a weekly regional energy summary for executives covering Middle East national oil companies (NOCs) and supermajor international oil companies (IOCs). Use ONLY facts found in the provided article digest; never invent companies, names, numbers, deals or quotes. Write in a precise, analytical consulting voice. Output a SINGLE valid JSON object and nothing else (no markdown, no preamble, no code fences). Keys: weekOf (string); intro (2-3 sentences framing the week); noc (array up to 6; focus ADNOC and its entities, QatarEnergy, Saudi Aramco, Kuwait Petroleum); ioc (array up to 6; focus Shell, TotalEnergies, ExxonMobil, BP, Chevron); each noc/ioc item has keys company, development (the concrete development in 1-2 sentences), theme (short strategic theme), signals (what it signals, 1-2 sentences), risk (begin with Low, Medium or High then a short rationale), watch (a forward-looking watch point). movers (array up to 6 with keys company, individual, previous, current, date, why describing leadership or board changes). bonus (object with keys title and body; body is 3 short paragraphs of original strategic analysis grounded in the digest). Omit any company with no relevant news. Output ONLY the JSON object.\"},\n    {\"role\":\"user\",\"content\": {{ JSON.stringify('Article digest for ' + ($json.date||'') + ' (' + ($json.count||0) + ' items):\\n' + ($json.articles||'')) }} }\n  ]\n}",
         "options": {
           "timeout": 600000
         }
@@ -155,7 +155,7 @@
       ],
       "parameters": {
         "language": "javaScript",
-        "jsCode": "const md = ($json && $json.message && $json.message.content) ? $json.message.content : '';\nconst top = md.split(/\\n/).filter(function(l){ return /adnoc|energy|oil|gas|lng|masdar|taqa/i.test(l); }).slice(0,4).join('; ') || 'UAE and ADNOC energy sector developments';\nconst style = 'Premium editorial intelligence-report cover. Deep navy (#0A1A2F) background with refined gold (#C9A24B) accents. Abstract professional energy motifs (flowing light, geometric grids, subtle infrastructure silhouettes). NO text, NO logos, NO faces. Cinematic, restrained, high-end consultancy aesthetic.';\nreturn [{ json: { markdown: md || 'No data available for this period.', date: new Date().toISOString().slice(0,10), coverPrompt: style + ' Visual theme inspired by: ' + top } }];"
+        "jsCode": "const j = $json || {};\nlet md = '';\nif (j.message && j.message.content) { md = j.message.content; }\nelse if (j.content && j.content[0] && j.content[0].text) { md = j.content[0].text; }\nelse if (typeof j.markdown === 'string') { md = j.markdown; }\nmd = md || '';\nconst top = md.split(/\\n/).filter(function(l){ return /adnoc|energy|oil|gas|lng|masdar|taqa/i.test(l); }).slice(0,4).join('; ') || 'UAE and ADNOC energy sector developments';\nconst style = 'Premium editorial intelligence-report cover. Deep navy (#0A1A2F) background with refined gold (#C9A24B) accents. Abstract professional energy motifs. NO text, NO logos, NO faces.';\nreturn [{ json: { markdown: md || 'No data available for this period.', date: new Date().toISOString().slice(0,10), coverPrompt: style + ' Visual theme inspired by: ' + top } }];"
       },
       "onError": "continueErrorOutput"
     },
@@ -251,6 +251,74 @@
       ],
       "parameters": {},
       "notes": "Failure path: emit a reduced-coverage notice + log instead of producing nothing."
+    },
+    {
+      "id": "use-claude",
+      "name": "Use Claude?",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2,
+      "position": [
+        1090,
+        240
+      ],
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": false,
+            "typeValidation": "loose"
+          },
+          "combinator": "and",
+          "conditions": [
+            {
+              "leftValue": "={{ $env.AI_PROVIDER || 'ollama' }}",
+              "rightValue": "claude",
+              "operator": {
+                "type": "string",
+                "operation": "equals"
+              }
+            }
+          ]
+        }
+      }
+    },
+    {
+      "id": "analyst-claude",
+      "name": "AI Analyst (Claude)",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        1320,
+        140
+      ],
+      "parameters": {
+        "method": "POST",
+        "url": "={{ $env.CLAUDE_BASE_URL || 'https://api.anthropic.com' }}/v1/messages",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "x-api-key",
+              "value": "={{ $env.ANTHROPIC_API_KEY }}"
+            },
+            {
+              "name": "anthropic-version",
+              "value": "2023-06-01"
+            },
+            {
+              "name": "content-type",
+              "value": "application/json"
+            }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={\n  \"model\": \"{{ $env.CLAUDE_MODEL || 'claude-sonnet-4-6' }}\",\n  \"max_tokens\": 4000,\n  \"system\": \"You are a senior energy-sector intelligence analyst at a top consultancy, producing a weekly regional energy summary for executives covering Middle East national oil companies (NOCs) and supermajor international oil companies (IOCs). Use ONLY facts found in the provided article digest; never invent companies, names, numbers, deals or quotes. Write in a precise, analytical consulting voice. Output a SINGLE valid JSON object and nothing else (no markdown, no preamble, no code fences). Keys: weekOf (string); intro (2-3 sentences framing the week); noc (array up to 6; focus ADNOC and its entities, QatarEnergy, Saudi Aramco, Kuwait Petroleum); ioc (array up to 6; focus Shell, TotalEnergies, ExxonMobil, BP, Chevron); each noc/ioc item has keys company, development (the concrete development in 1-2 sentences), theme (short strategic theme), signals (what it signals, 1-2 sentences), risk (begin with Low, Medium or High then a short rationale), watch (a forward-looking watch point). movers (array up to 6 with keys company, individual, previous, current, date, why describing leadership or board changes). bonus (object with keys title and body; body is 3 short paragraphs of original strategic analysis grounded in the digest). Omit any company with no relevant news. Output ONLY the JSON object.\",\n  \"messages\": [\n    {\"role\":\"user\",\"content\": {{ JSON.stringify('Article digest for ' + ($json.date||'') + ' (' + ($json.count||0) + ' items):\\n' + ($json.articles||'')) }} }\n  ]\n}",
+        "options": {
+          "timeout": 120000
+        }
+      },
+      "onError": "continueErrorOutput",
+      "notes": "Anthropic Claude path (AI_PROVIDER=claude). Higher-quality analysis. Requires ANTHROPIC_API_KEY."
     }
   ],
   "connections": {
@@ -310,25 +378,7 @@
       "main": [
         [
           {
-            "node": "AI Analyst (provider-abstracted)",
-            "type": "main",
-            "index": 0
-          }
-        ],
-        [
-          {
-            "node": "Reduced Coverage Notice",
-            "type": "main",
-            "index": 0
-          }
-        ]
-      ]
-    },
-    "AI Analyst (provider-abstracted)": {
-      "main": [
-        [
-          {
-            "node": "Build Cover Image Prompt",
+            "node": "Use Claude?",
             "type": "main",
             "index": 0
           }
@@ -387,6 +437,60 @@
         [
           {
             "node": "Email Brief (provider-abstracted)",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Use Claude?": {
+      "main": [
+        [
+          {
+            "node": "AI Analyst (Claude)",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "AI Analyst (Ollama)",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "AI Analyst (Claude)": {
+      "main": [
+        [
+          {
+            "node": "Build Cover Image Prompt",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Reduced Coverage Notice",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "AI Analyst (Ollama)": {
+      "main": [
+        [
+          {
+            "node": "Build Cover Image Prompt",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Reduced Coverage Notice",
             "type": "main",
             "index": 0
           }
