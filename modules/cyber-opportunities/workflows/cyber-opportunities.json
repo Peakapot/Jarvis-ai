@@ -3,7 +3,7 @@
   "name": "Jarvis · Cyber Opportunities Brief",
   "meta": {
     "jarvisModule": "cyber-opportunities",
-    "jarvisVersion": "2.3.0",
+    "jarvisVersion": "2.4.0",
     "intelligenceProduct": true,
     "description": "Weekly cyber commercial-opportunities (RFP) brief. Google-News opportunity feeds -> round-robin by region -> Claude/Ollama structured analysis -> blue-branded HTML+PDF (rfpcover/rfpbanner) -> archive+email. Week-over-week aware.",
     "prompts": [
@@ -179,7 +179,7 @@
         },
         "sendBody": true,
         "specifyBody": "json",
-        "jsonBody": "={\n  \"model\": \"{{ $env.CLAUDE_MODEL || 'claude-sonnet-4-6' }}\",\n  \"max_tokens\": 6000,\n  \"system\": \"You are a senior business-development analyst for a cybersecurity consulting and managed-services firm, producing a weekly commercial-opportunities brief for leadership. Use ONLY facts found in the provided digest; never invent tenders, buyers, values or deadlines. Write in a precise, commercial voice. Output a SINGLE valid JSON object and nothing else (no markdown, no preamble, no code fences). Keys: weekOf (string); executiveSummary (2-3 sentences); weekOverWeek (short string of changes since the previous edition; empty string if none provided); topOpportunities (array up to 10; each: opportunity, buyer, region, type, value, deadline, source) where type is one of RFP, RFI, Tender, Managed Security, Security Awareness, GRC, SOC, Vulnerability Management, OT Security, Critical Infrastructure, AI Security, Cloud Security; regionalBreakdown (array; each: region, summary) covering GCC first (UAE, Saudi Arabia, Qatar, Oman, Bahrain, Kuwait), then UK/Europe, then Global; highPriority (array up to 6; each: opportunity, fit, posture, winProbability where winProbability begins with Low, Medium or High then a short rationale); strategicRelevance (string, 2-3 sentences); recommendedActions (array of short action strings); historicalTrends (string, 2-3 sentences). Focus regions: primary GCC, secondary UK/Europe/Global. Where a field is unknown use 'Not specified'. Do not fabricate. If a PREVIOUS EDITION SUMMARY is provided, populate weekOverWeek with what changed since then. Output ONLY the JSON object.\",\n  \"messages\": [\n    {\"role\":\"user\",\"content\": {{ JSON.stringify('OPPORTUNITY DIGEST for ' + ($json.date||'') + ' (' + ($json.count||0) + ' items):\\n' + ($json.articles||'') + '\\n\\nPREVIOUS EDITION SUMMARY:\\n' + ($json.previous||'No previous edition available.')) }} }\n  ]\n}",
+        "jsonBody": "={\n  \"model\": \"{{ $env.CLAUDE_MODEL || 'claude-sonnet-4-6' }}\",\n  \"max_tokens\": 6000,\n  \"system\": \"You are a senior business-development analyst for a cybersecurity consulting and managed-services firm, producing a weekly commercial-opportunities brief for leadership. Use ONLY facts found in the provided digest; never invent tenders, buyers, values or deadlines. Write in a precise, commercial voice. Output a SINGLE valid JSON object and nothing else (no markdown, no preamble, no code fences). Keys: weekOf (string); executiveSummary (2-3 sentences); weekOverWeek (short string of changes since the previous edition; empty string if none provided); topOpportunities (array up to 10; each: opportunity, buyer, region, type, value, deadline, source) where type is one of RFP, RFI, Tender, Managed Security, Security Awareness, GRC, SOC, Vulnerability Management, OT Security, Critical Infrastructure, AI Security, Cloud Security; regionalBreakdown (array; each: region, summary) covering GCC first (UAE, Saudi Arabia, Qatar, Oman, Bahrain, Kuwait), then UK/Europe, then Global; highPriority (array up to 6; each: opportunity, fit, posture, winProbability where winProbability begins with Low, Medium or High then a short rationale); strategicRelevance (string, 2-3 sentences); recommendedActions (array of short action strings); historicalTrends (string, 2-3 sentences). Focus regions: primary GCC, secondary UK/Europe/Global. Prefer entries from the VERIFIED TENDER LINKS section for topOpportunities and use their real URL as the source; treat the news digest as supporting demand-signal context. Where a field is unknown use 'Not specified'. Do not fabricate. If a PREVIOUS EDITION SUMMARY is provided, populate weekOverWeek with what changed since then. Output ONLY the JSON object.\",\n  \"messages\": [\n    {\"role\":\"user\",\"content\": {{ JSON.stringify('OPPORTUNITY DIGEST for ' + ($json.date||'') + ' (' + ($json.count||0) + ' items):\\n' + ($json.articles||'') + '\\n\\nVERIFIED TENDER LINKS (real procurement/tender pages — PREFER these for topOpportunities and use the URL as source):\\n' + ($json.tenders||'None.') + '\\n\\nPREVIOUS EDITION SUMMARY:\\n' + ($json.previous||'No previous edition available.')) }} }\n  ]\n}",
         "options": {
           "timeout": 120000
         }
@@ -200,7 +200,7 @@
         "url": "={{ $env.OLLAMA_BASE_URL || 'http://jarvis-ollama:11434' }}/api/chat",
         "sendBody": true,
         "specifyBody": "json",
-        "jsonBody": "={\n  \"model\": \"{{ $env.OLLAMA_DEFAULT_MODEL || 'llama3.1:8b' }}\",\n  \"stream\": false,\n  \"keep_alive\": \"10m\",\n  \"options\": { \"temperature\": 0.2, \"num_predict\": 2400, \"num_ctx\": 8192 },\n  \"messages\": [\n    {\"role\":\"system\",\"content\":\"You are a senior business-development analyst for a cybersecurity consulting and managed-services firm, producing a weekly commercial-opportunities brief for leadership. Use ONLY facts found in the provided digest; never invent tenders, buyers, values or deadlines. Write in a precise, commercial voice. Output a SINGLE valid JSON object and nothing else (no markdown, no preamble, no code fences). Keys: weekOf (string); executiveSummary (2-3 sentences); weekOverWeek (short string of changes since the previous edition; empty string if none provided); topOpportunities (array up to 10; each: opportunity, buyer, region, type, value, deadline, source) where type is one of RFP, RFI, Tender, Managed Security, Security Awareness, GRC, SOC, Vulnerability Management, OT Security, Critical Infrastructure, AI Security, Cloud Security; regionalBreakdown (array; each: region, summary) covering GCC first (UAE, Saudi Arabia, Qatar, Oman, Bahrain, Kuwait), then UK/Europe, then Global; highPriority (array up to 6; each: opportunity, fit, posture, winProbability where winProbability begins with Low, Medium or High then a short rationale); strategicRelevance (string, 2-3 sentences); recommendedActions (array of short action strings); historicalTrends (string, 2-3 sentences). Focus regions: primary GCC, secondary UK/Europe/Global. Where a field is unknown use 'Not specified'. Do not fabricate. If a PREVIOUS EDITION SUMMARY is provided, populate weekOverWeek with what changed since then. Output ONLY the JSON object.\"},\n    {\"role\":\"user\",\"content\": {{ JSON.stringify('OPPORTUNITY DIGEST for ' + ($json.date||'') + ' (' + ($json.count||0) + ' items):\\n' + ($json.articles||'') + '\\n\\nPREVIOUS EDITION SUMMARY:\\n' + ($json.previous||'No previous edition available.')) }} }\n  ]\n}",
+        "jsonBody": "={\n  \"model\": \"{{ $env.OLLAMA_DEFAULT_MODEL || 'llama3.1:8b' }}\",\n  \"stream\": false,\n  \"keep_alive\": \"10m\",\n  \"options\": { \"temperature\": 0.2, \"num_predict\": 2400, \"num_ctx\": 8192 },\n  \"messages\": [\n    {\"role\":\"system\",\"content\":\"You are a senior business-development analyst for a cybersecurity consulting and managed-services firm, producing a weekly commercial-opportunities brief for leadership. Use ONLY facts found in the provided digest; never invent tenders, buyers, values or deadlines. Write in a precise, commercial voice. Output a SINGLE valid JSON object and nothing else (no markdown, no preamble, no code fences). Keys: weekOf (string); executiveSummary (2-3 sentences); weekOverWeek (short string of changes since the previous edition; empty string if none provided); topOpportunities (array up to 10; each: opportunity, buyer, region, type, value, deadline, source) where type is one of RFP, RFI, Tender, Managed Security, Security Awareness, GRC, SOC, Vulnerability Management, OT Security, Critical Infrastructure, AI Security, Cloud Security; regionalBreakdown (array; each: region, summary) covering GCC first (UAE, Saudi Arabia, Qatar, Oman, Bahrain, Kuwait), then UK/Europe, then Global; highPriority (array up to 6; each: opportunity, fit, posture, winProbability where winProbability begins with Low, Medium or High then a short rationale); strategicRelevance (string, 2-3 sentences); recommendedActions (array of short action strings); historicalTrends (string, 2-3 sentences). Focus regions: primary GCC, secondary UK/Europe/Global. Prefer entries from the VERIFIED TENDER LINKS section for topOpportunities and use their real URL as the source; treat the news digest as supporting demand-signal context. Where a field is unknown use 'Not specified'. Do not fabricate. If a PREVIOUS EDITION SUMMARY is provided, populate weekOverWeek with what changed since then. Output ONLY the JSON object.\"},\n    {\"role\":\"user\",\"content\": {{ JSON.stringify('OPPORTUNITY DIGEST for ' + ($json.date||'') + ' (' + ($json.count||0) + ' items):\\n' + ($json.articles||'') + '\\n\\nVERIFIED TENDER LINKS (real procurement/tender pages — PREFER these for topOpportunities and use the URL as source):\\n' + ($json.tenders||'None.') + '\\n\\nPREVIOUS EDITION SUMMARY:\\n' + ($json.previous||'No previous edition available.')) }} }\n  ]\n}",
         "options": {
           "timeout": 600000
         }
@@ -419,6 +419,95 @@
         520
       ],
       "parameters": {}
+    },
+    {
+      "id": "build-queries",
+      "name": "Build Search Queries",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        620,
+        460
+      ],
+      "parameters": {
+        "language": "javaScript",
+        "jsCode": "var queries = [\n  'cybersecurity (tender OR RFP OR RFI OR procurement) (UAE OR \"Saudi Arabia\" OR Qatar OR Oman OR Bahrain OR Kuwait)',\n  '(\"managed security\" OR SOC OR GRC OR \"vulnerability management\") (tender OR RFP OR contract) (UAE OR Gulf OR \"Saudi Arabia\" OR Qatar)',\n  '(\"OT security\" OR \"critical infrastructure\" OR \"cloud security\" OR \"AI security\") (tender OR RFP) (Gulf OR UAE OR \"Middle East\")',\n  'cybersecurity (tender OR framework OR RFP OR procurement) (\"United Kingdom\" OR UK OR Europe)'\n];\nreturn queries.map(function(q){ return { json: { q: q } }; });"
+      },
+      "onError": "continueErrorOutput"
+    },
+    {
+      "id": "search-cse",
+      "name": "Search Tenders (Google CSE)",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        840,
+        460
+      ],
+      "parameters": {
+        "method": "GET",
+        "url": "https://www.googleapis.com/customsearch/v1",
+        "sendQuery": true,
+        "queryParameters": {
+          "parameters": [
+            {
+              "name": "key",
+              "value": "={{ $env.GOOGLE_CSE_KEY }}"
+            },
+            {
+              "name": "cx",
+              "value": "={{ $env.GOOGLE_CSE_CX }}"
+            },
+            {
+              "name": "q",
+              "value": "={{ $json.q }}"
+            },
+            {
+              "name": "dateRestrict",
+              "value": "m1"
+            },
+            {
+              "name": "num",
+              "value": "10"
+            }
+          ]
+        },
+        "options": {
+          "timeout": 30000
+        }
+      },
+      "onError": "continueRegularOutput",
+      "notes": "Google Programmable Search (free 100/day). Returns real tender/portal links. Inert until GOOGLE_CSE_KEY + GOOGLE_CSE_CX set."
+    },
+    {
+      "id": "agg-links",
+      "name": "Aggregate Tender Links",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1060,
+        460
+      ],
+      "parameters": {
+        "language": "javaScript",
+        "jsCode": "const items = $input.all();\nvar links = [];\nitems.forEach(function(it){\n  var arr = (it.json && it.json.items) ? it.json.items : [];\n  arr.forEach(function(r){ links.push('- ' + (r.title||'') + ' — ' + ((r.snippet||'').toString().replace(/\\s+/g,' ').slice(0,160)) + ' (' + (r.link||'') + ')'); });\n});\nvar text = links.length ? links.slice(0,25).join('\\n') : 'No verified tender links retrieved (set GOOGLE_CSE_KEY and GOOGLE_CSE_CX in .env to enable real RFP links).';\nreturn [{ json: { tenders: text, tenderCount: links.length } }];"
+      },
+      "onError": "continueErrorOutput"
+    },
+    {
+      "id": "merge-sources",
+      "name": "Merge Sources",
+      "type": "n8n-nodes-base.merge",
+      "typeVersion": 3,
+      "position": [
+        1280,
+        360
+      ],
+      "parameters": {
+        "mode": "combine",
+        "combineBy": "combineByPosition",
+        "options": {}
+      }
     }
   ],
   "connections": {
@@ -438,6 +527,11 @@
         [
           {
             "node": "Load & Split Sources",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Build Search Queries",
             "type": "main",
             "index": 0
           }
@@ -478,7 +572,7 @@
       "main": [
         [
           {
-            "node": "Use Claude?",
+            "node": "Merge Sources",
             "type": "main",
             "index": 0
           }
@@ -635,6 +729,50 @@
         [
           {
             "node": "Email Brief (provider-abstracted)",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Build Search Queries": {
+      "main": [
+        [
+          {
+            "node": "Search Tenders (Google CSE)",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Search Tenders (Google CSE)": {
+      "main": [
+        [
+          {
+            "node": "Aggregate Tender Links",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Aggregate Tender Links": {
+      "main": [
+        [
+          {
+            "node": "Merge Sources",
+            "type": "main",
+            "index": 1
+          }
+        ]
+      ]
+    },
+    "Merge Sources": {
+      "main": [
+        [
+          {
+            "node": "Use Claude?",
             "type": "main",
             "index": 0
           }

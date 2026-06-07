@@ -90,6 +90,9 @@ services:
       CLAUDE_BASE_URL: ${CLAUDE_BASE_URL:-https://api.anthropic.com}
       # Gotenberg HTML->PDF service (used by intelligence briefs to emit PDF)
       GOTENBERG_URL: ${GOTENBERG_URL:-http://jarvis-gotenberg:3000}
+      # Google Programmable Search (free) for real RFP/tender links
+      GOOGLE_CSE_KEY: ${GOOGLE_CSE_KEY:-}
+      GOOGLE_CSE_CX: ${GOOGLE_CSE_CX:-}
       # Telegram (primary interface) — workflows read these via $env
       TELEGRAM_BOT_TOKEN: ${TELEGRAM_BOT_TOKEN:-}
       TELEGRAM_ALLOWED_CHAT_IDS: ${TELEGRAM_ALLOWED_CHAT_IDS:-}
