@@ -24,6 +24,11 @@ Steer topics with `config/awareness/topics.txt`. Provider follows `AI_PROVIDER`.
 | `micro-tips.json` | `/tips` (+ weekly) | `tips/` — printable tips one-pager + lock-screen cards |
 | `teachable-moment.json` | `/teachable` (+ weekly) | `teachable/` — news-triggered "what happened / why / what to do" note |
 | `kpi-report.json` | `/kpi` | `kpi/` — client KPI report from `config/awareness/kpi-input.json` |
+| `elearning.json` | `/elearning` | `elearning/` — interactive HTML lesson + SCORM 1.2 `.zip` (scored knowledge check) |
+| `certificate.json` | `/certificate` | `certificates/` — diploma-style completion certificate PDF (landscape) |
+| `campaign-calendar.json` | `/calendar` | `calendar/` — 12-month campaign plan PDF + `.ics` calendar feed |
+| `video-script.json` | `/videoscript` | `video/` — video script & storyboard PDF (scene cards) |
+| `signage-slides.json` | `/signage` | `signage/` — 1920×1080 digital-signage PNG slides, bundled as a `.zip` |
 
 ## Choosing the topic & options
 - **Telegram:** pass the topic in the command, e.g. `/poster mfa`,
@@ -39,6 +44,11 @@ Steer topics with `config/awareness/topics.txt`. Provider follows `AI_PROVIDER`.
 - *teachable-moment* takes an optional **Focus** (else it auto-picks the week's
   top breach); *kpi-report* reads `config/awareness/kpi-input.json` with optional
   Period/Client overrides on the form.
+- *elearning* adds **Audience**, a **Pass mark (%)** and a **Format** (interactive
+  HTML, SCORM package, or both); *certificate* takes a **Recipient name**,
+  **Course/topic**, **Date** and optional **Certificate ID**; *campaign-calendar*
+  takes a **Year** and optional **Focus/region**; *video-script* takes a **Length
+  (seconds)**; *signage-slides* takes a **Number of slides**.
 
 ## Inputs
 - `config/awareness/topics.txt` — suggested topics/themes (mirrored in the form dropdowns).
@@ -48,7 +58,8 @@ Steer topics with `config/awareness/topics.txt`. Provider follows `AI_PROVIDER`.
 ## Import
 `./workflows` is mounted at `/workflows`, so each is importable directly:
 ```
-for w in poster-explainer quiz-pack tabletop-pack micro-tips teachable-moment kpi-report; do
+for w in poster-explainer quiz-pack tabletop-pack micro-tips teachable-moment kpi-report \
+         elearning certificate campaign-calendar video-script signage-slides; do
   docker compose exec n8n n8n import:workflow --input=/workflows/awareness/$w.json
 done
 docker compose exec n8n n8n import:workflow --input=/workflows/core/telegram-assistant.json

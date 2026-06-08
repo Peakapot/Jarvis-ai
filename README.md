@@ -27,8 +27,10 @@ reproducible from a single idempotent installer.
   data and source references.
 - 🧰 **On-demand awareness toolkit** — generate posters, one-page explainers,
   quizzes & "spot-the-phish" packs, tabletop exercises, micro-tips & lock-screen
-  cards, news-triggered "teachable moment" notes, and client KPI reports — each
-  on request via a single Telegram command.
+  cards, news-triggered "teachable moment" notes, client KPI reports,
+  **interactive e-learning modules (HTML + SCORM)**, **completion certificates**,
+  **12-month campaign calendars**, **video scripts & storyboards**, and
+  **digital-signage slides** — each on request via a single Telegram command.
 - 💬 **Conversational Telegram interface** — the team drives everything with
   simple commands (`/poster phishing`, `/tabletop ransomware`, `/quiz mfa`, …);
   finished assets are saved and returned in chat.
@@ -69,12 +71,12 @@ a branded PDF — **without editing any code**.
 
 | Capability | What it produces | Entry point |
 |------------|------------------|-------------|
-| **Telegram Assistant** | The control surface: `/help`, `/status`, `/cyber`, `/defence`, `/energy`, `/opportunities`, plus the awareness toolkit `/poster`, `/explainer`, `/quiz`, `/tabletop`, `/tips`, `/teachable`, `/kpi`. | `workflows/core/telegram-assistant.json` |
+| **Telegram Assistant** | The control surface: `/help`, `/status`, `/cyber`, `/defence`, `/energy`, `/opportunities`, plus the awareness toolkit `/poster`, `/explainer`, `/quiz`, `/tabletop`, `/tips`, `/teachable`, `/kpi`, `/elearning`, `/certificate`, `/calendar`, `/videoscript`, `/signage`. | `workflows/core/telegram-assistant.json` |
 | **Cybersecurity Talent** *(weekly magazine)* | Awareness & skills magazine: editorial, featured training technique, training technology, qualifications & courses, in-demand skills, the human firewall, emerging threats — journalistic briefs, custom AI cover, references. | `workflows/core/cyber-brief.json` |
 | **Cyber Defence Watch** *(weekly brief)* | OSINT cyber-defence brief themed for the **KSA Ministry of Defence**: allied policy & capability (US/UK/Five Eyes/NATO), Middle East defence cyber, defence-impacting breaches, threat actors, and a bespoke *Implications for KSA MOD* assessment. | `workflows/core/defence-cyber.json` |
 | **Cyber Opportunities Brief** *(daily)* | Commercial-opportunity radar (RFPs, tenders, MSS, GRC, SOC, OT/CNI, cloud & AI security) with a GCC-first focus. | `modules/cyber-opportunities/` |
 | **Energy Intelligence Brief** *(daily)* | UAE/ADNOC-focused energy intelligence with live oil & gas prices and an AI cover. | `modules/energy-intelligence/` |
-| **Awareness Toolkit** *(on-demand)* | Posters, explainers, quizzes, tabletop packs, micro-tips, teachable-moment notes, KPI reports — files to `reports/awareness/`. | `workflows/awareness/` |
+| **Awareness Toolkit** *(on-demand)* | Posters, explainers, quizzes, tabletop packs, micro-tips, teachable-moment notes, KPI reports, e-learning modules (HTML + SCORM), completion certificates, campaign calendars, video scripts & storyboards, digital-signage slides — files to `reports/awareness/`. | `workflows/awareness/` |
 
 ## Intelligence magazines
 
@@ -108,6 +110,11 @@ until `CLIENT_NAME` is set for white-label delivery.
 | Micro-Tips & Cards | `/tips <theme>` | printable tips + lock-screen cards (also weekly) |
 | Teachable Moment | `/teachable` | news-triggered "what happened / why / what to do" note (also weekly) |
 | KPI Report | `/kpi` | client metrics report from `config/awareness/kpi-input.json` |
+| E-learning Module | `/elearning <topic>` | interactive HTML lesson + SCORM 1.2 package (scored knowledge check) |
+| Completion Certificate | `/certificate <name>` | diploma-style certificate PDF (landscape, unique ID) |
+| Campaign Calendar | `/calendar [year]` | 12-month awareness plan PDF + `.ics` calendar feed |
+| Video Script & Storyboard | `/videoscript <topic>` | script + storyboard PDF (scene cards) |
+| Digital-Signage Slides | `/signage <topic>` | 1920×1080 PNG slides bundled as a `.zip` |
 
 ## How it works
 
