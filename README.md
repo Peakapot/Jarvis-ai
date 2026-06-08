@@ -1,54 +1,46 @@
 <!-- markdownlint-disable MD033 MD041 -->
 <div align="center">
 
-# 🤖 Jarvis — Personal AI Assistant Platform
+# 🛡️ Jarvis — AI Cyber Awareness Assistant
 
-**Docker-first · Modular · Recoverable · Observable · Secure by default**
+**Automated cyber-awareness intelligence & content for security teams**
 
-A self-hostable personal AI assistant built on [n8n](https://n8n.io) and
-[Ollama](https://ollama.com), with a Telegram interface, a daily cyber-threat
-intelligence brief, an email assistant, and a plugin architecture for future
-capabilities — all reproducible from a single idempotent installer.
+Docker-first · Modular · Recoverable · Observable · Secure by default
+
+Jarvis is a self-hostable AI assistant that produces **professional,
+magazine-quality cyber intelligence** and a full **security-awareness content
+toolkit** — delivered straight to Telegram and as branded PDFs. It is built for a
+security awareness & training team to run for their organisation and their
+clients, on [n8n](https://n8n.io) + [Ollama](https://ollama.com), and is
+reproducible from a single idempotent installer.
 
 </div>
 
 ---
 
-## Why Jarvis
+## What Jarvis delivers
 
-Jarvis is engineered as a **long-term product**, not a throwaway experiment.
-Every design decision optimises for maintainability, reliability,
-recoverability, observability, security and future expansion so that major
-architectural refactoring is avoided later. The guiding principles:
+- 📰 **Weekly intelligence magazines** — *Cybersecurity Talent* (awareness &
+  skills), *Cyber Defence Watch* (an OSINT cyber-defence brief themed for the KSA
+  Ministry of Defence), plus *Cyber Opportunities* and *Energy* briefs. Each is a
+  designed, multi-page PDF with a custom AI cover, journalistic write-ups, live
+  data and source references.
+- 🧰 **On-demand awareness toolkit** — generate posters, one-page explainers,
+  quizzes & "spot-the-phish" packs, tabletop exercises, micro-tips & lock-screen
+  cards, news-triggered "teachable moment" notes, and client KPI reports — each
+  on request via a single Telegram command.
+- 💬 **Conversational Telegram interface** — the team drives everything with
+  simple commands (`/poster phishing`, `/tabletop ransomware`, `/quiz mfa`, …);
+  finished assets are saved and returned in chat.
+- 🎨 **White-label per client** — set one variable (`CLIENT_NAME`) to brand
+  every asset for a specific client; theming (e.g. the KSA green/gold defence
+  brief) is configuration-driven.
+- 🔌 **Provider-abstracted AI** — local-first **Ollama** by default, or switch to
+  **Claude**/**OpenAI** with a single setting. Cover/poster art via an image
+  provider; HTML→PDF via Gotenberg.
 
-- **Infrastructure as Code** — the whole stack is declared and reproducible.
-- **Configuration over hard coding** — behaviour is driven by `.env` and
-  declarative descriptors, never baked into code.
-- **Modular architecture / Separation of concerns** — every component is
-  replaceable without redesigning the system.
-- **Idempotent operations** — the installer and tooling are safely re-runnable.
-- **Stateless services where possible** & **fail-safe defaults**.
-- **Security by default** — public repo, zero secrets committed.
-- **Observability by default** — structured logging, health checks, status.
-- **Documentation as code** — docs live beside the code they describe.
-
-## Architecture at a glance
-
-```mermaid
-flowchart LR
-  user([User]) -- Telegram --> n8n
-  subgraph Docker[Docker Compose · jarvis-net]
-    n8n[n8n\nWorkflow engine] --> ollama[(Ollama\nDefault AI provider)]
-    n8n -. future .-> qdrant[(Qdrant\nVector DB)]
-    n8n -. future .-> monitoring[Prometheus/Grafana]
-  end
-  n8n -- provider-abstracted --> ai{{AI: Ollama/Claude/OpenAI}}
-  n8n -- provider-abstracted --> email{{Email: Gmail/M365/SMTP}}
-  n8n -- provider-abstracted --> image{{Image: OpenAI/…}}
-  n8n --> reports[/reports · HTML/PDF/email/]
-```
-
-See [`docs/architecture.md`](docs/architecture.md) for the full design.
+> Everything runs in your own environment. The repository contains **no secrets** —
+> all credentials live only in your local, git-ignored `.env`.
 
 ## Quick start
 
@@ -57,11 +49,11 @@ See [`docs/architecture.md`](docs/architecture.md) for the full design.
 git clone https://github.com/peakapot/jarvis-ai.git
 cd jarvis-ai
 
-# 2. Install (validates the host, generates .env, starts the stack,
-#    pulls the default model, imports workflows, runs health checks)
+# 2. Install — validates the host, generates .env, starts the stack,
+#    pulls the default model, imports workflows, runs health checks
 ./install.sh
 
-# 3. Add your credentials to the generated .env (Telegram, email, …)
+# 3. Add your credentials to the generated .env (Telegram bot, AI keys, …)
 #    then re-run — completed steps are skipped (idempotent)
 ./install.sh
 
@@ -70,76 +62,94 @@ scripts/healthcheck.sh
 scripts/status.sh
 ```
 
-A new user can `git clone` → `./install.sh` → provide variables → message the
-Telegram bot → receive a reply and a daily cyber brief → run diagnostics, health
-checks, backup, restore and upgrade — **without manually editing any code**.
+Then message the Telegram bot, request a brief or an awareness asset, and receive
+a branded PDF — **without editing any code**.
 
-## Core capabilities
+## Capabilities at a glance
 
-| Capability | Description | Entry point |
-|------------|-------------|-------------|
-| **Telegram Assistant** | Primary interface with a command architecture (`/help`, `/status`, `/research`, `/emails`, `/image`, `/cyber`, `/opportunities`, `/energy`, `/defence`, plus awareness toolkit `/poster`, `/explainer`, `/quiz`, `/tabletop`, `/tips`, `/kpi`, `/teachable`) — new commands are easy to add. | `workflows/core/telegram-assistant.json` |
-| **Cybersecurity Talent** | Weekly awareness/skills magazine for a security awareness & training team: editorial, featured training technique, training technology, qualifications & courses, skills, the human firewall and emerging threats — journalistic briefs, custom AI cover, references. | `workflows/core/cyber-brief.json` |
-| **Cyber Defence Watch** | Weekly OSINT cyber-defence brief for the KSA Ministry of Defence (KSA-green theme): allied policy & capability (US/UK/Five Eyes/NATO), Middle East defence cyber, defence-impacting breaches, threat actors, and a bespoke *Implications for KSA MOD* assessment. | `workflows/core/defence-cyber.json` |
-| **Cyber Opportunities Brief** | Daily commercial-opportunity radar (RFPs, RFIs, tenders, MSS, GRC, SOC, OT/CNI, cloud & AI security) with a GCC-first focus; premium HTML/PDF/archive with an AI cover image. | `modules/cyber-opportunities/` |
-| **Energy Intelligence Brief** | Daily UAE/ADNOC-focused energy intelligence (ADNOC ecosystem, then regional & global oil & gas) with the same premium output, live oil & gas prices and an AI cover image. | `modules/energy-intelligence/` |
-| **Awareness Toolkit** | On-demand security-awareness asset generators — posters & explainers, quiz / spot-the-phish packs, tabletop exercises, micro-tips & lock-screen cards, news-triggered teachable-moment notes and client KPI reports. Files written to `reports/awareness/`. | `workflows/awareness/` |
-| **Email Assistant** | Inbox summaries, draft replies, categorisation & prioritisation, thread summaries. | `prompts/email-assistant/` |
-| **Error Handler** | Central failure path for every workflow: structured logging + alerting. | `workflows/core/error-handler.json` |
+| Capability | What it produces | Entry point |
+|------------|------------------|-------------|
+| **Telegram Assistant** | The control surface: `/help`, `/status`, `/cyber`, `/defence`, `/energy`, `/opportunities`, plus the awareness toolkit `/poster`, `/explainer`, `/quiz`, `/tabletop`, `/tips`, `/teachable`, `/kpi`. | `workflows/core/telegram-assistant.json` |
+| **Cybersecurity Talent** *(weekly magazine)* | Awareness & skills magazine: editorial, featured training technique, training technology, qualifications & courses, in-demand skills, the human firewall, emerging threats — journalistic briefs, custom AI cover, references. | `workflows/core/cyber-brief.json` |
+| **Cyber Defence Watch** *(weekly brief)* | OSINT cyber-defence brief themed for the **KSA Ministry of Defence**: allied policy & capability (US/UK/Five Eyes/NATO), Middle East defence cyber, defence-impacting breaches, threat actors, and a bespoke *Implications for KSA MOD* assessment. | `workflows/core/defence-cyber.json` |
+| **Cyber Opportunities Brief** *(daily)* | Commercial-opportunity radar (RFPs, tenders, MSS, GRC, SOC, OT/CNI, cloud & AI security) with a GCC-first focus. | `modules/cyber-opportunities/` |
+| **Energy Intelligence Brief** *(daily)* | UAE/ADNOC-focused energy intelligence with live oil & gas prices and an AI cover. | `modules/energy-intelligence/` |
+| **Awareness Toolkit** *(on-demand)* | Posters, explainers, quizzes, tabletop packs, micro-tips, teachable-moment notes, KPI reports — files to `reports/awareness/`. | `workflows/awareness/` |
 
-## Intelligence products
+## Intelligence magazines
 
 Jarvis runs a **registry-driven intelligence framework**: four briefs —
 **Cybersecurity Talent**, **Cyber Defence Watch** (KSA MOD), **Cyber
-Opportunities** and **Energy** — share one reusable
-pipeline (provider-abstracted AI, sources files, schedules, archive) and one
-**common premium branding framework** ([`config/intelligence/branding.json`](config/intelligence/branding.json)),
-so every brief has a consistent, premium style across HTML/PDF/email, each
-opened by an **AI-generated cover image** built from the day's top stories. The
-registry [`config/intelligence/products.json`](config/intelligence/products.json)
-is the single source of truth — install, validate, health, status and backup all
-iterate it, so future products (Defence, AI, Government, Healthcare, Market) are
-added as a module + registry entry with **no core code changes**. See
-[`docs/intelligence-products.md`](docs/intelligence-products.md).
+Opportunities** and **Energy** — share one reusable pipeline (provider-abstracted
+AI, source feeds, schedules, archive) and one common premium design system, so
+every issue has a consistent, magazine-quality style opened by an
+**AI-generated cover**. The registry
+[`config/intelligence/products.json`](config/intelligence/products.json) is the
+single source of truth — install, validate, health-check, status and backup all
+iterate it, so a **new brief is added as one registry entry + workflow, with no
+core code changes**. See [`docs/intelligence-products.md`](docs/intelligence-products.md).
 
 ## Awareness toolkit
 
-Beyond the scheduled magazines, Jarvis includes an **on-demand security-awareness
-toolkit** for supporting a client's awareness team. Each tool is a self-contained
-workflow under [`workflows/awareness/`](workflows/awareness/README.md) that reuses
-the same engine (provider-abstracted AI → image/Gotenberg → file) and writes
-ready-to-use assets to `reports/awareness/`. Trigger each by a **Telegram command**
-or by running it **manually** in n8n; branding is generic until `CLIENT_NAME` is
-set for white-label delivery.
+On-demand security-awareness asset generators for an awareness team and its
+clients. Each is a self-contained workflow under
+[`workflows/awareness/`](workflows/awareness/README.md) that reuses the same
+engine (provider-abstracted AI → image/Gotenberg → file) and writes ready-to-use
+assets to `reports/awareness/`. Trigger by a **Telegram command** or **manually**
+in n8n; output is generic-branded until `CLIENT_NAME` is set for white-label
+delivery.
 
 | Tool | Command | Output |
 |------|---------|--------|
 | Poster & Explainer | `/poster <topic>` · `/explainer <topic>` | A4 poster + one-page explainer PDF |
 | Quiz & Spot-the-Phish | `/quiz <topic>` | participant + facilitator answer-key PDF |
 | Tabletop Exercise | `/tabletop <scenario>` | scenario, roles, timed injects, debrief PDF |
-| Micro-Tips & Cards | `/tips <theme>` | printable tips + lock-screen card PDF (also weekly) |
+| Micro-Tips & Cards | `/tips <theme>` | printable tips + lock-screen cards (also weekly) |
 | Teachable Moment | `/teachable` | news-triggered "what happened / why / what to do" note (also weekly) |
 | KPI Report | `/kpi` | client metrics report from `config/awareness/kpi-input.json` |
 
-## Provider abstraction
+## How it works
 
-Switching providers is a **configuration change, not a code change**. Select the
-active provider in `.env`; declarative descriptors in `config/providers/` define
-how each is reached. **Ollama is the default AI provider.**
+```mermaid
+flowchart LR
+  user([Security team]) -- Telegram commands --> n8n
+  subgraph Docker[Docker Compose · jarvis-net]
+    n8n[n8n\nworkflow engine] --> ollama[(Ollama\ndefault local AI)]
+    n8n --> gotenberg[Gotenberg\nHTML to PDF]
+    n8n -. future .-> qdrant[(Qdrant\nvector DB)]
+    n8n -. future .-> monitoring[Prometheus/Grafana]
+  end
+  n8n -- provider-abstracted --> ai{{AI: Ollama / Claude / OpenAI}}
+  n8n -- provider-abstracted --> image{{Image: OpenAI / …}}
+  n8n --> out[/reports · branded PDFs + archive/]
+  n8n -- delivers --> user
+```
+
+Switching providers is a **configuration change, not a code change**:
 
 | Kind | Variable | Options |
 |------|----------|---------|
 | AI | `AI_PROVIDER` | `ollama` (default), `claude`, `openai` |
-| Email | `EMAIL_PROVIDER` | `smtp`, `gmail`, `microsoft365` |
 | Image | `IMAGE_PROVIDER` | `openai`, … |
+| Email | `EMAIL_PROVIDER` | `smtp`, `gmail`, `microsoft365` |
 
-## Plugin modules (future expansion)
+See [`docs/architecture.md`](docs/architecture.md) for the full design.
 
-New capabilities are added as self-contained modules under `modules/`, each with
-its own configuration, prompts, workflows, documentation and health checks:
-`knowledge-assistant`, `meeting-assistant`, `calendar-assistant`,
-`iso27001-assistant`, `presentation-assistant`, `image-assistant`. See
-[`modules/README.md`](modules/README.md).
+## Built to last
+
+Jarvis is engineered as a **long-term product**, not a throwaway experiment —
+optimised for reliability, recoverability, observability and security so it can
+be handed over and operated with confidence:
+
+- **Infrastructure as Code** — the whole stack is declared and reproducible.
+- **Configuration over hard coding** — behaviour is driven by `.env` and
+  declarative descriptors.
+- **Modular architecture** — every component is replaceable without a redesign;
+  new briefs/tools are added without touching the core.
+- **Idempotent operations** — the installer and tooling are safely re-runnable.
+- **Security by default** — public repo, zero secrets committed.
+- **Observability by default** — structured logging, health checks, status.
+- **Documentation as code** — docs live beside the code they describe.
 
 ## Operations toolkit
 
@@ -149,53 +159,45 @@ its own configuration, prompts, workflows, documentation and health checks:
 | Health check | `scripts/healthcheck.sh [--json]` |
 | Status dashboard | `scripts/status.sh [--json]` |
 | Diagnostics bundle | `scripts/diagnostics.sh` |
-| Full backup | `./backup.sh [--with-data]` |
-| Restore | `./restore.sh [archive] [--with-data]` |
-| Workflow backup/restore | `scripts/workflows/workflow-backup.sh` · `…/workflow-restore.sh` |
-| Workflow migrate | `scripts/workflows/workflow-migrate.sh` |
-
-## Documentation
-
-Full, enterprise-quality documentation lives in [`docs/`](docs/README.md):
-architecture, installation, operations, administration, backup, recovery,
-troubleshooting, upgrade and development guides, plus operational runbooks.
+| Full backup / restore | `./backup.sh [--with-data]` · `./restore.sh [archive]` |
+| Workflow lifecycle | `scripts/workflows/workflow-backup.sh` · `…-restore.sh` · `…-migrate.sh` |
 
 ## Repository layout
 
 ```
 .
 ├── install.sh              # Idempotent bootstrap installer
-├── backup.sh / restore.sh  # Full system backup & <15-min recovery
-├── docker-compose.yml      # Service topology (n8n, ollama, future profiles)
+├── backup.sh / restore.sh  # Full system backup & rapid recovery
+├── docker-compose.yml      # Service topology (n8n, ollama, gotenberg, profiles)
 ├── .env.example            # Configuration template (copy to .env)
-├── config/                 # Provider descriptors, feeds, templates
-│   └── providers/          #   AI / email / image abstraction
-├── scripts/                # Validation, health, status, diagnostics, libs
-│   ├── lib/                #   Shared shell library (logging, state, common)
-│   └── workflows/          #   Workflow lifecycle tooling
-├── workflows/              # Workflows as source code (core + modules)
-│   └── awareness/          #   On-demand awareness toolkit generators
-├── prompts/                # First-class, versioned prompt assets
+├── config/                 # Provider descriptors, feeds, intelligence registry
+├── workflows/              # Workflows as source code (core + awareness toolkit)
+│   └── awareness/          #   On-demand awareness asset generators
 ├── modules/                # Plugin architecture (one folder per capability)
-├── templates/              # Email/report templates
-├── reports/                # Generated intelligence products + archive
+├── prompts/                # First-class, versioned prompt assets
+├── templates/              # Report/email templates
+├── reports/                # Generated magazines + awareness assets + archive
+├── scripts/                # Validation, health, status, diagnostics, libs
 ├── docs/                   # Documentation as code
-├── logs/ backups/ state/   # Runtime (git-ignored)
-└── .github/                # CI
+└── logs/ backups/ state/   # Runtime (git-ignored)
 ```
+
+## Documentation
+
+Full documentation lives in [`docs/`](docs/README.md): architecture,
+installation, operations, administration, backup, recovery, troubleshooting,
+upgrade and development guides, plus the
+[intelligence-products guide](docs/intelligence-products.md) and the
+[awareness toolkit guide](workflows/awareness/README.md).
 
 ## Security
 
-This is a **public repository** that contains **no secrets, credentials, API
-keys or tokens**. All secrets live only in your local, git-ignored `.env`
-(generated by the installer with `chmod 600`). See
-[`SECURITY.md`](SECURITY.md).
+This is a **public repository** containing **no secrets, credentials, API keys
+or tokens**. All secrets live only in your local, git-ignored `.env` (generated
+by the installer with `chmod 600`). See [`SECURITY.md`](SECURITY.md).
 
-## Contributing & roadmap
+## Contributing, roadmap & licence
 
-See [`CONTRIBUTING.md`](CONTRIBUTING.md) and [`ROADMAP.md`](ROADMAP.md).
-Changes are tracked in [`CHANGELOG.md`](CHANGELOG.md).
-
-## License
-
-Released under the MIT License — see [`LICENSE`](LICENSE).
+See [`CONTRIBUTING.md`](CONTRIBUTING.md), [`ROADMAP.md`](ROADMAP.md) and
+[`CHANGELOG.md`](CHANGELOG.md). Released under the MIT License — see
+[`LICENSE`](LICENSE).

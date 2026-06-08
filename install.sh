@@ -56,7 +56,7 @@ state_init
 banner() {
   cat >&2 <<'EOF'
    _   _   _   _   _
-  | | | |_| |_| | | |   JARVIS — Personal AI Assistant Platform
+  | | | |_| |_| | | |   JARVIS — AI Cyber Awareness Assistant
   |_| |_| |_| |_| |_|   Docker-first · Modular · Recoverable
 EOF
 }

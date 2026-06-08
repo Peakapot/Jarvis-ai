@@ -1,6 +1,6 @@
 # Architecture
 
-System architecture for **Jarvis**, a Docker-first personal AI assistant
+System architecture for **Jarvis — AI Cyber Awareness Assistant**, a Docker-first
 platform built on [n8n](https://n8n.io) (workflow orchestration) and
 [Ollama](https://ollama.com) (local-first LLM runtime).
 

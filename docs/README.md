@@ -1,8 +1,8 @@
 # Jarvis Documentation
 
-Welcome to the documentation set for **Jarvis** — a Docker-first personal AI
-assistant platform built on [n8n](https://n8n.io) (workflow orchestration) and
-[Ollama](https://ollama.com) (local-first LLM runtime).
+Welcome to the documentation set for **Jarvis — AI Cyber Awareness Assistant** —
+a Docker-first platform built on [n8n](https://n8n.io) (workflow orchestration)
+and [Ollama](https://ollama.com) (local-first LLM runtime).
 
 This documentation is written **as code**: it lives in the repository next to
 the system it describes, is reviewed in pull requests, and is kept accurate to
