@@ -1,0 +1,246 @@
+{
+  "id": "jarvisAwCert001",
+  "name": "Jarvis · Awareness — Completion Certificate",
+  "meta": {
+    "jarvisModule": "awareness-toolkit",
+    "jarvisVersion": "1.0.0",
+    "awarenessTool": true,
+    "description": "On-demand diploma-style completion CERTIFICATE generator (template-driven, no AI). Trigger via Telegram (/certificate <name>) or manually (form: recipient, course, date, optional ID). Render builds a landscape A4 certificate (CLIENT_NAME branding, unique ID); Gotenberg renders the PDF to /reports/awareness/certificates and returns it. Pairs with the quiz / e-learning module.",
+    "envVars": [
+      "CLIENT_NAME",
+      "GOTENBERG_URL"
+    ]
+  },
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "nodes": [
+    {
+      "id": "man",
+      "name": "Open Form",
+      "type": "n8n-nodes-base.formTrigger",
+      "typeVersion": 2.2,
+      "position": [
+        200,
+        200
+      ],
+      "parameters": {
+        "formTitle": "Issue a Completion Certificate",
+        "formDescription": "Enter the recipient and course. A diploma-style PDF certificate is generated.",
+        "formFields": {
+          "values": [
+            {
+              "fieldLabel": "Recipient name",
+              "fieldType": "text",
+              "requiredField": false,
+              "placeholder": "e.g. Jane Doe"
+            },
+            {
+              "fieldLabel": "Course / topic",
+              "fieldType": "text",
+              "requiredField": false,
+              "placeholder": "e.g. Phishing Awareness"
+            },
+            {
+              "fieldLabel": "Date",
+              "fieldType": "date",
+              "requiredField": false
+            },
+            {
+              "fieldLabel": "Certificate ID",
+              "fieldType": "text",
+              "requiredField": false,
+              "placeholder": "Auto-generated if blank"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "webhookId": "aw-certificate-form"
+    },
+    {
+      "id": "ewt",
+      "name": "On Command",
+      "type": "n8n-nodes-base.executeWorkflowTrigger",
+      "typeVersion": 1,
+      "position": [
+        200,
+        360
+      ],
+      "parameters": {}
+    },
+    {
+      "id": "resolve",
+      "name": "Resolve Cert",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        440,
+        280
+      ],
+      "parameters": {
+        "language": "javaScript",
+        "jsCode": "const i = $input.first() ? ($input.first().json || {}) : {};\nfunction pick(){ for(var k=0;k<arguments.length;k++){ var v=arguments[k]; if(v!=null && String(v).trim()!=='') return String(v).trim(); } return ''; }\nconst txt = pick(i.text).replace(/^\\/certificate\\b/i,'').trim();\nconst name = pick(i['Recipient name'], i['Recipient'], i.name, txt) || 'Recipient Name';\nconst course = pick(i['Course / topic'], i['Course'], i.course, i.topic) || 'Cybersecurity Awareness';\nlet date = pick(i['Date'], i.date); if(!date) date = new Date().toISOString().slice(0,10);\nlet id = pick(i['Certificate ID'], i.id); if(!id) id = 'JAW-' + Date.now().toString(36).toUpperCase().slice(-6);\nconst safe = (name+'-'+course).toLowerCase().replace(/[^a-z0-9]+/g,'-').replace(/^-|-$/g,'').slice(0,50) || 'certificate';\nreturn [{ json: { name:name, course:course, date:date, certId:id, client:($env.CLIENT_NAME||'').toString(), fileSafe:safe, outDir:'certificates', filePrefix:'certificate' } }];\n"
+      }
+    },
+    {
+      "id": "render",
+      "name": "Render HTML",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        680,
+        280
+      ],
+      "parameters": {
+        "language": "javaScript",
+        "jsCode": "const j = $json || {};\nfunction esc(s){ return (s==null?'':String(s)).replace(/[&<>]/g,function(c){return({'&':'&amp;','<':'&lt;','>':'&gt;'})[c];}); }\nfunction ord(n){ var s=['th','st','nd','rd'],v=n%100; return n+(s[(v-20)%10]||s[v]||s[0]); }\nfunction pretty(x){ try{ var p=String(x).split('-'); var dt=new Date(+p[0],+p[1]-1,+p[2]); var M=['January','February','March','April','May','June','July','August','September','October','November','December']; return M[dt.getMonth()]+' '+ord(dt.getDate())+' '+dt.getFullYear(); }catch(e){ return x; } }\nconst issuer = j.client ? j.client : 'Security Awareness Team';\nconst CSS = \"@page{size:A4 landscape;margin:0} *{box-sizing:border-box} body{margin:0;font-family:Georgia,'Times New Roman',serif;color:#14202b} \"\n+\".cert{height:100vh;padding:26px;background:#fff} .frame{height:100%;border:3px solid #0E7C86;border-radius:10px;position:relative;padding:46px 60px;text-align:center} \"\n+\".frame:before{content:'';position:absolute;top:12px;left:12px;right:12px;bottom:12px;border:1px solid #C9A24B;border-radius:6px} \"\n+\".kick{position:relative;letter-spacing:6px;font-size:14px;color:#0E7C86;font-weight:700;text-transform:uppercase;font-family:Arial} \"\n+\"h1{position:relative;font-size:46px;margin:6px 0 4px;color:#0E2233} .sub{position:relative;font-style:italic;color:#5A6472;font-size:16px} \"\n+\".name{position:relative;font-size:40px;color:#0E2233;margin:30px 0 8px;border-bottom:2px solid #C9A24B;display:inline-block;padding:0 30px 8px} \"\n+\".course{position:relative;font-size:22px;color:#0E7C86;margin:18px 0} .course b{color:#0E2233} \"\n+\".row{position:relative;display:flex;justify-content:space-between;align-items:flex-end;margin-top:54px;padding:0 20px} .sig{width:38%;border-top:1px solid #8a98a4;padding-top:8px;font-size:13px;color:#5A6472;font-family:Arial} \"\n+\".id{position:absolute;bottom:18px;left:0;right:0;font-size:11px;color:#9aa6b2;font-family:Arial;letter-spacing:1px}\";\nconst html = '<!doctype html><html><head><meta charset=\"utf-8\"><style>'+CSS+'</style></head><body><div class=\"cert\"><div class=\"frame\">'\n+'<div class=\"kick\">Certificate of Completion</div>'\n+'<h1>'+esc(issuer)+'</h1>'\n+'<div class=\"sub\">This is proudly presented to</div>'\n+'<div class=\"name\">'+esc(j.name)+'</div>'\n+'<div class=\"sub\">for successfully completing</div>'\n+'<div class=\"course\"><b>'+esc(j.course)+'</b></div>'\n+'<div class=\"row\"><div class=\"sig\">'+esc(pretty(j.date))+'<br>Date</div><div class=\"sig\">'+esc(issuer)+'<br>Issued by</div></div>'\n+'<div class=\"id\">Certificate ID: '+esc(j.certId)+' &middot; AI-generated — verify before issuing</div>'\n+'</div></div></body></html>';\nreturn [{ json: { html: html, topic: j.course, date: j.date, fileSafe: j.fileSafe, outDir: j.outDir, filePrefix: j.filePrefix } }];\n"
+      }
+    },
+    {
+      "id": "pdfin",
+      "name": "Build PDF Input",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        920,
+        280
+      ],
+      "parameters": {
+        "language": "javaScript",
+        "jsCode": "const html = $json.html || '';\nreturn [{ json: { topic:$json.topic, date:$json.date, fileSafe:$json.fileSafe, outDir:$json.outDir, filePrefix:$json.filePrefix },\n  binary: { data: { data: Buffer.from(html,'utf8').toString('base64'), mimeType:'text/html', fileName:'index.html' } } }];\n"
+      }
+    },
+    {
+      "id": "goten",
+      "name": "Gotenberg PDF",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        1160,
+        280
+      ],
+      "parameters": {
+        "method": "POST",
+        "url": "={{ $env.GOTENBERG_URL || 'http://jarvis-gotenberg:3000' }}/forms/chromium/convert/html",
+        "contentType": "multipart-form-data",
+        "sendBody": true,
+        "bodyParameters": {
+          "parameters": [
+            {
+              "parameterType": "formBinaryData",
+              "name": "files",
+              "inputDataFieldName": "data"
+            },
+            {
+              "parameterType": "formData",
+              "name": "marginTop",
+              "value": "0"
+            },
+            {
+              "parameterType": "formData",
+              "name": "marginBottom",
+              "value": "0"
+            },
+            {
+              "parameterType": "formData",
+              "name": "marginLeft",
+              "value": "0"
+            },
+            {
+              "parameterType": "formData",
+              "name": "marginRight",
+              "value": "0"
+            },
+            {
+              "parameterType": "formData",
+              "name": "landscape",
+              "value": "true"
+            }
+          ]
+        },
+        "options": {
+          "response": {
+            "response": {
+              "responseFormat": "file",
+              "outputPropertyName": "data"
+            }
+          },
+          "timeout": 120000
+        }
+      },
+      "onError": "continueErrorOutput"
+    },
+    {
+      "id": "write",
+      "name": "Write File",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1400,
+        280
+      ],
+      "parameters": {
+        "language": "javaScript",
+        "jsCode": "const fs = require('fs');\nconst meta = $('Render HTML').first().json;\nconst dir = '/reports/awareness/' + (meta.outDir || 'misc');\nconst name = (meta.filePrefix || 'asset') + '-' + (meta.fileSafe || 'item') + '-' + meta.date + '.pdf';\nlet buf = null;\ntry { buf = await this.helpers.getBinaryDataBuffer(0, 'data'); } catch (e) {}\ntry { fs.mkdirSync(dir, { recursive: true }); if (buf) fs.writeFileSync(dir + '/' + name, buf); } catch (e) {}\nconst out = { json: { ok: !!buf, file: dir + '/' + name, topic: meta.topic } };\ntry { const b = $input.first().binary; if (b && b.data) { b.data.fileName = name; out.binary = { data: b.data }; } } catch (e) {}\nreturn [out];\n"
+      }
+    }
+  ],
+  "connections": {
+    "Open Form": [
+      [
+        {
+          "node": "Resolve Cert",
+          "type": "main",
+          "index": 0
+        }
+      ]
+    ],
+    "On Command": [
+      [
+        {
+          "node": "Resolve Cert",
+          "type": "main",
+          "index": 0
+        }
+      ]
+    ],
+    "Resolve Cert": [
+      [
+        {
+          "node": "Render HTML",
+          "type": "main",
+          "index": 0
+        }
+      ]
+    ],
+    "Render HTML": [
+      [
+        {
+          "node": "Build PDF Input",
+          "type": "main",
+          "index": 0
+        }
+      ]
+    ],
+    "Build PDF Input": [
+      [
+        {
+          "node": "Gotenberg PDF",
+          "type": "main",
+          "index": 0
+        }
+      ]
+    ],
+    "Gotenberg PDF": [
+      [
+        {
+          "node": "Write File",
+          "type": "main",
+          "index": 0
+        }
+      ],
+      []
+    ]
+  }
+}

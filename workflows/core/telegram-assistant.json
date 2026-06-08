@@ -318,6 +318,36 @@
                   }
                 ]
               }
+            },
+            {
+              "outputKey": "elearning",
+              "conditions": {
+                "conditions": [
+                  {
+                    "leftValue": "={{ $json.message.text }}",
+                    "rightValue": "/elearning",
+                    "operator": {
+                      "type": "string",
+                      "operation": "startsWith"
+                    }
+                  }
+                ]
+              }
+            },
+            {
+              "outputKey": "certificate",
+              "conditions": {
+                "conditions": [
+                  {
+                    "leftValue": "={{ $json.message.text }}",
+                    "rightValue": "/certificate",
+                    "operator": {
+                      "type": "string",
+                      "operation": "startsWith"
+                    }
+                  }
+                ]
+              }
             }
           ]
         },
@@ -535,6 +565,36 @@
                   }
                 ]
               }
+            },
+            {
+              "outputKey": "elearning",
+              "conditions": {
+                "conditions": [
+                  {
+                    "leftValue": "={{ $json.cmd }}",
+                    "rightValue": "/elearning",
+                    "operator": {
+                      "type": "string",
+                      "operation": "equals"
+                    }
+                  }
+                ]
+              }
+            },
+            {
+              "outputKey": "certificate",
+              "conditions": {
+                "conditions": [
+                  {
+                    "leftValue": "={{ $json.cmd }}",
+                    "rightValue": "/certificate",
+                    "operator": {
+                      "type": "string",
+                      "operation": "equals"
+                    }
+                  }
+                ]
+              }
             }
           ]
         },
@@ -699,6 +759,46 @@
         }
       },
       "onError": "continueRegularOutput"
+    },
+    {
+      "id": "run-e-learning",
+      "name": "Run E-learning",
+      "type": "n8n-nodes-base.executeWorkflow",
+      "typeVersion": 1.2,
+      "position": [
+        1600,
+        960
+      ],
+      "parameters": {
+        "workflowId": {
+          "__rl": true,
+          "value": "jarvisAwElearn01",
+          "mode": "id",
+          "cachedResultName": "Jarvis · Awareness — E-learning Module"
+        },
+        "options": {}
+      },
+      "onError": "continueRegularOutput"
+    },
+    {
+      "id": "run-certificate",
+      "name": "Run Certificate",
+      "type": "n8n-nodes-base.executeWorkflow",
+      "typeVersion": 1.2,
+      "position": [
+        1600,
+        1060
+      ],
+      "parameters": {
+        "workflowId": {
+          "__rl": true,
+          "value": "jarvisAwCert001",
+          "mode": "id",
+          "cachedResultName": "Jarvis · Awareness — Completion Certificate"
+        },
+        "options": {}
+      },
+      "onError": "continueRegularOutput"
     }
   ],
   "connections": {
@@ -786,6 +886,20 @@
         [
           {
             "node": "Latest Intelligence Brief",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Prep Toolkit Cmd",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Prep Toolkit Cmd",
             "type": "main",
             "index": 0
           }
@@ -950,7 +1064,20 @@
             "index": 0
           }
         ],
-        []
+        [
+          {
+            "node": "Run E-learning",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Run Certificate",
+            "type": "main",
+            "index": 0
+          }
+        ]
       ]
     },
     "Run Poster": {
@@ -1022,6 +1149,28 @@
     "Send Toolkit Document": {
       "main": [
         []
+      ]
+    },
+    "Run E-learning": {
+      "main": [
+        [
+          {
+            "node": "Send Toolkit Document",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Run Certificate": {
+      "main": [
+        [
+          {
+            "node": "Send Toolkit Document",
+            "type": "main",
+            "index": 0
+          }
+        ]
       ]
     }
   }
