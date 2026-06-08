@@ -1,0 +1,467 @@
+{
+  "id": "jarvisAwSignage1",
+  "name": "Jarvis · Awareness — Digital-Signage Slides",
+  "meta": {
+    "jarvisModule": "awareness-toolkit",
+    "jarvisVersion": "1.0.0",
+    "awarenessTool": true,
+    "description": "On-demand DIGITAL-SIGNAGE slide set for office/lobby screens. Trigger via Telegram (/signage <topic>) or manually (form: topic, audience, number of slides). AI writes short slide copy; Render builds one 1920×1080 HTML page per slide; Gotenberg screenshot renders each to PNG (one per slide); a pure-JS store ZIP writer bundles them into a .zip written to /reports/awareness/signage and returned in chat.",
+    "envVars": [
+      "AI_PROVIDER",
+      "CLIENT_NAME",
+      "GOTENBERG_URL",
+      "DEFAULT_AWARENESS_TOPIC"
+    ]
+  },
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "nodes": [
+    {
+      "id": "man",
+      "name": "Open Form",
+      "type": "n8n-nodes-base.formTrigger",
+      "typeVersion": 2.2,
+      "position": [
+        200,
+        200
+      ],
+      "parameters": {
+        "formTitle": "Generate Digital-Signage Slides",
+        "formDescription": "Pick a topic and how many slides, then submit. Produces 1920×1080 PNG slides as a .zip bundle.",
+        "formFields": {
+          "values": [
+            {
+              "fieldLabel": "Topic",
+              "fieldType": "dropdown",
+              "requiredField": false,
+              "fieldOptions": {
+                "values": [
+                  {
+                    "option": "Phishing"
+                  },
+                  {
+                    "option": "Spear phishing & whaling"
+                  },
+                  {
+                    "option": "Business email compromise (BEC)"
+                  },
+                  {
+                    "option": "Passwords & passphrases"
+                  },
+                  {
+                    "option": "Multi-factor authentication (MFA)"
+                  },
+                  {
+                    "option": "Social engineering"
+                  },
+                  {
+                    "option": "Vishing (voice phishing)"
+                  },
+                  {
+                    "option": "Smishing (SMS phishing)"
+                  },
+                  {
+                    "option": "QR-code phishing (quishing)"
+                  },
+                  {
+                    "option": "Safe remote & home working"
+                  },
+                  {
+                    "option": "Travel security"
+                  },
+                  {
+                    "option": "Removable media & USB"
+                  },
+                  {
+                    "option": "Public Wi-Fi"
+                  },
+                  {
+                    "option": "Data classification & handling"
+                  },
+                  {
+                    "option": "Insider risk"
+                  },
+                  {
+                    "option": "Ransomware"
+                  },
+                  {
+                    "option": "Reporting incidents"
+                  },
+                  {
+                    "option": "Deepfakes & AI-enabled fraud"
+                  },
+                  {
+                    "option": "Generative-AI safe use"
+                  },
+                  {
+                    "option": "Custom (type below)"
+                  }
+                ]
+              }
+            },
+            {
+              "fieldLabel": "Custom topic",
+              "fieldType": "text",
+              "requiredField": false,
+              "placeholder": "Used if set / if Topic = Custom"
+            },
+            {
+              "fieldLabel": "Audience",
+              "fieldType": "dropdown",
+              "requiredField": false,
+              "fieldOptions": {
+                "values": [
+                  {
+                    "option": "All staff"
+                  },
+                  {
+                    "option": "Finance"
+                  },
+                  {
+                    "option": "Executives"
+                  },
+                  {
+                    "option": "IT & Developers"
+                  },
+                  {
+                    "option": "New joiners"
+                  }
+                ]
+              }
+            },
+            {
+              "fieldLabel": "Number of slides",
+              "fieldType": "dropdown",
+              "requiredField": false,
+              "fieldOptions": {
+                "values": [
+                  {
+                    "option": "3"
+                  },
+                  {
+                    "option": "4"
+                  },
+                  {
+                    "option": "5"
+                  },
+                  {
+                    "option": "6"
+                  },
+                  {
+                    "option": "8"
+                  }
+                ]
+              }
+            }
+          ]
+        },
+        "options": {}
+      },
+      "webhookId": "aw-signage-form"
+    },
+    {
+      "id": "ewt",
+      "name": "On Command",
+      "type": "n8n-nodes-base.executeWorkflowTrigger",
+      "typeVersion": 1,
+      "position": [
+        200,
+        360
+      ],
+      "parameters": {}
+    },
+    {
+      "id": "resolve",
+      "name": "Resolve Input",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        440,
+        280
+      ],
+      "parameters": {
+        "language": "javaScript",
+        "jsCode": "const i = $input.first() ? ($input.first().json || {}) : {};\nfunction pick(){ for(var k=0;k<arguments.length;k++){ var v=arguments[k]; if(v!=null && String(v).trim()!=='') return String(v).trim(); } return ''; }\nlet custom = pick(i['Custom topic']); let drop = pick(i['Topic'], i.topic); if(/^custom/i.test(drop)) drop='';\nlet t = pick(custom, drop, i.query, i.text); t = t.replace(/^\\/[a-zA-Z]+\\b/, '').trim();\nif(!t) t = ($env.DEFAULT_AWARENESS_TOPIC || 'phishing');\nlet n = parseInt(pick(i['Number of slides'], i['Slides'], i.slides), 10); if(isNaN(n)) n = 5; if(n<1) n=1; if(n>10) n=10;\nreturn [{ json: { topic:t, audience:(pick(i['Audience'],i.audience)||'All staff'), slides:n, date:new Date().toISOString().slice(0,10), client:($env.CLIENT_NAME||'').toString(), fileSafe:(t.toLowerCase().replace(/[^a-z0-9]+/g,'-').replace(/^-|-$/g,'').slice(0,40)||'signage') } }];\n"
+      }
+    },
+    {
+      "id": "useclaude",
+      "name": "Use Claude?",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2,
+      "position": [
+        680,
+        280
+      ],
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": false,
+            "typeValidation": "loose"
+          },
+          "combinator": "and",
+          "conditions": [
+            {
+              "leftValue": "={{ $env.AI_PROVIDER || 'ollama' }}",
+              "rightValue": "claude",
+              "operator": {
+                "type": "string",
+                "operation": "equals"
+              }
+            }
+          ]
+        }
+      }
+    },
+    {
+      "id": "aiclaude",
+      "name": "AI (Claude)",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        920,
+        180
+      ],
+      "parameters": {
+        "method": "POST",
+        "url": "={{ $env.CLAUDE_BASE_URL || 'https://api.anthropic.com' }}/v1/messages",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "x-api-key",
+              "value": "={{ $env.ANTHROPIC_API_KEY }}"
+            },
+            {
+              "name": "anthropic-version",
+              "value": "2023-06-01"
+            },
+            {
+              "name": "content-type",
+              "value": "application/json"
+            }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={\n  \"model\": \"{{ $env.CLAUDE_MODEL || 'claude-sonnet-4-6' }}\",\n  \"max_tokens\": 2500,\n  \"system\": \"You are a security-awareness designer creating copy for digital-signage slides (screens in offices/lobbies). For the given topic and audience produce a SINGLE valid JSON object. Keys: title; slides (an array with EXACTLY the requested number of items, each {headline (very short, max 5 words, punchy), sub (one short supporting line, max ~10 words), points (array of 0-2 ultra-short tips, max ~5 words each)}). Each slide must stand alone and be readable from across a room. Plain, bold, action-oriented language; no jargon. Do NOT use markdown code fences. Output ONLY the JSON object.\",\n  \"messages\": [ {\"role\":\"user\",\"content\": {{ JSON.stringify('Create copy for ' + ($json.slides||5) + ' digital-signage slides on the topic: ' + ($json.topic || 'phishing') + '. Audience: ' + ($json.audience||'All staff') + '. Return exactly ' + ($json.slides||5) + ' slides.') }} } ]\n}",
+        "options": {
+          "timeout": 600000
+        }
+      },
+      "onError": "continueErrorOutput"
+    },
+    {
+      "id": "aiollama",
+      "name": "AI (Ollama)",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        920,
+        380
+      ],
+      "parameters": {
+        "method": "POST",
+        "url": "={{ $env.OLLAMA_BASE_URL || 'http://jarvis-ollama:11434' }}/api/chat",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={\n  \"model\": \"{{ $env.OLLAMA_DEFAULT_MODEL || 'llama3.1:8b' }}\",\n  \"stream\": false,\n  \"keep_alive\": \"10m\",\n  \"options\": { \"temperature\": 0.5, \"num_predict\": 2000 },\n  \"messages\": [ {\"role\":\"system\",\"content\":\"You are a security-awareness designer creating copy for digital-signage slides (screens in offices/lobbies). For the given topic and audience produce a SINGLE valid JSON object. Keys: title; slides (an array with EXACTLY the requested number of items, each {headline (very short, max 5 words, punchy), sub (one short supporting line, max ~10 words), points (array of 0-2 ultra-short tips, max ~5 words each)}). Each slide must stand alone and be readable from across a room. Plain, bold, action-oriented language; no jargon. Do NOT use markdown code fences. Output ONLY the JSON object.\"}, {\"role\":\"user\",\"content\": {{ JSON.stringify('Create copy for ' + ($json.slides||5) + ' digital-signage slides on the topic: ' + ($json.topic || 'phishing') + '. Audience: ' + ($json.audience||'All staff') + '. Return exactly ' + ($json.slides||5) + ' slides.') }} } ]\n}",
+        "options": {
+          "timeout": 600000
+        }
+      },
+      "onError": "continueErrorOutput"
+    },
+    {
+      "id": "prep",
+      "name": "Prep Content",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1160,
+        280
+      ],
+      "parameters": {
+        "language": "javaScript",
+        "jsCode": "const j = $json || {};\nlet raw = '';\nif (j.message && j.message.content) raw = j.message.content;\nelse if (j.content && j.content[0] && j.content[0].text) raw = j.content[0].text;\nlet data = null;\ntry { data = JSON.parse(raw.replace(/^```(?:json)?\\s*/i,'').replace(/\\s*```$/i,'')); }\ncatch (e) { try { const m = raw.match(/\\{[\\s\\S]*\\}/); if (m) data = JSON.parse(m[0]); } catch (e2) { data = null; } }\nconst r = $('Resolve Input').first().json || {};\nreturn [{ json: Object.assign({}, r, { data: data }) }];\n"
+      }
+    },
+    {
+      "id": "render",
+      "name": "Render Slides",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1400,
+        280
+      ],
+      "parameters": {
+        "language": "javaScript",
+        "jsCode": "const r = $json || {};\nconst d = r.data || {};\nconst topic = r.topic || 'Security Awareness';\nconst client = (r.client || '').toString();\nconst brand = client ? client : 'Security Awareness';\nconst want = Number(r.slides) || 5;\nfunction esc(s){ return (s==null?'':String(s)).replace(/[&<>]/g,function(c){return({'&':'&amp;','<':'&lt;','>':'&gt;'})[c];}); }\nfunction arr(x){ return Array.isArray(x)?x:(x==null||x===''?[]:[x]); }\nlet slides = arr(d.slides).slice(0, want);\nif(!slides.length){ for(var k=0;k<want;k++) slides.push({ headline:topic, sub:'Stay alert. Stay secure.', points:[] }); }\nconst palettes = [['#0E2233','#0E7C86'],['#0E7C86','#0E2233'],['#102A43','#1F8A4C'],['#10233A','#2D6CB5'],['#0E2233','#7A3FB0']];\nfunction slideHtml(s, idx){\n  var pal = palettes[idx % palettes.length];\n  var pts = arr(s.points).slice(0,2);\n  var ptsHtml = pts.length ? ('<div class=\"pts\">'+pts.map(function(p){return '<span class=\"pt\">'+esc(p)+'</span>';}).join('')+'</div>') : '';\n  var CSS = \"@page{size:1920px 1080px;margin:0} *{box-sizing:border-box} html,body{margin:0;padding:0} \"\n    +\".slide{width:1920px;height:1080px;position:relative;overflow:hidden;font-family:-apple-system,'Segoe UI',Arial,sans-serif;color:#fff;background:linear-gradient(135deg,\"+pal[0]+\",\"+pal[1]+\")} \"\n    +\".slide:after{content:'';position:absolute;right:-200px;bottom:-200px;width:760px;height:760px;border-radius:50%;background:rgba(255,255,255,.06)} \"\n    +\".kick{position:absolute;top:90px;left:120px;letter-spacing:8px;font-size:30px;font-weight:800;text-transform:uppercase;color:rgba(255,255,255,.85)} \"\n    +\".mid{position:absolute;top:300px;left:120px;right:120px} h1{font-size:140px;line-height:1.02;margin:0;font-weight:800} \"\n    +\".sub{font-size:54px;margin-top:36px;color:#dff1f4;max-width:1400px;line-height:1.25} \"\n    +\".pts{position:absolute;left:120px;bottom:160px;display:flex;gap:24px} .pt{background:rgba(255,255,255,.14);border:2px solid rgba(255,255,255,.3);border-radius:46px;padding:18px 38px;font-size:38px;font-weight:700} \"\n    +\".foot{position:absolute;left:120px;bottom:70px;font-size:30px;color:rgba(255,255,255,.7)} .pg{position:absolute;right:120px;bottom:70px;font-size:30px;color:rgba(255,255,255,.7)}\";\n  return '<!doctype html><html><head><meta charset=\"utf-8\"><style>'+CSS+'</style></head><body><div class=\"slide\">'\n    +'<div class=\"kick\">'+esc(topic)+'</div>'\n    +'<div class=\"mid\"><h1>'+esc(s.headline||topic)+'</h1>'+(s.sub?'<div class=\"sub\">'+esc(s.sub)+'</div>':'')+'</div>'\n    +ptsHtml\n    +'<div class=\"foot\">'+esc(brand)+'</div><div class=\"pg\">'+(idx+1)+' / '+slides.length+'</div>'\n    +'</div></body></html>';\n}\nreturn slides.map(function(s, idx){\n  var html = slideHtml(s, idx);\n  return { json: { idx:idx, total:slides.length, topic:topic, date:r.date, fileSafe:r.fileSafe },\n    binary: { data: { data: Buffer.from(html,'utf8').toString('base64'), mimeType:'text/html', fileName:'index.html' } } };\n});\n"
+      }
+    },
+    {
+      "id": "shot",
+      "name": "Gotenberg Screenshot",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        1640,
+        280
+      ],
+      "parameters": {
+        "method": "POST",
+        "url": "={{ $env.GOTENBERG_URL || 'http://jarvis-gotenberg:3000' }}/forms/chromium/screenshot/html",
+        "contentType": "multipart-form-data",
+        "sendBody": true,
+        "bodyParameters": {
+          "parameters": [
+            {
+              "parameterType": "formBinaryData",
+              "name": "files",
+              "inputDataFieldName": "data"
+            },
+            {
+              "parameterType": "formData",
+              "name": "format",
+              "value": "png"
+            },
+            {
+              "parameterType": "formData",
+              "name": "width",
+              "value": "1920"
+            },
+            {
+              "parameterType": "formData",
+              "name": "height",
+              "value": "1080"
+            },
+            {
+              "parameterType": "formData",
+              "name": "optimizeForSpeed",
+              "value": "true"
+            }
+          ]
+        },
+        "options": {
+          "response": {
+            "response": {
+              "responseFormat": "file",
+              "outputPropertyName": "data"
+            }
+          },
+          "timeout": 120000
+        }
+      },
+      "onError": "continueErrorOutput"
+    },
+    {
+      "id": "zip",
+      "name": "Zip & Write",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1880,
+        280
+      ],
+      "parameters": {
+        "language": "javaScript",
+        "jsCode": "const fs = require('fs');\nconst meta = $('Render Slides').first().json || {};\nconst dir = '/reports/awareness/signage';\nconst base = 'signage-' + (meta.fileSafe || 'set') + '-' + (meta.date || new Date().toISOString().slice(0,10));\nfunction _crcT(){ var c,t=[]; for(var n=0;n<256;n++){ c=n; for(var k=0;k<8;k++) c=(c&1)?(0xEDB88320^(c>>>1)):(c>>>1); t[n]=c>>>0; } return t; }\nvar CT=_crcT();\nfunction crc32(b){ var c=0xFFFFFFFF; for(var i=0;i<b.length;i++) c=CT[(c^b[i])&0xFF]^(c>>>8); return (c^0xFFFFFFFF)>>>0; }\nfunction zipStore(entries){ var dt=new Date(); var T=((dt.getHours()&31)<<11)|((dt.getMinutes()&63)<<5)|((Math.floor(dt.getSeconds()/2))&31); var D=(((dt.getFullYear()-1980)&127)<<9)|(((dt.getMonth()+1)&15)<<5)|(dt.getDate()&31); var local=[],central=[],off=0; entries.forEach(function(e){ var name=Buffer.from(e.name,'utf8'); var data=Buffer.isBuffer(e.data)?e.data:Buffer.from(String(e.data),'utf8'); var crc=crc32(data); var lh=Buffer.alloc(30); lh.writeUInt32LE(0x04034b50,0);lh.writeUInt16LE(20,4);lh.writeUInt16LE(0,6);lh.writeUInt16LE(0,8);lh.writeUInt16LE(T,10);lh.writeUInt16LE(D,12);lh.writeUInt32LE(crc,14);lh.writeUInt32LE(data.length,18);lh.writeUInt32LE(data.length,22);lh.writeUInt16LE(name.length,26);lh.writeUInt16LE(0,28); local.push(lh,name,data); var ch=Buffer.alloc(46); ch.writeUInt32LE(0x02014b50,0);ch.writeUInt16LE(20,4);ch.writeUInt16LE(20,6);ch.writeUInt16LE(0,8);ch.writeUInt16LE(0,10);ch.writeUInt16LE(T,12);ch.writeUInt16LE(D,14);ch.writeUInt32LE(crc,16);ch.writeUInt32LE(data.length,20);ch.writeUInt32LE(data.length,24);ch.writeUInt16LE(name.length,28);ch.writeUInt16LE(0,30);ch.writeUInt16LE(0,32);ch.writeUInt16LE(0,34);ch.writeUInt16LE(0,36);ch.writeUInt32LE(0,38);ch.writeUInt32LE(off,42); central.push(ch,name); off+=30+name.length+data.length; }); var cd=Buffer.concat(central), body=Buffer.concat(local); var eo=Buffer.alloc(22); eo.writeUInt32LE(0x06054b50,0);eo.writeUInt16LE(0,4);eo.writeUInt16LE(0,6);eo.writeUInt16LE(entries.length,8);eo.writeUInt16LE(entries.length,10);eo.writeUInt32LE(cd.length,12);eo.writeUInt32LE(body.length,16);eo.writeUInt16LE(0,20); return Buffer.concat([body,cd,eo]); }\nconst items = $input.all();\nconst entries = [];\nfor (let i = 0; i < items.length; i++) {\n  let buf = null;\n  try { buf = await this.helpers.getBinaryDataBuffer(i, 'data'); } catch (e) {}\n  if (buf && buf.length) entries.push({ name: 'slide-' + String(i+1).padStart(2,'0') + '.png', data: buf });\n}\nlet primary = null, name = base + '.zip';\ntry { fs.mkdirSync(dir, { recursive: true }); } catch (e) {}\nif (entries.length) { primary = zipStore(entries); try { fs.writeFileSync(dir + '/' + name, primary); } catch (e) {} }\nconst out = { json: { ok: !!primary, file: dir + '/' + name, slides: entries.length, topic: meta.topic } };\nif (primary) { const bin = await this.helpers.prepareBinaryData(primary, name, 'application/zip'); out.binary = { data: bin }; }\nreturn [out];\n"
+      }
+    }
+  ],
+  "connections": {
+    "Open Form": [
+      [
+        {
+          "node": "Resolve Input",
+          "type": "main",
+          "index": 0
+        }
+      ]
+    ],
+    "On Command": [
+      [
+        {
+          "node": "Resolve Input",
+          "type": "main",
+          "index": 0
+        }
+      ]
+    ],
+    "Resolve Input": [
+      [
+        {
+          "node": "Use Claude?",
+          "type": "main",
+          "index": 0
+        }
+      ]
+    ],
+    "Use Claude?": [
+      [
+        {
+          "node": "AI (Claude)",
+          "type": "main",
+          "index": 0
+        }
+      ],
+      [
+        {
+          "node": "AI (Ollama)",
+          "type": "main",
+          "index": 0
+        }
+      ]
+    ],
+    "AI (Claude)": [
+      [
+        {
+          "node": "Prep Content",
+          "type": "main",
+          "index": 0
+        }
+      ],
+      []
+    ],
+    "AI (Ollama)": [
+      [
+        {
+          "node": "Prep Content",
+          "type": "main",
+          "index": 0
+        }
+      ],
+      []
+    ],
+    "Prep Content": [
+      [
+        {
+          "node": "Render Slides",
+          "type": "main",
+          "index": 0
+        }
+      ]
+    ],
+    "Render Slides": [
+      [
+        {
+          "node": "Gotenberg Screenshot",
+          "type": "main",
+          "index": 0
+        }
+      ]
+    ],
+    "Gotenberg Screenshot": [
+      [
+        {
+          "node": "Zip & Write",
+          "type": "main",
+          "index": 0
+        }
+      ],
+      []
+    ]
+  }
+}

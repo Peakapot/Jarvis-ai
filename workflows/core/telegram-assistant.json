@@ -378,6 +378,21 @@
                   }
                 ]
               }
+            },
+            {
+              "outputKey": "signage",
+              "conditions": {
+                "conditions": [
+                  {
+                    "leftValue": "={{ $json.message.text }}",
+                    "rightValue": "/signage",
+                    "operator": {
+                      "type": "string",
+                      "operation": "startsWith"
+                    }
+                  }
+                ]
+              }
             }
           ]
         },
@@ -655,6 +670,21 @@
                   }
                 ]
               }
+            },
+            {
+              "outputKey": "signage",
+              "conditions": {
+                "conditions": [
+                  {
+                    "leftValue": "={{ $json.cmd }}",
+                    "rightValue": "/signage",
+                    "operator": {
+                      "type": "string",
+                      "operation": "equals"
+                    }
+                  }
+                ]
+              }
             }
           ]
         },
@@ -899,6 +929,26 @@
         "options": {}
       },
       "onError": "continueRegularOutput"
+    },
+    {
+      "id": "run-signage",
+      "name": "Run Signage",
+      "type": "n8n-nodes-base.executeWorkflow",
+      "typeVersion": 1.2,
+      "position": [
+        1600,
+        960
+      ],
+      "parameters": {
+        "workflowId": {
+          "__rl": true,
+          "value": "jarvisAwSignage1",
+          "mode": "id",
+          "cachedResultName": "Jarvis · Awareness — Digital-Signage Slides"
+        },
+        "options": {}
+      },
+      "onError": "continueRegularOutput"
     }
   ],
   "connections": {
@@ -986,6 +1036,13 @@
         [
           {
             "node": "Latest Intelligence Brief",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Prep Toolkit Cmd",
             "type": "main",
             "index": 0
           }
@@ -1205,6 +1262,13 @@
             "type": "main",
             "index": 0
           }
+        ],
+        [
+          {
+            "node": "Run Signage",
+            "type": "main",
+            "index": 0
+          }
         ]
       ]
     },
@@ -1313,6 +1377,17 @@
       ]
     },
     "Run Video Script": {
+      "main": [
+        [
+          {
+            "node": "Send Toolkit Document",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Run Signage": {
       "main": [
         [
           {
