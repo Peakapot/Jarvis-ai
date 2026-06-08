@@ -19,10 +19,17 @@ lesson stays self-contained. It degrades gracefully: with images turned off (for
 or `ELEARNING_SECTION_IMAGES=false`) or no image key, each section falls back to a
 branded gradient banner.
 
-`Render HTML` turns this into **one self-contained interactive lesson** (vanilla
-JS: a section hero image, section navigation, progress bar, scored knowledge
-check, pass/fail and answer review). The same HTML is **SCORM-aware** — it
-feature-detects an LMS `API` in parent frames and, when present, reports
+`Render HTML` turns this into **one self-contained, 16:9 full-screen interactive
+lesson** designed to fill a monitor. Flow: an **AI cover** screen → **name entry**
+(used on the certificate) → introduction → two-column sections (Ken-Burns hero
+image + text + an **animated SVG icon** chosen from the heading) → knowledge
+check → an **animated score ring** result → a **bedded-in completion
+certificate** (rendered client-side from the learner's name, score, date and a
+generated ID, with Print / Save-as-PDF). Motion is delivered with CSS/animated
+SVG and Ken-Burns drift on the stills — the OpenAI image API returns static
+images, not animated GIFs, so true raster animation would need a separate video
+model. The lesson is **SCORM-aware** — it feature-detects an LMS `API`,
+pre-fills the name from `cmi.core.student_name` when present, and reports
 `cmi.core.lesson_status` and `cmi.core.score.raw` (and no-ops standalone). For
 SCORM delivery a pure-JS ZIP writer packs `imsmanifest.xml` (SCORM 1.2,
 `index.html` as the SCO) + the lesson into a `.zip`. Output (`.html` and/or
