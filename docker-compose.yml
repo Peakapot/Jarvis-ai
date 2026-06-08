@@ -109,6 +109,8 @@ services:
       OPENAI_BASE_URL: ${OPENAI_BASE_URL:-https://api.openai.com/v1}
       OPENAI_API_KEY: ${OPENAI_API_KEY:-}
       OPENAI_IMAGE_API_KEY: ${OPENAI_IMAGE_API_KEY:-}
+      # Awareness toolkit — optional client white-label (blank = generic branding)
+      CLIENT_NAME: ${CLIENT_NAME:-}
       # Intelligence product schedules / focus (workflows read these via $env)
       CYBER_BRIEF_ENABLED: ${CYBER_BRIEF_ENABLED:-true}
       CYBER_SECTION_IMAGES: ${CYBER_SECTION_IMAGES:-true}

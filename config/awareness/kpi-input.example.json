@@ -1,0 +1,18 @@
+{
+  "client": "",
+  "period": "Q2 2026",
+  "phishingSimulation": {
+    "campaigns": [
+      { "month": "Apr", "sent": 1200, "clickRate": 14.2, "reportRate": 31.0 },
+      { "month": "May", "sent": 1200, "clickRate": 9.8,  "reportRate": 44.5 },
+      { "month": "Jun", "sent": 1200, "clickRate": 6.1,  "reportRate": 58.2 }
+    ]
+  },
+  "training": { "assigned": 1450, "completed": 1306, "completionRate": 90.1 },
+  "byDepartment": [
+    { "name": "Finance",    "clickRate": 4.0, "completionRate": 96 },
+    { "name": "Operations", "clickRate": 7.5, "completionRate": 88 },
+    { "name": "Sales",      "clickRate": 11.2, "completionRate": 82 }
+  ],
+  "notes": "Replace these example figures with the client's real metrics. Saved as config/awareness/kpi-input.json (without .example)."
+}

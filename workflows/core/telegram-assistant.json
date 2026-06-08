@@ -213,6 +213,36 @@
                   }
                 ]
               }
+            },
+            {
+              "outputKey": "poster",
+              "conditions": {
+                "conditions": [
+                  {
+                    "leftValue": "={{ $json.message.text }}",
+                    "rightValue": "/poster",
+                    "operator": {
+                      "type": "string",
+                      "operation": "startsWith"
+                    }
+                  }
+                ]
+              }
+            },
+            {
+              "outputKey": "explainer",
+              "conditions": {
+                "conditions": [
+                  {
+                    "leftValue": "={{ $json.message.text }}",
+                    "rightValue": "/explainer",
+                    "operator": {
+                      "type": "string",
+                      "operation": "startsWith"
+                    }
+                  }
+                ]
+              }
             }
           ]
         },
@@ -314,6 +344,79 @@
         "text": "⚠️ Jarvis hit an error handling that request. The team has been notified and it has been logged."
       },
       "notes": "Failure path: AI/Ollama unavailable -> tell the user gracefully (Error Handling)."
+    },
+    {
+      "id": "awp-prep",
+      "name": "Prep Poster Cmd",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1120,
+        560
+      ],
+      "parameters": {
+        "language": "javaScript",
+        "jsCode": "const m=$json.message||{}; return [{ json:{ text:(m.text||''), chatId:(m.chat&&m.chat.id)||'' } }];"
+      }
+    },
+    {
+      "id": "awp-run",
+      "name": "Run Poster Generator",
+      "type": "n8n-nodes-base.executeWorkflow",
+      "typeVersion": 1.2,
+      "position": [
+        1340,
+        560
+      ],
+      "parameters": {
+        "workflowId": {
+          "__rl": true,
+          "value": "jarvisAwPoster01",
+          "mode": "id",
+          "cachedResultName": "Jarvis · Awareness — Poster & Explainer"
+        },
+        "options": {}
+      },
+      "onError": "continueRegularOutput"
+    },
+    {
+      "id": "awp-send",
+      "name": "Send Poster Document",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        1560,
+        560
+      ],
+      "parameters": {
+        "method": "POST",
+        "url": "=https://api.telegram.org/bot{{ $env.TELEGRAM_BOT_TOKEN }}/sendDocument",
+        "contentType": "multipart-form-data",
+        "sendBody": true,
+        "bodyParameters": {
+          "parameters": [
+            {
+              "parameterType": "formData",
+              "name": "chat_id",
+              "value": "={{ $('Prep Poster Cmd').first().json.chatId }}"
+            },
+            {
+              "parameterType": "formData",
+              "name": "caption",
+              "value": "=Here is your awareness asset (poster + explainer)."
+            },
+            {
+              "parameterType": "formBinaryData",
+              "name": "document",
+              "inputDataFieldName": "data"
+            }
+          ]
+        },
+        "options": {
+          "timeout": 60000
+        }
+      },
+      "onError": "continueRegularOutput"
     }
   ],
   "connections": {
@@ -407,6 +510,20 @@
         ],
         [
           {
+            "node": "Prep Poster Cmd",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Prep Poster Cmd",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
             "node": "AI Assistant (provider-abstracted)",
             "type": "main",
             "index": 0
@@ -459,6 +576,33 @@
             "index": 0
           }
         ]
+      ]
+    },
+    "Prep Poster Cmd": {
+      "main": [
+        [
+          {
+            "node": "Run Poster Generator",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Run Poster Generator": {
+      "main": [
+        [
+          {
+            "node": "Send Poster Document",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Send Poster Document": {
+      "main": [
+        []
       ]
     }
   }

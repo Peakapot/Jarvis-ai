@@ -1,0 +1,24 @@
+# Suggested awareness topics for posters, explainers, tips and quizzes.
+# One per line; the team can pass any topic via the Telegram command instead.
+Phishing
+Spear phishing & whaling
+Business email compromise (BEC)
+Passwords & passphrases
+Multi-factor authentication (MFA)
+MFA fatigue / push-bombing
+Social engineering
+Vishing (voice phishing)
+Smishing (SMS phishing)
+QR-code phishing (quishing)
+Safe remote & home working
+Travel security
+Removable media & USB
+Public Wi-Fi
+Data classification & handling
+Clear desk & screen
+Physical security & tailgating
+Insider risk
+Ransomware
+Reporting incidents
+Deepfakes & AI-enabled fraud
+Generative-AI safe use
