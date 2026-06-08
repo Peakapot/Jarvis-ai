@@ -298,105 +298,125 @@
     }
   ],
   "connections": {
-    "Open Form": [
-      [
-        {
-          "node": "Resolve Input",
-          "type": "main",
-          "index": 0
-        }
+    "Open Form": {
+      "main": [
+        [
+          {
+            "node": "Resolve Input",
+            "type": "main",
+            "index": 0
+          }
+        ]
       ]
-    ],
-    "On Command": [
-      [
-        {
-          "node": "Resolve Input",
-          "type": "main",
-          "index": 0
-        }
+    },
+    "On Command": {
+      "main": [
+        [
+          {
+            "node": "Resolve Input",
+            "type": "main",
+            "index": 0
+          }
+        ]
       ]
-    ],
-    "Resolve Input": [
-      [
-        {
-          "node": "Use Claude?",
-          "type": "main",
-          "index": 0
-        }
+    },
+    "Resolve Input": {
+      "main": [
+        [
+          {
+            "node": "Use Claude?",
+            "type": "main",
+            "index": 0
+          }
+        ]
       ]
-    ],
-    "Use Claude?": [
-      [
-        {
-          "node": "AI (Claude)",
-          "type": "main",
-          "index": 0
-        }
-      ],
-      [
-        {
-          "node": "AI (Ollama)",
-          "type": "main",
-          "index": 0
-        }
+    },
+    "Use Claude?": {
+      "main": [
+        [
+          {
+            "node": "AI (Claude)",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "AI (Ollama)",
+            "type": "main",
+            "index": 0
+          }
+        ]
       ]
-    ],
-    "AI (Claude)": [
-      [
-        {
-          "node": "Prep Content",
-          "type": "main",
-          "index": 0
-        }
-      ],
-      []
-    ],
-    "AI (Ollama)": [
-      [
-        {
-          "node": "Prep Content",
-          "type": "main",
-          "index": 0
-        }
-      ],
-      []
-    ],
-    "Prep Content": [
-      [
-        {
-          "node": "Render HTML",
-          "type": "main",
-          "index": 0
-        }
+    },
+    "AI (Claude)": {
+      "main": [
+        [
+          {
+            "node": "Prep Content",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        []
       ]
-    ],
-    "Render HTML": [
-      [
-        {
-          "node": "Build PDF Input",
-          "type": "main",
-          "index": 0
-        }
+    },
+    "AI (Ollama)": {
+      "main": [
+        [
+          {
+            "node": "Prep Content",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        []
       ]
-    ],
-    "Build PDF Input": [
-      [
-        {
-          "node": "Gotenberg PDF",
-          "type": "main",
-          "index": 0
-        }
+    },
+    "Prep Content": {
+      "main": [
+        [
+          {
+            "node": "Render HTML",
+            "type": "main",
+            "index": 0
+          }
+        ]
       ]
-    ],
-    "Gotenberg PDF": [
-      [
-        {
-          "node": "Write Files",
-          "type": "main",
-          "index": 0
-        }
-      ],
-      []
-    ]
+    },
+    "Render HTML": {
+      "main": [
+        [
+          {
+            "node": "Build PDF Input",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Build PDF Input": {
+      "main": [
+        [
+          {
+            "node": "Gotenberg PDF",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Gotenberg PDF": {
+      "main": [
+        [
+          {
+            "node": "Write Files",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        []
+      ]
+    }
   }
 }

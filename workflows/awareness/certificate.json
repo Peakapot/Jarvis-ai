@@ -187,60 +187,72 @@
     }
   ],
   "connections": {
-    "Open Form": [
-      [
-        {
-          "node": "Resolve Cert",
-          "type": "main",
-          "index": 0
-        }
+    "Open Form": {
+      "main": [
+        [
+          {
+            "node": "Resolve Cert",
+            "type": "main",
+            "index": 0
+          }
+        ]
       ]
-    ],
-    "On Command": [
-      [
-        {
-          "node": "Resolve Cert",
-          "type": "main",
-          "index": 0
-        }
+    },
+    "On Command": {
+      "main": [
+        [
+          {
+            "node": "Resolve Cert",
+            "type": "main",
+            "index": 0
+          }
+        ]
       ]
-    ],
-    "Resolve Cert": [
-      [
-        {
-          "node": "Render HTML",
-          "type": "main",
-          "index": 0
-        }
+    },
+    "Resolve Cert": {
+      "main": [
+        [
+          {
+            "node": "Render HTML",
+            "type": "main",
+            "index": 0
+          }
+        ]
       ]
-    ],
-    "Render HTML": [
-      [
-        {
-          "node": "Build PDF Input",
-          "type": "main",
-          "index": 0
-        }
+    },
+    "Render HTML": {
+      "main": [
+        [
+          {
+            "node": "Build PDF Input",
+            "type": "main",
+            "index": 0
+          }
+        ]
       ]
-    ],
-    "Build PDF Input": [
-      [
-        {
-          "node": "Gotenberg PDF",
-          "type": "main",
-          "index": 0
-        }
+    },
+    "Build PDF Input": {
+      "main": [
+        [
+          {
+            "node": "Gotenberg PDF",
+            "type": "main",
+            "index": 0
+          }
+        ]
       ]
-    ],
-    "Gotenberg PDF": [
-      [
-        {
-          "node": "Write File",
-          "type": "main",
-          "index": 0
-        }
-      ],
-      []
-    ]
+    },
+    "Gotenberg PDF": {
+      "main": [
+        [
+          {
+            "node": "Write File",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        []
+      ]
+    }
   }
 }
