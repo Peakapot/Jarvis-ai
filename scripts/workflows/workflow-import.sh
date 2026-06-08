@@ -9,6 +9,7 @@
 #
 # Source order (later overrides earlier on id collision):
 #   workflows/core/        core assistant workflows
+#   workflows/awareness/   on-demand awareness toolkit generators
 #   workflows/modules/     per-plugin module workflows
 #   workflows/exported/    round-trip mirror (only with --include-exported)
 #
@@ -27,7 +28,7 @@ log_init "workflow"
 load_env
 
 N8N_SERVICE="${N8N_SERVICE_NAME:-n8n}"
-declare -a DIRS=("${JARVIS_ROOT}/workflows/core" "${JARVIS_ROOT}/workflows/modules")
+declare -a DIRS=("${JARVIS_ROOT}/workflows/core" "${JARVIS_ROOT}/workflows/awareness" "${JARVIS_ROOT}/workflows/modules")
 INCLUDE_EXPORTED=0
 
 while [[ $# -gt 0 ]]; do

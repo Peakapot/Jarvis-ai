@@ -56,7 +56,9 @@ Steer topics with `config/awareness/topics.txt`. Provider follows `AI_PROVIDER`.
   with the client's real phishing-sim / training metrics.
 
 ## Import
-`./workflows` is mounted at `/workflows`, so each is importable directly:
+`install.sh` imports every workflow in this folder automatically (the importer
+scans `workflows/awareness/`). To (re-)import manually — `./workflows` is mounted
+at `/workflows`, so each is importable directly:
 ```
 for w in poster-explainer quiz-pack tabletop-pack micro-tips teachable-moment kpi-report \
          elearning certificate campaign-calendar video-script signage-slides; do
