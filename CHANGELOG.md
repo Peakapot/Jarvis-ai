@@ -90,8 +90,7 @@ Initial platform foundation establishing the long-term architecture.
 - **Structured logging** — shared shell library (`scripts/lib/`) emitting
   human-readable + JSON logs per component, with a log-rotation strategy.
 - **Plugin module architecture** — `modules/` with a template and scaffolds for
-  knowledge, meeting, calendar, ISO 27001, mindhaven, dealforge, presentation and
-  image assistants.
+  knowledge, meeting, calendar, ISO 27001, presentation and image assistants.
 - **Security by default** — strict `.gitignore`, `.env.example`, locally
   generated secrets, no credentials in the repository.
 - **Enterprise documentation** — architecture, installation, operations,

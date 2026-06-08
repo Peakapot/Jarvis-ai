@@ -80,8 +80,6 @@ are ignored). Tooling discovers modules by globbing `modules/*/module.json`:
 | [`meeting-assistant`](./meeting-assistant/) | Meeting note + transcript summarisation, action-item extraction | planned (scaffold) |
 | [`calendar-assistant`](./calendar-assistant/) | Schedule queries, event-creation drafts, daily agenda | planned (scaffold) |
 | [`iso27001-assistant`](./iso27001-assistant/) | ISO 27001 control guidance, gap analysis, policy drafting | planned (scaffold) |
-| [`mindhaven-assistant`](./mindhaven-assistant/) | Supportive wellbeing/journaling companion (non-clinical) | planned (scaffold) |
-| [`dealforge-assistant`](./dealforge-assistant/) | Sales/deal pipeline: lead summaries, follow-up drafts | planned (scaffold) |
 | [`presentation-assistant`](./presentation-assistant/) | Brief → slide outline + speaker notes | planned (scaffold) |
 | [`image-assistant`](./image-assistant/) | Image generation via the Image Provider Abstraction | planned (scaffold) |
 

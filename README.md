@@ -138,8 +138,7 @@ how each is reached. **Ollama is the default AI provider.**
 New capabilities are added as self-contained modules under `modules/`, each with
 its own configuration, prompts, workflows, documentation and health checks:
 `knowledge-assistant`, `meeting-assistant`, `calendar-assistant`,
-`iso27001-assistant`, `mindhaven-assistant`, `dealforge-assistant`,
-`presentation-assistant`, `image-assistant`. See
+`iso27001-assistant`, `presentation-assistant`, `image-assistant`. See
 [`modules/README.md`](modules/README.md).
 
 ## Operations toolkit

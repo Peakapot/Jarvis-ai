@@ -71,8 +71,7 @@ refactoring (*Prefer adding modules over modifying the core*):
 
 - Promote scaffolded modules to GA as demand dictates:
   `meeting-assistant`, `calendar-assistant`, `iso27001-assistant`,
-  `mindhaven-assistant`, `dealforge-assistant`, `presentation-assistant`,
-  `image-assistant`.
+  `presentation-assistant`, `image-assistant`.
 - Module marketplace / discovery improvements.
 
 ## Phase 5 — Multi-user & scale
