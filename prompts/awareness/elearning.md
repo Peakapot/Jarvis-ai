@@ -26,8 +26,10 @@ image + text + an **animated SVG icon** chosen from the heading) → knowledge
 check → an **animated score ring** result → a **bedded-in premium completion
 certificate** (gold seal/stamp, ornate border; rendered client-side from the
 learner's name, score, date and a generated ID, with Print / Save-as-PDF). A
-**voiceover** (browser Speech Synthesis) reads each screen aloud with
-Narrate / Pause / Resume — zero-dependency, offline, no audio files. Motion is delivered with CSS/animated
+**voiceover** (browser Speech Synthesis) auto-reads the **body text** of the
+intro and each section aloud as the learner arrives on the slide; a
+Pause / Resume control lets them silence it. Zero-dependency, offline, no audio
+files. Motion is delivered with CSS/animated
 SVG and Ken-Burns drift on the stills — the OpenAI image API returns static
 images, not animated GIFs, so true raster animation would need a separate video
 model. The lesson is **SCORM-aware** — it feature-detects an LMS `API`,
