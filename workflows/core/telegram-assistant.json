@@ -243,6 +243,81 @@
                   }
                 ]
               }
+            },
+            {
+              "outputKey": "quiz",
+              "conditions": {
+                "conditions": [
+                  {
+                    "leftValue": "={{ $json.message.text }}",
+                    "rightValue": "/quiz",
+                    "operator": {
+                      "type": "string",
+                      "operation": "startsWith"
+                    }
+                  }
+                ]
+              }
+            },
+            {
+              "outputKey": "tabletop",
+              "conditions": {
+                "conditions": [
+                  {
+                    "leftValue": "={{ $json.message.text }}",
+                    "rightValue": "/tabletop",
+                    "operator": {
+                      "type": "string",
+                      "operation": "startsWith"
+                    }
+                  }
+                ]
+              }
+            },
+            {
+              "outputKey": "tips",
+              "conditions": {
+                "conditions": [
+                  {
+                    "leftValue": "={{ $json.message.text }}",
+                    "rightValue": "/tips",
+                    "operator": {
+                      "type": "string",
+                      "operation": "startsWith"
+                    }
+                  }
+                ]
+              }
+            },
+            {
+              "outputKey": "kpi",
+              "conditions": {
+                "conditions": [
+                  {
+                    "leftValue": "={{ $json.message.text }}",
+                    "rightValue": "/kpi",
+                    "operator": {
+                      "type": "string",
+                      "operation": "startsWith"
+                    }
+                  }
+                ]
+              }
+            },
+            {
+              "outputKey": "teachable",
+              "conditions": {
+                "conditions": [
+                  {
+                    "leftValue": "={{ $json.message.text }}",
+                    "rightValue": "/teachable",
+                    "operator": {
+                      "type": "string",
+                      "operation": "startsWith"
+                    }
+                  }
+                ]
+              }
             }
           ]
         },
@@ -346,27 +421,134 @@
       "notes": "Failure path: AI/Ollama unavailable -> tell the user gracefully (Error Handling)."
     },
     {
-      "id": "awp-prep",
-      "name": "Prep Poster Cmd",
+      "id": "tk-prep",
+      "name": "Prep Toolkit Cmd",
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
       "position": [
         1120,
-        560
+        620
       ],
       "parameters": {
         "language": "javaScript",
-        "jsCode": "const m=$json.message||{}; return [{ json:{ text:(m.text||''), chatId:(m.chat&&m.chat.id)||'' } }];"
+        "jsCode": "const m=$json.message||{}; let txt=(m.text||'').toString(); let cmd=(txt.split(/\\s+/)[0]||'').toLowerCase(); if(cmd==='/explainer') cmd='/poster'; return [{ json:{ cmd:cmd, text:txt, chatId:(m.chat&&m.chat.id)||'' } }];"
       }
     },
     {
-      "id": "awp-run",
-      "name": "Run Poster Generator",
+      "id": "tk-router",
+      "name": "Toolkit Router",
+      "type": "n8n-nodes-base.switch",
+      "typeVersion": 3,
+      "position": [
+        1340,
+        620
+      ],
+      "parameters": {
+        "rules": {
+          "values": [
+            {
+              "outputKey": "poster",
+              "conditions": {
+                "conditions": [
+                  {
+                    "leftValue": "={{ $json.cmd }}",
+                    "rightValue": "/poster",
+                    "operator": {
+                      "type": "string",
+                      "operation": "equals"
+                    }
+                  }
+                ]
+              }
+            },
+            {
+              "outputKey": "quiz",
+              "conditions": {
+                "conditions": [
+                  {
+                    "leftValue": "={{ $json.cmd }}",
+                    "rightValue": "/quiz",
+                    "operator": {
+                      "type": "string",
+                      "operation": "equals"
+                    }
+                  }
+                ]
+              }
+            },
+            {
+              "outputKey": "tabletop",
+              "conditions": {
+                "conditions": [
+                  {
+                    "leftValue": "={{ $json.cmd }}",
+                    "rightValue": "/tabletop",
+                    "operator": {
+                      "type": "string",
+                      "operation": "equals"
+                    }
+                  }
+                ]
+              }
+            },
+            {
+              "outputKey": "tips",
+              "conditions": {
+                "conditions": [
+                  {
+                    "leftValue": "={{ $json.cmd }}",
+                    "rightValue": "/tips",
+                    "operator": {
+                      "type": "string",
+                      "operation": "equals"
+                    }
+                  }
+                ]
+              }
+            },
+            {
+              "outputKey": "kpi",
+              "conditions": {
+                "conditions": [
+                  {
+                    "leftValue": "={{ $json.cmd }}",
+                    "rightValue": "/kpi",
+                    "operator": {
+                      "type": "string",
+                      "operation": "equals"
+                    }
+                  }
+                ]
+              }
+            },
+            {
+              "outputKey": "teachable",
+              "conditions": {
+                "conditions": [
+                  {
+                    "leftValue": "={{ $json.cmd }}",
+                    "rightValue": "/teachable",
+                    "operator": {
+                      "type": "string",
+                      "operation": "equals"
+                    }
+                  }
+                ]
+              }
+            }
+          ]
+        },
+        "options": {}
+      }
+    },
+    {
+      "id": "tk-run-poster",
+      "name": "Run Poster",
       "type": "n8n-nodes-base.executeWorkflow",
       "typeVersion": 1.2,
       "position": [
-        1340,
-        560
+        1600,
+        360
       ],
       "parameters": {
         "workflowId": {
@@ -380,13 +562,113 @@
       "onError": "continueRegularOutput"
     },
     {
-      "id": "awp-send",
-      "name": "Send Poster Document",
+      "id": "tk-run-quiz",
+      "name": "Run Quiz",
+      "type": "n8n-nodes-base.executeWorkflow",
+      "typeVersion": 1.2,
+      "position": [
+        1600,
+        460
+      ],
+      "parameters": {
+        "workflowId": {
+          "__rl": true,
+          "value": "jarvisAwQuiz001",
+          "mode": "id",
+          "cachedResultName": "Jarvis · Awareness — Quiz & Spot-the-Phish"
+        },
+        "options": {}
+      },
+      "onError": "continueRegularOutput"
+    },
+    {
+      "id": "tk-run-table",
+      "name": "Run Tabletop",
+      "type": "n8n-nodes-base.executeWorkflow",
+      "typeVersion": 1.2,
+      "position": [
+        1600,
+        560
+      ],
+      "parameters": {
+        "workflowId": {
+          "__rl": true,
+          "value": "jarvisAwTable01",
+          "mode": "id",
+          "cachedResultName": "Jarvis · Awareness — Tabletop Exercise"
+        },
+        "options": {}
+      },
+      "onError": "continueRegularOutput"
+    },
+    {
+      "id": "tk-run-tips",
+      "name": "Run Tips",
+      "type": "n8n-nodes-base.executeWorkflow",
+      "typeVersion": 1.2,
+      "position": [
+        1600,
+        660
+      ],
+      "parameters": {
+        "workflowId": {
+          "__rl": true,
+          "value": "jarvisAwTips001",
+          "mode": "id",
+          "cachedResultName": "Jarvis · Awareness — Micro-Tips & Cards"
+        },
+        "options": {}
+      },
+      "onError": "continueRegularOutput"
+    },
+    {
+      "id": "tk-run-kpi",
+      "name": "Run KPI",
+      "type": "n8n-nodes-base.executeWorkflow",
+      "typeVersion": 1.2,
+      "position": [
+        1600,
+        760
+      ],
+      "parameters": {
+        "workflowId": {
+          "__rl": true,
+          "value": "jarvisAwKpi0001",
+          "mode": "id",
+          "cachedResultName": "Jarvis · Awareness — KPI Report"
+        },
+        "options": {}
+      },
+      "onError": "continueRegularOutput"
+    },
+    {
+      "id": "tk-run-teach",
+      "name": "Run Teachable",
+      "type": "n8n-nodes-base.executeWorkflow",
+      "typeVersion": 1.2,
+      "position": [
+        1600,
+        860
+      ],
+      "parameters": {
+        "workflowId": {
+          "__rl": true,
+          "value": "jarvisAwTeach01",
+          "mode": "id",
+          "cachedResultName": "Jarvis · Awareness — Teachable Moment"
+        },
+        "options": {}
+      },
+      "onError": "continueRegularOutput"
+    },
+    {
+      "id": "tk-send",
+      "name": "Send Toolkit Document",
       "type": "n8n-nodes-base.httpRequest",
       "typeVersion": 4.2,
       "position": [
-        1560,
-        560
+        1860,
+        620
       ],
       "parameters": {
         "method": "POST",
@@ -398,12 +680,12 @@
             {
               "parameterType": "formData",
               "name": "chat_id",
-              "value": "={{ $('Prep Poster Cmd').first().json.chatId }}"
+              "value": "={{ $('Prep Toolkit Cmd').first().json.chatId }}"
             },
             {
               "parameterType": "formData",
               "name": "caption",
-              "value": "=Here is your awareness asset (poster + explainer)."
+              "value": "=Here is your awareness asset."
             },
             {
               "parameterType": "formBinaryData",
@@ -510,14 +792,49 @@
         ],
         [
           {
-            "node": "Prep Poster Cmd",
+            "node": "Prep Toolkit Cmd",
             "type": "main",
             "index": 0
           }
         ],
         [
           {
-            "node": "Prep Poster Cmd",
+            "node": "Prep Toolkit Cmd",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Prep Toolkit Cmd",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Prep Toolkit Cmd",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Prep Toolkit Cmd",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Prep Toolkit Cmd",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Prep Toolkit Cmd",
             "type": "main",
             "index": 0
           }
@@ -578,29 +895,131 @@
         ]
       ]
     },
-    "Prep Poster Cmd": {
+    "Prep Toolkit Cmd": {
       "main": [
         [
           {
-            "node": "Run Poster Generator",
+            "node": "Toolkit Router",
             "type": "main",
             "index": 0
           }
         ]
       ]
     },
-    "Run Poster Generator": {
+    "Toolkit Router": {
       "main": [
         [
           {
-            "node": "Send Poster Document",
+            "node": "Run Poster",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Run Quiz",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Run Tabletop",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Run Tips",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Run KPI",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Run Teachable",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        []
+      ]
+    },
+    "Run Poster": {
+      "main": [
+        [
+          {
+            "node": "Send Toolkit Document",
             "type": "main",
             "index": 0
           }
         ]
       ]
     },
-    "Send Poster Document": {
+    "Run Quiz": {
+      "main": [
+        [
+          {
+            "node": "Send Toolkit Document",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Run Tabletop": {
+      "main": [
+        [
+          {
+            "node": "Send Toolkit Document",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Run Tips": {
+      "main": [
+        [
+          {
+            "node": "Send Toolkit Document",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Run KPI": {
+      "main": [
+        [
+          {
+            "node": "Send Toolkit Document",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Run Teachable": {
+      "main": [
+        [
+          {
+            "node": "Send Toolkit Document",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Send Toolkit Document": {
       "main": [
         []
       ]

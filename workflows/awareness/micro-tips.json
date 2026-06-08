@@ -1,0 +1,409 @@
+{
+  "id": "jarvisAwTips001",
+  "name": "Jarvis · Awareness — Micro-Tips & Cards",
+  "meta": {
+    "jarvisModule": "awareness-toolkit",
+    "jarvisVersion": "1.0.0",
+    "awarenessTool": true,
+    "description": "On-demand security micro-tips one-pager + lock-screen cards as a PDF saved to /reports/awareness/tips. Trigger via /tips <theme>, weekly schedule, or manually.",
+    "envVars": [
+      "AI_PROVIDER",
+      "CLIENT_NAME",
+      "GOTENBERG_URL"
+    ]
+  },
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "nodes": [
+    {
+      "id": "man",
+      "name": "Run Manually",
+      "type": "n8n-nodes-base.manualTrigger",
+      "typeVersion": 1,
+      "position": [
+        200,
+        200
+      ],
+      "parameters": {}
+    },
+    {
+      "id": "ewt",
+      "name": "On Command",
+      "type": "n8n-nodes-base.executeWorkflowTrigger",
+      "typeVersion": 1,
+      "position": [
+        200,
+        360
+      ],
+      "parameters": {}
+    },
+    {
+      "id": "resolve",
+      "name": "Resolve Input",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        460,
+        280
+      ],
+      "parameters": {
+        "language": "javaScript",
+        "jsCode": "const i = $input.first() ? ($input.first().json || {}) : {};\nlet t = (i.topic || i.query || i.text || '').toString().trim();\nt = t.replace(/^\\/[a-zA-Z]+\\b/, '').trim();\nif (!t) t = 'phishing';\nreturn [{ json: { topic: t, date: new Date().toISOString().slice(0,10), client: ($env.CLIENT_NAME || '').toString() } }];\n"
+      }
+    },
+    {
+      "id": "useclaude",
+      "name": "Use Claude?",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2,
+      "position": [
+        700,
+        280
+      ],
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": false,
+            "typeValidation": "loose"
+          },
+          "combinator": "and",
+          "conditions": [
+            {
+              "leftValue": "={{ $env.AI_PROVIDER || 'ollama' }}",
+              "rightValue": "claude",
+              "operator": {
+                "type": "string",
+                "operation": "equals"
+              }
+            }
+          ]
+        }
+      }
+    },
+    {
+      "id": "aiclaude",
+      "name": "AI (Claude)",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        940,
+        180
+      ],
+      "parameters": {
+        "method": "POST",
+        "url": "={{ $env.CLAUDE_BASE_URL || 'https://api.anthropic.com' }}/v1/messages",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "x-api-key",
+              "value": "={{ $env.ANTHROPIC_API_KEY }}"
+            },
+            {
+              "name": "anthropic-version",
+              "value": "2023-06-01"
+            },
+            {
+              "name": "content-type",
+              "value": "application/json"
+            }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={\n  \"model\": \"{{ $env.CLAUDE_MODEL || 'claude-sonnet-4-6' }}\",\n  \"max_tokens\": 3000,\n  \"system\": \"You are a security-awareness copywriter. For the given theme produce a SINGLE valid JSON object of bite-sized tips. Keys: theme; intro (one sentence); tips (6-9 items {title (max 5 words), tip (one short sentence)}); cards (the 3 strongest, each {front (a punchy 3-6 word line), back (one short action)}). Friendly, encouraging, non-technical. Do NOT use markdown code fences. Output ONLY the JSON object.\",\n  \"messages\": [ {\"role\":\"user\",\"content\": {{ JSON.stringify('Create bite-sized security tips for the theme: ' + ($json.topic || 'phishing')) }} } ]\n}",
+        "options": {
+          "timeout": 180000
+        }
+      },
+      "onError": "continueErrorOutput"
+    },
+    {
+      "id": "aiollama",
+      "name": "AI (Ollama)",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        940,
+        380
+      ],
+      "parameters": {
+        "method": "POST",
+        "url": "={{ $env.OLLAMA_BASE_URL || 'http://jarvis-ollama:11434' }}/api/chat",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={\n  \"model\": \"{{ $env.OLLAMA_DEFAULT_MODEL || 'llama3.1:8b' }}\",\n  \"stream\": false,\n  \"keep_alive\": \"10m\",\n  \"options\": { \"temperature\": 0.5, \"num_predict\": 2200 },\n  \"messages\": [ {\"role\":\"system\",\"content\":\"You are a security-awareness copywriter. For the given theme produce a SINGLE valid JSON object of bite-sized tips. Keys: theme; intro (one sentence); tips (6-9 items {title (max 5 words), tip (one short sentence)}); cards (the 3 strongest, each {front (a punchy 3-6 word line), back (one short action)}). Friendly, encouraging, non-technical. Do NOT use markdown code fences. Output ONLY the JSON object.\"}, {\"role\":\"user\",\"content\": {{ JSON.stringify('Create bite-sized security tips for the theme: ' + ($json.topic || 'phishing')) }} } ]\n}",
+        "options": {
+          "timeout": 300000
+        }
+      },
+      "onError": "continueErrorOutput"
+    },
+    {
+      "id": "prep",
+      "name": "Prep Content",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1180,
+        280
+      ],
+      "parameters": {
+        "language": "javaScript",
+        "jsCode": "const j = $json || {};\nlet raw = '';\nif (j.message && j.message.content) raw = j.message.content;\nelse if (j.content && j.content[0] && j.content[0].text) raw = j.content[0].text;\nlet data = null;\ntry { data = JSON.parse(raw.replace(/^```(?:json)?\\s*/i,'').replace(/\\s*```$/i,'')); }\ncatch (e) { try { const m = raw.match(/\\{[\\s\\S]*\\}/); if (m) data = JSON.parse(m[0]); } catch (e2) { data = null; } }\nconst r = $('Resolve Input').first().json;\nreturn [{ json: { data: data, topic: r.topic, date: r.date, client: r.client, markdown: raw } }];\n"
+      }
+    },
+    {
+      "id": "render",
+      "name": "Render HTML",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1420,
+        280
+      ],
+      "parameters": {
+        "language": "javaScript",
+        "jsCode": "const d=$json.data||{}; const topic=$json.topic||'Security'; const date=$json.date||''; const client=($json.client||'').toString();\nfunction esc(s){ return (s==null?'':String(s)).replace(/[&<>]/g,function(c){return({'&':'&amp;','<':'&lt;','>':'&gt;'})[c];}); }\nconst byline=client?('Prepared for '+client):'Security Awareness';\nvar tipsHtml=((d.tips||[]).map(function(t){return '<div class=\"tip\"><div class=\"th\">'+esc(t.title)+'</div><div class=\"td\">'+esc(t.tip)+'</div></div>';}).join(''));\nvar cards=((d.cards||[]).map(function(c){return '<div class=\"lock\"><div class=\"lk\">SECURITY TIP</div><div class=\"lf\">'+esc(c.front)+'</div><div class=\"lb\">'+esc(c.back)+'</div><div class=\"lfoot\">'+esc(byline)+'</div></div>';}).join(''));\nvar EXTRA=\" .tip{border-left:4px solid #0E7C86;background:#F4F8F8;border-radius:6px;padding:10px 14px;margin:9px 0;page-break-inside:avoid} .th{font-weight:800;color:#0E2233;font-size:14px} .td{font-size:13px;color:#2b3340;margin-top:3px} .lock{height:100vh;page-break-before:always;background:linear-gradient(150deg,#0E2233,#0E7C86);color:#fff;position:relative;display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;padding:60px} .lock .lk{position:absolute;top:48px;letter-spacing:4px;font-size:13px;color:#9fe4d8;font-weight:800} .lock .lf{font-size:46px;font-weight:800;line-height:1.1;max-width:80%} .lock .lb{font-size:20px;color:#CDE7F0;margin-top:18px;max-width:70%} .lock .lfoot{position:absolute;bottom:48px;color:#8fb3c2;font-size:13px;letter-spacing:1px}\";\nvar CSS=\"@page{margin:0} *{box-sizing:border-box} body{margin:0;font-family:-apple-system,\\\"Segoe UI\\\",Arial,sans-serif;color:#11151c} .pg{padding:44px 52px;page-break-after:always} .pg:last-child{page-break-after:auto} .kick{color:#0E7C86;letter-spacing:2px;font-weight:800;font-size:12px;text-transform:uppercase} h1.t{font-family:Georgia,serif;font-size:30px;color:#0E2233;margin:6px 0 4px} .sub{color:#5A6472;font-size:13px;margin:0 0 18px} h2{font-family:Georgia,serif;font-size:19px;color:#0E2233;margin:20px 0 10px;border-bottom:2px solid #0E7C86;padding-bottom:6px} p{font-size:14px;line-height:1.6;color:#2b3340} .foot{position:fixed;bottom:22px;left:52px;right:52px;color:#9aa6b2;font-size:11px;border-top:1px solid #E2E6EC;padding-top:8px;display:flex;justify-content:space-between} .card{border:1px solid #E2E6EC;border-radius:8px;padding:14px 16px;margin:12px 0;page-break-inside:avoid} .card h3{margin:0 0 8px;font-family:Georgia,serif;font-size:16px;color:#0E2233} .pill{display:inline-block;background:#E6F4F1;color:#0E7C86;font-weight:800;font-size:11px;padding:3px 10px;border-radius:12px;letter-spacing:.5px}\"+EXTRA;\nvar page1='<div class=\"pg\"><div class=\"kick\">Security Tips</div><h1 class=\"t\">'+esc(topic)+' — Tips</h1><div class=\"sub\">'+esc(d.intro||'Small habits, big protection.')+'</div>'+tipsHtml+'<div class=\"foot\"><span>'+esc(byline)+'</span><span>'+esc(date)+'</span></div></div>';\nconst html='<!doctype html><html><head><meta charset=\"utf-8\"><style>'+CSS+'</style></head><body>'+page1+cards+'</body></html>';\nconst fileSafe=topic.toLowerCase().replace(/[^a-z0-9]+/g,'-').replace(/^-|-$/g,'').slice(0,40)||'tips';\nreturn [{ json:{ html:html, topic:topic, date:date, fileSafe:fileSafe, outDir:'tips', filePrefix:'tips' } }];\n"
+      }
+    },
+    {
+      "id": "pdfin",
+      "name": "Build PDF Input",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1660,
+        280
+      ],
+      "parameters": {
+        "language": "javaScript",
+        "jsCode": "const html = $json.html || '';\nreturn [{ json: { topic:$json.topic, date:$json.date, fileSafe:$json.fileSafe, outDir:$json.outDir, filePrefix:$json.filePrefix },\n  binary: { data: { data: Buffer.from(html,'utf8').toString('base64'), mimeType:'text/html', fileName:'index.html' } } }];\n"
+      }
+    },
+    {
+      "id": "goten",
+      "name": "Gotenberg PDF",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        1900,
+        280
+      ],
+      "parameters": {
+        "method": "POST",
+        "url": "={{ $env.GOTENBERG_URL || 'http://jarvis-gotenberg:3000' }}/forms/chromium/convert/html",
+        "contentType": "multipart-form-data",
+        "sendBody": true,
+        "bodyParameters": {
+          "parameters": [
+            {
+              "parameterType": "formBinaryData",
+              "name": "files",
+              "inputDataFieldName": "data"
+            },
+            {
+              "parameterType": "formData",
+              "name": "marginTop",
+              "value": "0"
+            },
+            {
+              "parameterType": "formData",
+              "name": "marginBottom",
+              "value": "0"
+            },
+            {
+              "parameterType": "formData",
+              "name": "marginLeft",
+              "value": "0"
+            },
+            {
+              "parameterType": "formData",
+              "name": "marginRight",
+              "value": "0"
+            }
+          ]
+        },
+        "options": {
+          "response": {
+            "response": {
+              "responseFormat": "file",
+              "outputPropertyName": "data"
+            }
+          },
+          "timeout": 120000
+        }
+      },
+      "onError": "continueErrorOutput"
+    },
+    {
+      "id": "write",
+      "name": "Write File",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        2140,
+        280
+      ],
+      "parameters": {
+        "language": "javaScript",
+        "jsCode": "const fs = require('fs');\nconst meta = $('Render HTML').first().json;\nconst dir = '/reports/awareness/' + (meta.outDir || 'misc');\nconst name = (meta.filePrefix || 'asset') + '-' + (meta.fileSafe || 'item') + '-' + meta.date + '.pdf';\nlet buf = null;\ntry { buf = await this.helpers.getBinaryDataBuffer(0, 'data'); } catch (e) {}\ntry { fs.mkdirSync(dir, { recursive: true }); if (buf) fs.writeFileSync(dir + '/' + name, buf); } catch (e) {}\nconst out = { json: { ok: !!buf, file: dir + '/' + name, topic: meta.topic } };\ntry { const b = $input.first().binary; if (b && b.data) { b.data.fileName = name; out.binary = { data: b.data }; } } catch (e) {}\nreturn [out];\n"
+      },
+      "onError": "continueRegularOutput"
+    },
+    {
+      "id": "sched",
+      "name": "Weekly Schedule",
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "typeVersion": 1.2,
+      "position": [
+        200,
+        520
+      ],
+      "parameters": {
+        "rule": {
+          "interval": [
+            {
+              "field": "cronExpression",
+              "expression": "={{ $env.MICRO_TIPS_SCHEDULE_CRON || '0 8 * * 1' }}"
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "connections": {
+    "Run Manually": {
+      "main": [
+        [
+          {
+            "node": "Resolve Input",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "On Command": {
+      "main": [
+        [
+          {
+            "node": "Resolve Input",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Resolve Input": {
+      "main": [
+        [
+          {
+            "node": "Use Claude?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Use Claude?": {
+      "main": [
+        [
+          {
+            "node": "AI (Claude)",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "AI (Ollama)",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "AI (Claude)": {
+      "main": [
+        [
+          {
+            "node": "Prep Content",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        []
+      ]
+    },
+    "AI (Ollama)": {
+      "main": [
+        [
+          {
+            "node": "Prep Content",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        []
+      ]
+    },
+    "Prep Content": {
+      "main": [
+        [
+          {
+            "node": "Render HTML",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Render HTML": {
+      "main": [
+        [
+          {
+            "node": "Build PDF Input",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Build PDF Input": {
+      "main": [
+        [
+          {
+            "node": "Gotenberg PDF",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Gotenberg PDF": {
+      "main": [
+        [
+          {
+            "node": "Write File",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        []
+      ]
+    },
+    "Weekly Schedule": {
+      "main": [
+        [
+          {
+            "node": "Resolve Input",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  }
+}

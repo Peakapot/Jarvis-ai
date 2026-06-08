@@ -1,0 +1,222 @@
+{
+  "id": "jarvisAwKpi0001",
+  "name": "Jarvis · Awareness — KPI Report",
+  "meta": {
+    "jarvisModule": "awareness-toolkit",
+    "jarvisVersion": "1.0.0",
+    "awarenessTool": true,
+    "description": "Client-facing security-awareness KPI report (phishing-sim trend, training completion, by-department) rendered from config/awareness/kpi-input.json to /reports/awareness/kpi. Trigger via /kpi or manually.",
+    "envVars": [
+      "CLIENT_NAME",
+      "GOTENBERG_URL"
+    ]
+  },
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "nodes": [
+    {
+      "id": "man",
+      "name": "Run Manually",
+      "type": "n8n-nodes-base.manualTrigger",
+      "typeVersion": 1,
+      "position": [
+        220,
+        220
+      ],
+      "parameters": {}
+    },
+    {
+      "id": "ewt",
+      "name": "On Command",
+      "type": "n8n-nodes-base.executeWorkflowTrigger",
+      "typeVersion": 1,
+      "position": [
+        220,
+        360
+      ],
+      "parameters": {}
+    },
+    {
+      "id": "load",
+      "name": "Load KPI",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        460,
+        290
+      ],
+      "parameters": {
+        "language": "javaScript",
+        "jsCode": "const fs = require('fs');\nlet d = {};\ntry { d = JSON.parse(fs.readFileSync('/config/awareness/kpi-input.json','utf8')); }\ncatch (e) { try { d = JSON.parse(fs.readFileSync('/config/awareness/kpi-input.example.json','utf8')); } catch (e2) { d = {}; } }\nreturn [{ json: { data: d, date: new Date().toISOString().slice(0,10), client: (d.client || $env.CLIENT_NAME || '').toString() } }];\n"
+      }
+    },
+    {
+      "id": "render",
+      "name": "Render HTML",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        700,
+        290
+      ],
+      "parameters": {
+        "language": "javaScript",
+        "jsCode": "const d=$json.data||{}; const date=$json.date||''; const client=($json.client||'').toString();\nfunction esc(s){ return (s==null?'':String(s)).replace(/[&<>]/g,function(c){return({'&':'&amp;','<':'&lt;','>':'&gt;'})[c];}); }\nconst byline=client?('Prepared for '+client):'Security Awareness';\nfunction bar(label,val,color){ var v=Number(val); if(isNaN(v))v=0; var w=Math.max(0,Math.min(100,v)); return '<div class=\"brow\"><span class=\"bl\">'+esc(label)+'</span><span class=\"bt\"><span class=\"bf\" style=\"width:'+w+'%;background:'+color+'\"></span></span><span class=\"bv\">'+esc(val)+'%</span></div>'; }\nconst ps=(d.phishingSimulation&&d.phishingSimulation.campaigns)||[];\nconst tr=d.training||{};\nconst dep=d.byDepartment||[];\nvar phish=ps.map(function(c){ return bar(esc(c.month)+' · click rate', c.clickRate, '#C0392B')+bar(esc(c.month)+' · report rate', c.reportRate, '#1E8E5A'); }).join('');\nvar deptRows=dep.map(function(x){ return '<tr><td class=\"rl\">'+esc(x.name)+'</td><td>'+bar('click', x.clickRate, '#C0392B')+'</td><td>'+bar('done', x.completionRate, '#0E7C86')+'</td></tr>'; }).join('');\nvar EXTRA=\" .brow{margin:7px 0;font-size:0;white-space:nowrap} .bl{display:inline-block;width:168px;font-size:12.5px;color:#2b3340;vertical-align:middle} .bt{display:inline-block;width:300px;height:14px;background:#EEF1F5;border-radius:7px;overflow:hidden;margin:0 10px;vertical-align:middle} .bf{display:block;height:14px;border-radius:7px} .bv{display:inline-block;width:50px;text-align:right;font-size:12.5px;font-weight:700;color:#0E2233;vertical-align:middle} table.r{width:100%;border-collapse:collapse;margin:6px 0} table.r td{border-bottom:1px solid #EEF1F5;padding:8px 10px;font-size:12.5px;vertical-align:middle} table.r td.rl{font-weight:700;color:#0E2233;width:24%} table.r .bl{width:34px} table.r .bt{width:150px} table.r .brow{margin:0} .big{margin:8px 0;font-size:0} .stat{display:inline-block;width:32%;border:1px solid #E2E6EC;border-radius:8px;padding:14px;vertical-align:top;margin-right:1%} .stat .n{font-family:Georgia,serif;font-size:30px;font-weight:700;color:#0E7C86} .stat .l{font-size:11px;letter-spacing:.5px;color:#5A6472;text-transform:uppercase}\";\nvar CSS=\"@page{margin:0} *{box-sizing:border-box} body{margin:0;font-family:-apple-system,\\\"Segoe UI\\\",Arial,sans-serif;color:#11151c} .pg{padding:44px 52px;page-break-after:always} .pg:last-child{page-break-after:auto} .kick{color:#0E7C86;letter-spacing:2px;font-weight:800;font-size:12px;text-transform:uppercase} h1.t{font-family:Georgia,serif;font-size:30px;color:#0E2233;margin:6px 0 4px} .sub{color:#5A6472;font-size:13px;margin:0 0 18px} h2{font-family:Georgia,serif;font-size:19px;color:#0E2233;margin:20px 0 10px;border-bottom:2px solid #0E7C86;padding-bottom:6px} p{font-size:14px;line-height:1.6;color:#2b3340} .foot{position:fixed;bottom:22px;left:52px;right:52px;color:#9aa6b2;font-size:11px;border-top:1px solid #E2E6EC;padding-top:8px;display:flex;justify-content:space-between} .card{border:1px solid #E2E6EC;border-radius:8px;padding:14px 16px;margin:12px 0;page-break-inside:avoid} .card h3{margin:0 0 8px;font-family:Georgia,serif;font-size:16px;color:#0E2233} .pill{display:inline-block;background:#E6F4F1;color:#0E7C86;font-weight:800;font-size:11px;padding:3px 10px;border-radius:12px;letter-spacing:.5px}\"+EXTRA;\nvar body='<div class=\"pg\"><div class=\"kick\">Awareness Metrics</div><h1 class=\"t\">Security Awareness KPI Report</h1><div class=\"sub\">'+esc(d.period||'')+(client?(' · '+esc(client)):'')+'</div>'\n +'<div class=\"big\"><div class=\"stat\"><div class=\"n\">'+esc((tr.completionRate!=null?tr.completionRate+'%':'—'))+'</div><div class=\"l\">Training completion</div></div><div class=\"stat\"><div class=\"n\">'+esc(ps.length?(ps[ps.length-1].clickRate+'%'):'—')+'</div><div class=\"l\">Latest phishing click rate</div></div><div class=\"stat\"><div class=\"n\">'+esc(ps.length?(ps[ps.length-1].reportRate+'%'):'—')+'</div><div class=\"l\">Latest report rate</div></div></div>'\n +'<h2>Phishing simulation trend</h2>'+(phish||'<p>No simulation data supplied.</p>')\n +'<h2>Training completion</h2>'+bar('Completion', tr.completionRate, '#0E7C86')+'<p style=\"font-size:12px;color:#5A6472\">'+esc((tr.completed!=null?tr.completed:'—')+' of '+(tr.assigned!=null?tr.assigned:'—')+' staff completed.')+'</p>'\n +'<h2>By department</h2><table class=\"r\">'+deptRows+'</table>'\n +(d.notes?'<p style=\"font-size:12px;color:#5A6472;margin-top:14px\">'+esc(d.notes)+'</p>':'')\n +'<div class=\"foot\"><span>'+esc(byline)+' · figures supplied by the awareness team</span><span>'+esc(date)+'</span></div></div>';\nconst html='<!doctype html><html><head><meta charset=\"utf-8\"><style>'+CSS+'</style></head><body>'+body+'</body></html>';\nreturn [{ json:{ html:html, topic:'kpi', date:date, fileSafe:(d.period||'report').toString().toLowerCase().replace(/[^a-z0-9]+/g,'-').replace(/^-|-$/g,''), outDir:'kpi', filePrefix:'kpi' } }];\n"
+      }
+    },
+    {
+      "id": "pdfin",
+      "name": "Build PDF Input",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        940,
+        290
+      ],
+      "parameters": {
+        "language": "javaScript",
+        "jsCode": "const html = $json.html || '';\nreturn [{ json: { topic:$json.topic, date:$json.date, fileSafe:$json.fileSafe, outDir:$json.outDir, filePrefix:$json.filePrefix },\n  binary: { data: { data: Buffer.from(html,'utf8').toString('base64'), mimeType:'text/html', fileName:'index.html' } } }];\n"
+      }
+    },
+    {
+      "id": "goten",
+      "name": "Gotenberg PDF",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        1180,
+        290
+      ],
+      "parameters": {
+        "method": "POST",
+        "url": "={{ $env.GOTENBERG_URL || 'http://jarvis-gotenberg:3000' }}/forms/chromium/convert/html",
+        "contentType": "multipart-form-data",
+        "sendBody": true,
+        "bodyParameters": {
+          "parameters": [
+            {
+              "parameterType": "formBinaryData",
+              "name": "files",
+              "inputDataFieldName": "data"
+            },
+            {
+              "parameterType": "formData",
+              "name": "marginTop",
+              "value": "0"
+            },
+            {
+              "parameterType": "formData",
+              "name": "marginBottom",
+              "value": "0"
+            },
+            {
+              "parameterType": "formData",
+              "name": "marginLeft",
+              "value": "0"
+            },
+            {
+              "parameterType": "formData",
+              "name": "marginRight",
+              "value": "0"
+            }
+          ]
+        },
+        "options": {
+          "response": {
+            "response": {
+              "responseFormat": "file",
+              "outputPropertyName": "data"
+            }
+          },
+          "timeout": 120000
+        }
+      },
+      "onError": "continueErrorOutput"
+    },
+    {
+      "id": "write",
+      "name": "Write File",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1420,
+        290
+      ],
+      "parameters": {
+        "language": "javaScript",
+        "jsCode": "const fs = require('fs');\nconst meta = $('Render HTML').first().json;\nconst dir = '/reports/awareness/' + (meta.outDir || 'misc');\nconst name = (meta.filePrefix || 'asset') + '-' + (meta.fileSafe || 'item') + '-' + meta.date + '.pdf';\nlet buf = null;\ntry { buf = await this.helpers.getBinaryDataBuffer(0, 'data'); } catch (e) {}\ntry { fs.mkdirSync(dir, { recursive: true }); if (buf) fs.writeFileSync(dir + '/' + name, buf); } catch (e) {}\nconst out = { json: { ok: !!buf, file: dir + '/' + name, topic: meta.topic } };\ntry { const b = $input.first().binary; if (b && b.data) { b.data.fileName = name; out.binary = { data: b.data }; } } catch (e) {}\nreturn [out];\n"
+      },
+      "onError": "continueRegularOutput"
+    }
+  ],
+  "connections": {
+    "Run Manually": {
+      "main": [
+        [
+          {
+            "node": "Load KPI",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "On Command": {
+      "main": [
+        [
+          {
+            "node": "Load KPI",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Load KPI": {
+      "main": [
+        [
+          {
+            "node": "Render HTML",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Render HTML": {
+      "main": [
+        [
+          {
+            "node": "Build PDF Input",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Build PDF Input": {
+      "main": [
+        [
+          {
+            "node": "Gotenberg PDF",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Gotenberg PDF": {
+      "main": [
+        [
+          {
+            "node": "Write File",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        []
+      ]
+    }
+  }
+}

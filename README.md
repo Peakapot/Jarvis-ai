@@ -78,17 +78,20 @@ checks, backup, restore and upgrade — **without manually editing any code**.
 
 | Capability | Description | Entry point |
 |------------|-------------|-------------|
-| **Telegram Assistant** | Primary interface with a command architecture (`/help`, `/status`, `/research`, `/emails`, `/image`, `/cyber`, `/opportunities`, `/energy`) — new commands are easy to add. | `workflows/core/telegram-assistant.json` |
-| **Cyber Brief** | Professional daily threat-intelligence product: Executive & Technical summaries, Top Threats, Recommended Actions, Emerging Trends, UAE Relevance, Historical Archive — rendered to HTML/PDF/email. | `workflows/core/cyber-brief.json` |
-| **Cyber Opportunities Brief** | Daily commercial-opportunity radar (RFPs, RFIs, tenders, MSS, GRC, SOC, OT/CNI, cloud & AI security) with a GCC-first focus; premium HTML/PDF/email/archive with an AI cover image. | `modules/cyber-opportunities/` |
-| **Energy Intelligence Brief** | Daily UAE/ADNOC-focused energy intelligence (ADNOC ecosystem, then regional & global oil & gas) with the same premium output and AI cover image. | `modules/energy-intelligence/` |
+| **Telegram Assistant** | Primary interface with a command architecture (`/help`, `/status`, `/research`, `/emails`, `/image`, `/cyber`, `/opportunities`, `/energy`, `/defence`, plus awareness toolkit `/poster`, `/explainer`, `/quiz`, `/tabletop`, `/tips`, `/kpi`, `/teachable`) — new commands are easy to add. | `workflows/core/telegram-assistant.json` |
+| **Cybersecurity Talent** | Weekly awareness/skills magazine for a security awareness & training team: editorial, featured training technique, training technology, qualifications & courses, skills, the human firewall and emerging threats — journalistic briefs, custom AI cover, references. | `workflows/core/cyber-brief.json` |
+| **Cyber Defence Watch** | Weekly OSINT cyber-defence brief for the KSA Ministry of Defence (KSA-green theme): allied policy & capability (US/UK/Five Eyes/NATO), Middle East defence cyber, defence-impacting breaches, threat actors, and a bespoke *Implications for KSA MOD* assessment. | `workflows/core/defence-cyber.json` |
+| **Cyber Opportunities Brief** | Daily commercial-opportunity radar (RFPs, RFIs, tenders, MSS, GRC, SOC, OT/CNI, cloud & AI security) with a GCC-first focus; premium HTML/PDF/archive with an AI cover image. | `modules/cyber-opportunities/` |
+| **Energy Intelligence Brief** | Daily UAE/ADNOC-focused energy intelligence (ADNOC ecosystem, then regional & global oil & gas) with the same premium output, live oil & gas prices and an AI cover image. | `modules/energy-intelligence/` |
+| **Awareness Toolkit** | On-demand security-awareness asset generators — posters & explainers, quiz / spot-the-phish packs, tabletop exercises, micro-tips & lock-screen cards, news-triggered teachable-moment notes and client KPI reports. Files written to `reports/awareness/`. | `workflows/awareness/` |
 | **Email Assistant** | Inbox summaries, draft replies, categorisation & prioritisation, thread summaries. | `prompts/email-assistant/` |
 | **Error Handler** | Central failure path for every workflow: structured logging + alerting. | `workflows/core/error-handler.json` |
 
 ## Intelligence products
 
-Jarvis runs a **registry-driven intelligence framework**: three daily briefs —
-**Cyber Threat**, **Cyber Opportunities** and **Energy** — share one reusable
+Jarvis runs a **registry-driven intelligence framework**: four briefs —
+**Cybersecurity Talent**, **Cyber Defence Watch** (KSA MOD), **Cyber
+Opportunities** and **Energy** — share one reusable
 pipeline (provider-abstracted AI, sources files, schedules, archive) and one
 **common premium branding framework** ([`config/intelligence/branding.json`](config/intelligence/branding.json)),
 so every brief has a consistent, premium style across HTML/PDF/email, each
@@ -98,6 +101,25 @@ is the single source of truth — install, validate, health, status and backup a
 iterate it, so future products (Defence, AI, Government, Healthcare, Market) are
 added as a module + registry entry with **no core code changes**. See
 [`docs/intelligence-products.md`](docs/intelligence-products.md).
+
+## Awareness toolkit
+
+Beyond the scheduled magazines, Jarvis includes an **on-demand security-awareness
+toolkit** for supporting a client's awareness team. Each tool is a self-contained
+workflow under [`workflows/awareness/`](workflows/awareness/README.md) that reuses
+the same engine (provider-abstracted AI → image/Gotenberg → file) and writes
+ready-to-use assets to `reports/awareness/`. Trigger each by a **Telegram command**
+or by running it **manually** in n8n; branding is generic until `CLIENT_NAME` is
+set for white-label delivery.
+
+| Tool | Command | Output |
+|------|---------|--------|
+| Poster & Explainer | `/poster <topic>` · `/explainer <topic>` | A4 poster + one-page explainer PDF |
+| Quiz & Spot-the-Phish | `/quiz <topic>` | participant + facilitator answer-key PDF |
+| Tabletop Exercise | `/tabletop <scenario>` | scenario, roles, timed injects, debrief PDF |
+| Micro-Tips & Cards | `/tips <theme>` | printable tips + lock-screen card PDF (also weekly) |
+| Teachable Moment | `/teachable` | news-triggered "what happened / why / what to do" note (also weekly) |
+| KPI Report | `/kpi` | client metrics report from `config/awareness/kpi-input.json` |
 
 ## Provider abstraction
 
@@ -153,6 +175,7 @@ troubleshooting, upgrade and development guides, plus operational runbooks.
 │   ├── lib/                #   Shared shell library (logging, state, common)
 │   └── workflows/          #   Workflow lifecycle tooling
 ├── workflows/              # Workflows as source code (core + modules)
+│   └── awareness/          #   On-demand awareness toolkit generators
 ├── prompts/                # First-class, versioned prompt assets
 ├── modules/                # Plugin architecture (one folder per capability)
 ├── templates/              # Email/report templates
