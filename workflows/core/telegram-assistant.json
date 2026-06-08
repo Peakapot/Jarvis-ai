@@ -348,6 +348,36 @@
                   }
                 ]
               }
+            },
+            {
+              "outputKey": "calendar",
+              "conditions": {
+                "conditions": [
+                  {
+                    "leftValue": "={{ $json.message.text }}",
+                    "rightValue": "/calendar",
+                    "operator": {
+                      "type": "string",
+                      "operation": "startsWith"
+                    }
+                  }
+                ]
+              }
+            },
+            {
+              "outputKey": "videoscript",
+              "conditions": {
+                "conditions": [
+                  {
+                    "leftValue": "={{ $json.message.text }}",
+                    "rightValue": "/videoscript",
+                    "operator": {
+                      "type": "string",
+                      "operation": "startsWith"
+                    }
+                  }
+                ]
+              }
             }
           ]
         },
@@ -595,6 +625,36 @@
                   }
                 ]
               }
+            },
+            {
+              "outputKey": "calendar",
+              "conditions": {
+                "conditions": [
+                  {
+                    "leftValue": "={{ $json.cmd }}",
+                    "rightValue": "/calendar",
+                    "operator": {
+                      "type": "string",
+                      "operation": "equals"
+                    }
+                  }
+                ]
+              }
+            },
+            {
+              "outputKey": "videoscript",
+              "conditions": {
+                "conditions": [
+                  {
+                    "leftValue": "={{ $json.cmd }}",
+                    "rightValue": "/videoscript",
+                    "operator": {
+                      "type": "string",
+                      "operation": "equals"
+                    }
+                  }
+                ]
+              }
             }
           ]
         },
@@ -799,6 +859,46 @@
         "options": {}
       },
       "onError": "continueRegularOutput"
+    },
+    {
+      "id": "run-calendar",
+      "name": "Run Calendar",
+      "type": "n8n-nodes-base.executeWorkflow",
+      "typeVersion": 1.2,
+      "position": [
+        1600,
+        960
+      ],
+      "parameters": {
+        "workflowId": {
+          "__rl": true,
+          "value": "jarvisAwCal0001",
+          "mode": "id",
+          "cachedResultName": "Jarvis · Awareness — Campaign Calendar"
+        },
+        "options": {}
+      },
+      "onError": "continueRegularOutput"
+    },
+    {
+      "id": "run-video-script",
+      "name": "Run Video Script",
+      "type": "n8n-nodes-base.executeWorkflow",
+      "typeVersion": 1.2,
+      "position": [
+        1600,
+        1060
+      ],
+      "parameters": {
+        "workflowId": {
+          "__rl": true,
+          "value": "jarvisAwVideo01",
+          "mode": "id",
+          "cachedResultName": "Jarvis · Awareness — Video Script & Storyboard"
+        },
+        "options": {}
+      },
+      "onError": "continueRegularOutput"
     }
   ],
   "connections": {
@@ -886,6 +986,20 @@
         [
           {
             "node": "Latest Intelligence Brief",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Prep Toolkit Cmd",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Prep Toolkit Cmd",
             "type": "main",
             "index": 0
           }
@@ -1077,6 +1191,20 @@
             "type": "main",
             "index": 0
           }
+        ],
+        [
+          {
+            "node": "Run Calendar",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Run Video Script",
+            "type": "main",
+            "index": 0
+          }
         ]
       ]
     },
@@ -1163,6 +1291,28 @@
       ]
     },
     "Run Certificate": {
+      "main": [
+        [
+          {
+            "node": "Send Toolkit Document",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Run Calendar": {
+      "main": [
+        [
+          {
+            "node": "Send Toolkit Document",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Run Video Script": {
       "main": [
         [
           {
