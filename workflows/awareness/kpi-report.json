@@ -17,14 +17,34 @@
   "nodes": [
     {
       "id": "man",
-      "name": "Run Manually",
-      "type": "n8n-nodes-base.manualTrigger",
-      "typeVersion": 1,
+      "name": "Open Form",
+      "type": "n8n-nodes-base.formTrigger",
+      "typeVersion": 2.2,
       "position": [
         220,
         220
       ],
-      "parameters": {}
+      "parameters": {
+        "formTitle": "Generate KPI Report",
+        "formDescription": "Metrics come from config/awareness/kpi-input.json. You may override the period and client label below.",
+        "formFields": {
+          "values": [
+            {
+              "fieldLabel": "Period",
+              "fieldType": "text",
+              "requiredField": false,
+              "placeholder": "e.g. Q2 2026"
+            },
+            {
+              "fieldLabel": "Client",
+              "fieldType": "text",
+              "requiredField": false
+            }
+          ]
+        },
+        "options": {}
+      },
+      "webhookId": "aw-kpi-form"
     },
     {
       "id": "ewt",
@@ -48,7 +68,7 @@
       ],
       "parameters": {
         "language": "javaScript",
-        "jsCode": "const fs = require('fs');\nlet d = {};\ntry { d = JSON.parse(fs.readFileSync('/config/awareness/kpi-input.json','utf8')); }\ncatch (e) { try { d = JSON.parse(fs.readFileSync('/config/awareness/kpi-input.example.json','utf8')); } catch (e2) { d = {}; } }\nreturn [{ json: { data: d, date: new Date().toISOString().slice(0,10), client: (d.client || $env.CLIENT_NAME || '').toString() } }];\n"
+        "jsCode": "const fs = require('fs');\nlet d = {};\ntry { d = JSON.parse(fs.readFileSync('/config/awareness/kpi-input.json','utf8')); }\ncatch (e) { try { d = JSON.parse(fs.readFileSync('/config/awareness/kpi-input.example.json','utf8')); } catch (e2) { d = {}; } }\nconst _i=$input.first()?($input.first().json||{}):{};\nconst _period=(_i['Period']||'').toString().trim(); if(_period) d.period=_period;\nconst _client=(_i['Client']||'').toString().trim();\nreturn [{ json: { data: d, date: new Date().toISOString().slice(0,10), client: (_client || d.client || $env.CLIENT_NAME || '').toString() } }];\n"
       }
     },
     {
@@ -151,17 +171,6 @@
     }
   ],
   "connections": {
-    "Run Manually": {
-      "main": [
-        [
-          {
-            "node": "Load KPI",
-            "type": "main",
-            "index": 0
-          }
-        ]
-      ]
-    },
     "On Command": {
       "main": [
         [
@@ -216,6 +225,17 @@
           }
         ],
         []
+      ]
+    },
+    "Open Form": {
+      "main": [
+        [
+          {
+            "node": "Load KPI",
+            "type": "main",
+            "index": 0
+          }
+        ]
       ]
     }
   }

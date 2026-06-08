@@ -19,14 +19,28 @@
   "nodes": [
     {
       "id": "man",
-      "name": "Run Manually",
-      "type": "n8n-nodes-base.manualTrigger",
-      "typeVersion": 1,
+      "name": "Open Form",
+      "type": "n8n-nodes-base.formTrigger",
+      "typeVersion": 2.2,
       "position": [
         200,
         200
       ],
-      "parameters": {}
+      "parameters": {
+        "formTitle": "Generate Teachable Moment",
+        "formDescription": "Optional: bias the pick toward a focus (e.g. healthcare, ransomware). Leave blank for the week’s most significant breach.",
+        "formFields": {
+          "values": [
+            {
+              "fieldLabel": "Focus (optional)",
+              "fieldType": "text",
+              "requiredField": false
+            }
+          ]
+        },
+        "options": {}
+      },
+      "webhookId": "aw-teachable-form"
     },
     {
       "id": "ewt",
@@ -70,7 +84,7 @@
       ],
       "parameters": {
         "language": "javaScript",
-        "jsCode": "const urls = [\n 'https://news.google.com/rss/search?q=(%22data+breach%22+OR+ransomware+OR+%22cyber+attack%22+OR+hacked)+when:3d&hl=en-US&gl=US&ceid=US:en',\n 'https://www.bleepingcomputer.com/feed/'\n];\nreturn urls.map(function(u){ return { json: { url: u } }; });\n"
+        "jsCode": "const urls = [\n 'https://news.google.com/rss/search?q=(%22data+breach%22+OR+ransomware+OR+%22cyber+attack%22+OR+hacked)+when:3d&hl=en-US&gl=US&ceid=US:en',\n 'https://www.bleepingcomputer.com/feed/'\n];\nconst _i=$input.first()?($input.first().json||{}):{}; const _focus=(_i['Focus (optional)']||_i['Focus']||_i.focus||'').toString().trim();\nreturn urls.map(function(u){ return { json: { url: u, focus: _focus } }; });\n"
       },
       "onError": "continueErrorOutput"
     },
@@ -102,7 +116,7 @@
       ],
       "parameters": {
         "language": "javaScript",
-        "jsCode": "const items = $input.all();\nconst arts = items.map(function(i){ return i.json; }).filter(function(a){ return a && (a.title || a.contentSnippet || a.content); });\nfunction img(a){ try{ if(a.enclosure&&a.enclosure.url) return a.enclosure.url; var c=(a.content||a['content:encoded']||'').toString(); var m=c.match(/<img[^>]+src=[\"']([^\"']+)[\"']/i); if(m) return m[1]; }catch(e){} return ''; }\nconst lines = arts.slice(0,20).map(function(a){ var t=(a.title||'').toString(); var s=(a.contentSnippet||a.content||'').toString().replace(/\\s+/g,' ').slice(0,200); var u=(a.link||a.url||'').toString(); var im=img(a); return '- '+t+' — '+s+' ('+u+')'+(im?(' IMG='+im):''); });\nconst digest = lines.length ? lines.join('\\n') : 'No breach items retrieved.';\nreturn [{ json: { digest: digest, count: arts.length, date: new Date().toISOString().slice(0,10), client: ($env.CLIENT_NAME||'').toString() } }];\n"
+        "jsCode": "const items = $input.all();\nconst arts = items.map(function(i){ return i.json; }).filter(function(a){ return a && (a.title || a.contentSnippet || a.content); });\nfunction img(a){ try{ if(a.enclosure&&a.enclosure.url) return a.enclosure.url; var c=(a.content||a['content:encoded']||'').toString(); var m=c.match(/<img[^>]+src=[\"']([^\"']+)[\"']/i); if(m) return m[1]; }catch(e){} return ''; }\nconst lines = arts.slice(0,20).map(function(a){ var t=(a.title||'').toString(); var s=(a.contentSnippet||a.content||'').toString().replace(/\\s+/g,' ').slice(0,200); var u=(a.link||a.url||'').toString(); var im=img(a); return '- '+t+' — '+s+' ('+u+')'+(im?(' IMG='+im):''); });\nconst digest = lines.length ? lines.join('\\n') : 'No breach items retrieved.';\nlet focus=''; try{ focus=($('Load Sources').first().json.focus||'').toString(); }catch(e){}\nreturn [{ json: { digest: digest, count: arts.length, focus: focus, date: new Date().toISOString().slice(0,10), client: ($env.CLIENT_NAME||'').toString() } }];\n"
       },
       "onError": "continueErrorOutput"
     },
@@ -166,7 +180,7 @@
         },
         "sendBody": true,
         "specifyBody": "json",
-        "jsonBody": "={\n  \"model\": \"{{ $env.CLAUDE_MODEL || 'claude-sonnet-4-6' }}\",\n  \"max_tokens\": 1800,\n  \"system\": \"You are an internal security-communications writer. From the news digest, choose the SINGLE most significant breach or incident that is most relevant for staff awareness, and write a one-page internal 'teachable moment'. Output a SINGLE valid JSON object: {headline; what (2-3 sentences on what happened); why (2-3 sentences on why it matters to our staff and organisation); actions (4-6 short, concrete things staff should do); source (outlet name); url (verbatim link from the digest)}. Use ONLY facts present in the digest; do not invent details. Plain, calm, non-technical language. Do NOT use markdown code fences. Output ONLY the JSON object.\",\n  \"messages\": [ {\"role\":\"user\",\"content\": {{ JSON.stringify('BREACH NEWS DIGEST (' + ($json.count||0) + ' items):\\n' + ($json.digest||'')) }} } ]\n}",
+        "jsonBody": "={\n  \"model\": \"{{ $env.CLAUDE_MODEL || 'claude-sonnet-4-6' }}\",\n  \"max_tokens\": 1800,\n  \"system\": \"You are an internal security-communications writer. From the news digest, choose the SINGLE most significant breach or incident that is most relevant for staff awareness, and write a one-page internal 'teachable moment'. Output a SINGLE valid JSON object: {headline; what (2-3 sentences on what happened); why (2-3 sentences on why it matters to our staff and organisation); actions (4-6 short, concrete things staff should do); source (outlet name); url (verbatim link from the digest)}. Use ONLY facts present in the digest; do not invent details. Plain, calm, non-technical language. If a preferred focus is provided, prefer a breach relevant to it. Do NOT use markdown code fences. Output ONLY the JSON object.\",\n  \"messages\": [ {\"role\":\"user\",\"content\": {{ JSON.stringify('BREACH NEWS DIGEST (' + ($json.count||0) + ' items):\\n' + ($json.digest||'') + ($json.focus?('\\n\\nPreferred focus (optional): '+$json.focus):'')) }} } ]\n}",
         "options": {
           "timeout": 120000
         }
@@ -187,7 +201,7 @@
         "url": "={{ $env.OLLAMA_BASE_URL || 'http://jarvis-ollama:11434' }}/api/chat",
         "sendBody": true,
         "specifyBody": "json",
-        "jsonBody": "={\n  \"model\": \"{{ $env.OLLAMA_DEFAULT_MODEL || 'llama3.1:8b' }}\",\n  \"stream\": false,\n  \"keep_alive\": \"10m\",\n  \"options\": { \"temperature\": 0.4, \"num_predict\": 1400 },\n  \"messages\": [ {\"role\":\"system\",\"content\":\"You are an internal security-communications writer. From the news digest, choose the SINGLE most significant breach or incident that is most relevant for staff awareness, and write a one-page internal 'teachable moment'. Output a SINGLE valid JSON object: {headline; what (2-3 sentences on what happened); why (2-3 sentences on why it matters to our staff and organisation); actions (4-6 short, concrete things staff should do); source (outlet name); url (verbatim link from the digest)}. Use ONLY facts present in the digest; do not invent details. Plain, calm, non-technical language. Do NOT use markdown code fences. Output ONLY the JSON object.\"}, {\"role\":\"user\",\"content\": {{ JSON.stringify('BREACH NEWS DIGEST (' + ($json.count||0) + ' items):\\n' + ($json.digest||'')) }} } ]\n}",
+        "jsonBody": "={\n  \"model\": \"{{ $env.OLLAMA_DEFAULT_MODEL || 'llama3.1:8b' }}\",\n  \"stream\": false,\n  \"keep_alive\": \"10m\",\n  \"options\": { \"temperature\": 0.4, \"num_predict\": 1400 },\n  \"messages\": [ {\"role\":\"system\",\"content\":\"You are an internal security-communications writer. From the news digest, choose the SINGLE most significant breach or incident that is most relevant for staff awareness, and write a one-page internal 'teachable moment'. Output a SINGLE valid JSON object: {headline; what (2-3 sentences on what happened); why (2-3 sentences on why it matters to our staff and organisation); actions (4-6 short, concrete things staff should do); source (outlet name); url (verbatim link from the digest)}. Use ONLY facts present in the digest; do not invent details. Plain, calm, non-technical language. If a preferred focus is provided, prefer a breach relevant to it. Do NOT use markdown code fences. Output ONLY the JSON object.\"}, {\"role\":\"user\",\"content\": {{ JSON.stringify('BREACH NEWS DIGEST (' + ($json.count||0) + ' items):\\n' + ($json.digest||'') + ($json.focus?('\\n\\nPreferred focus (optional): '+$json.focus):'')) }} } ]\n}",
         "options": {
           "timeout": 300000
         }
@@ -308,17 +322,6 @@
     }
   ],
   "connections": {
-    "Run Manually": {
-      "main": [
-        [
-          {
-            "node": "Load Sources",
-            "type": "main",
-            "index": 0
-          }
-        ]
-      ]
-    },
     "On Command": {
       "main": [
         [
@@ -461,6 +464,17 @@
           }
         ],
         []
+      ]
+    },
+    "Open Form": {
+      "main": [
+        [
+          {
+            "node": "Load Sources",
+            "type": "main",
+            "index": 0
+          }
+        ]
       ]
     }
   }

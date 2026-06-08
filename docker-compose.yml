@@ -111,6 +111,8 @@ services:
       OPENAI_IMAGE_API_KEY: ${OPENAI_IMAGE_API_KEY:-}
       # Awareness toolkit — optional client white-label (blank = generic branding)
       CLIENT_NAME: ${CLIENT_NAME:-}
+      # Default topic for awareness tools when none is supplied (form/Telegram blank)
+      DEFAULT_AWARENESS_TOPIC: ${DEFAULT_AWARENESS_TOPIC:-phishing}
       # Intelligence product schedules / focus (workflows read these via $env)
       CYBER_BRIEF_ENABLED: ${CYBER_BRIEF_ENABLED:-true}
       CYBER_SECTION_IMAGES: ${CYBER_SECTION_IMAGES:-true}

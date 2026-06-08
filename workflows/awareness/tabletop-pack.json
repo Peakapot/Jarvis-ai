@@ -18,14 +18,176 @@
   "nodes": [
     {
       "id": "man",
-      "name": "Run Manually",
-      "type": "n8n-nodes-base.manualTrigger",
-      "typeVersion": 1,
+      "name": "Open Form",
+      "type": "n8n-nodes-base.formTrigger",
+      "typeVersion": 2.2,
       "position": [
         200,
         200
       ],
-      "parameters": {}
+      "parameters": {
+        "formTitle": "Generate Tabletop Exercise",
+        "formDescription": "Pick a topic and options, then submit. Leave blank to use the default.",
+        "formFields": {
+          "values": [
+            {
+              "fieldLabel": "Topic",
+              "fieldType": "dropdown",
+              "requiredField": false,
+              "fieldOptions": {
+                "values": [
+                  {
+                    "option": "Phishing"
+                  },
+                  {
+                    "option": "Spear phishing & whaling"
+                  },
+                  {
+                    "option": "Business email compromise (BEC)"
+                  },
+                  {
+                    "option": "Passwords & passphrases"
+                  },
+                  {
+                    "option": "Multi-factor authentication (MFA)"
+                  },
+                  {
+                    "option": "Social engineering"
+                  },
+                  {
+                    "option": "Vishing (voice phishing)"
+                  },
+                  {
+                    "option": "Smishing (SMS phishing)"
+                  },
+                  {
+                    "option": "QR-code phishing (quishing)"
+                  },
+                  {
+                    "option": "Safe remote & home working"
+                  },
+                  {
+                    "option": "Travel security"
+                  },
+                  {
+                    "option": "Removable media & USB"
+                  },
+                  {
+                    "option": "Public Wi-Fi"
+                  },
+                  {
+                    "option": "Data classification & handling"
+                  },
+                  {
+                    "option": "Insider risk"
+                  },
+                  {
+                    "option": "Ransomware"
+                  },
+                  {
+                    "option": "Reporting incidents"
+                  },
+                  {
+                    "option": "Deepfakes & AI-enabled fraud"
+                  },
+                  {
+                    "option": "Generative-AI safe use"
+                  },
+                  {
+                    "option": "Custom (type below)"
+                  }
+                ]
+              }
+            },
+            {
+              "fieldLabel": "Custom topic",
+              "fieldType": "text",
+              "requiredField": false,
+              "placeholder": "Used if set / if Topic = Custom"
+            },
+            {
+              "fieldLabel": "Audience",
+              "fieldType": "dropdown",
+              "requiredField": false,
+              "fieldOptions": {
+                "values": [
+                  {
+                    "option": "All staff"
+                  },
+                  {
+                    "option": "Finance"
+                  },
+                  {
+                    "option": "Executives"
+                  },
+                  {
+                    "option": "IT & Developers"
+                  },
+                  {
+                    "option": "New joiners"
+                  }
+                ]
+              }
+            },
+            {
+              "fieldLabel": "Tone",
+              "fieldType": "dropdown",
+              "requiredField": false,
+              "fieldOptions": {
+                "values": [
+                  {
+                    "option": "Friendly"
+                  },
+                  {
+                    "option": "Formal"
+                  },
+                  {
+                    "option": "Punchy"
+                  }
+                ]
+              }
+            },
+            {
+              "fieldLabel": "Duration",
+              "fieldType": "dropdown",
+              "requiredField": false,
+              "fieldOptions": {
+                "values": [
+                  {
+                    "option": "30 minutes"
+                  },
+                  {
+                    "option": "45 minutes"
+                  },
+                  {
+                    "option": "60 minutes"
+                  }
+                ]
+              }
+            },
+            {
+              "fieldLabel": "Audience level",
+              "fieldType": "dropdown",
+              "requiredField": false,
+              "fieldOptions": {
+                "values": [
+                  {
+                    "option": "All staff"
+                  },
+                  {
+                    "option": "Management"
+                  },
+                  {
+                    "option": "Board"
+                  }
+                ]
+              }
+            }
+          ]
+        },
+        "options": {}
+      },
+      "webhookId": "aw-tabletop-pack-form"
     },
     {
       "id": "ewt",
@@ -49,7 +211,7 @@
       ],
       "parameters": {
         "language": "javaScript",
-        "jsCode": "const i = $input.first() ? ($input.first().json || {}) : {};\nlet t = (i.topic || i.query || i.text || '').toString().trim();\nt = t.replace(/^\\/[a-zA-Z]+\\b/, '').trim();\nif (!t) t = 'phishing';\nreturn [{ json: { topic: t, date: new Date().toISOString().slice(0,10), client: ($env.CLIENT_NAME || '').toString() } }];\n"
+        "jsCode": "const i = $input.first() ? ($input.first().json || {}) : {};\nfunction pick(){ for(var k=0;k<arguments.length;k++){ var v=arguments[k]; if(v!=null && String(v).trim()!=='') return String(v).trim(); } return ''; }\nlet custom = pick(i['Custom topic'], i.customTopic);\nlet drop = pick(i['Topic'], i.topic); if(/^custom/i.test(drop)) drop='';\nlet t = pick(custom, drop, i.query, i.text);\nt = t.replace(/^\\/[a-zA-Z]+\\b/, '').trim();\nif (!t) t = ($env.DEFAULT_AWARENESS_TOPIC || 'phishing');\nreturn [{ json: { topic:t, audience:(pick(i['Audience'],i.audience)||'All staff'), tone:(pick(i['Tone'],i.tone)||'Friendly'), questions:pick(i['Questions'],i.questions), difficulty:pick(i['Difficulty'],i.difficulty), duration:pick(i['Duration'],i.duration), level:pick(i['Audience level'],i.level), numTips:pick(i['Number of tips'],i.numTips), date:new Date().toISOString().slice(0,10), client:($env.CLIENT_NAME||'').toString() } }];"
       }
     },
     {
@@ -112,7 +274,7 @@
         },
         "sendBody": true,
         "specifyBody": "json",
-        "jsonBody": "={\n  \"model\": \"{{ $env.CLAUDE_MODEL || 'claude-sonnet-4-6' }}\",\n  \"max_tokens\": 3000,\n  \"system\": \"You are a cyber crisis-exercise facilitator. For the given scenario or topic produce a SINGLE valid JSON object for a ~45-minute tabletop exercise aimed at a general management audience. Keys: title; scenario (2-3 sentence situation); objectives (3-4 short strings); roles (3-5 items {role, brief}); injects (4-6 items {time (e.g. \\\"T+10 min\\\"), inject (what new information arrives), prompt (the decision/question put to the room)}); debrief (4-6 short questions); facilitatorNotes (3-5 short practical tips). Plain language, realistic, non-technical. Do NOT use markdown code fences. Output ONLY the JSON object.\",\n  \"messages\": [ {\"role\":\"user\",\"content\": {{ JSON.stringify('Create a 45-minute tabletop exercise for the scenario: ' + ($json.topic || 'phishing')) }} } ]\n}",
+        "jsonBody": "={\n  \"model\": \"{{ $env.CLAUDE_MODEL || 'claude-sonnet-4-6' }}\",\n  \"max_tokens\": 3000,\n  \"system\": \"You are a cyber crisis-exercise facilitator. For the given scenario or topic produce a SINGLE valid JSON object for a ~45-minute tabletop exercise aimed at a general management audience. Keys: title; scenario (2-3 sentence situation); objectives (3-4 short strings); roles (3-5 items {role, brief}); injects (4-6 items {time (e.g. \\\"T+10 min\\\"), inject (what new information arrives), prompt (the decision/question put to the room)}); debrief (4-6 short questions); facilitatorNotes (3-5 short practical tips). Plain language, realistic, non-technical. Tailor the language, examples and difficulty to the stated Audience and Tone, and honour any stated number of questions, difficulty, duration, seniority or number of tips. Do NOT use markdown code fences. Output ONLY the JSON object.\",\n  \"messages\": [ {\"role\":\"user\",\"content\": {{ JSON.stringify('Create a 45-minute tabletop exercise for the scenario: ' + ($json.topic || 'phishing') + '. Audience: ' + ($json.audience||'All staff') + '. Tone: ' + ($json.tone||'Friendly') + ($json.questions?('. Number of questions: '+$json.questions):'') + ($json.difficulty?('. Difficulty: '+$json.difficulty):'') + ($json.duration?('. Duration: '+$json.duration):'') + ($json.level?('. Audience seniority: '+$json.level):'') + ($json.numTips?('. Number of tips: '+$json.numTips):'')) }} } ]\n}",
         "options": {
           "timeout": 180000
         }
@@ -133,7 +295,7 @@
         "url": "={{ $env.OLLAMA_BASE_URL || 'http://jarvis-ollama:11434' }}/api/chat",
         "sendBody": true,
         "specifyBody": "json",
-        "jsonBody": "={\n  \"model\": \"{{ $env.OLLAMA_DEFAULT_MODEL || 'llama3.1:8b' }}\",\n  \"stream\": false,\n  \"keep_alive\": \"10m\",\n  \"options\": { \"temperature\": 0.5, \"num_predict\": 2200 },\n  \"messages\": [ {\"role\":\"system\",\"content\":\"You are a cyber crisis-exercise facilitator. For the given scenario or topic produce a SINGLE valid JSON object for a ~45-minute tabletop exercise aimed at a general management audience. Keys: title; scenario (2-3 sentence situation); objectives (3-4 short strings); roles (3-5 items {role, brief}); injects (4-6 items {time (e.g. \\\"T+10 min\\\"), inject (what new information arrives), prompt (the decision/question put to the room)}); debrief (4-6 short questions); facilitatorNotes (3-5 short practical tips). Plain language, realistic, non-technical. Do NOT use markdown code fences. Output ONLY the JSON object.\"}, {\"role\":\"user\",\"content\": {{ JSON.stringify('Create a 45-minute tabletop exercise for the scenario: ' + ($json.topic || 'phishing')) }} } ]\n}",
+        "jsonBody": "={\n  \"model\": \"{{ $env.OLLAMA_DEFAULT_MODEL || 'llama3.1:8b' }}\",\n  \"stream\": false,\n  \"keep_alive\": \"10m\",\n  \"options\": { \"temperature\": 0.5, \"num_predict\": 2200 },\n  \"messages\": [ {\"role\":\"system\",\"content\":\"You are a cyber crisis-exercise facilitator. For the given scenario or topic produce a SINGLE valid JSON object for a ~45-minute tabletop exercise aimed at a general management audience. Keys: title; scenario (2-3 sentence situation); objectives (3-4 short strings); roles (3-5 items {role, brief}); injects (4-6 items {time (e.g. \\\"T+10 min\\\"), inject (what new information arrives), prompt (the decision/question put to the room)}); debrief (4-6 short questions); facilitatorNotes (3-5 short practical tips). Plain language, realistic, non-technical. Tailor the language, examples and difficulty to the stated Audience and Tone, and honour any stated number of questions, difficulty, duration, seniority or number of tips. Do NOT use markdown code fences. Output ONLY the JSON object.\"}, {\"role\":\"user\",\"content\": {{ JSON.stringify('Create a 45-minute tabletop exercise for the scenario: ' + ($json.topic || 'phishing') + '. Audience: ' + ($json.audience||'All staff') + '. Tone: ' + ($json.tone||'Friendly') + ($json.questions?('. Number of questions: '+$json.questions):'') + ($json.difficulty?('. Difficulty: '+$json.difficulty):'') + ($json.duration?('. Duration: '+$json.duration):'') + ($json.level?('. Audience seniority: '+$json.level):'') + ($json.numTips?('. Number of tips: '+$json.numTips):'')) }} } ]\n}",
         "options": {
           "timeout": 300000
         }
@@ -254,17 +416,6 @@
     }
   ],
   "connections": {
-    "Run Manually": {
-      "main": [
-        [
-          {
-            "node": "Resolve Input",
-            "type": "main",
-            "index": 0
-          }
-        ]
-      ]
-    },
     "On Command": {
       "main": [
         [
@@ -372,6 +523,17 @@
           }
         ],
         []
+      ]
+    },
+    "Open Form": {
+      "main": [
+        [
+          {
+            "node": "Resolve Input",
+            "type": "main",
+            "index": 0
+          }
+        ]
       ]
     }
   }

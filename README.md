@@ -95,9 +95,10 @@ On-demand security-awareness asset generators for an awareness team and its
 clients. Each is a self-contained workflow under
 [`workflows/awareness/`](workflows/awareness/README.md) that reuses the same
 engine (provider-abstracted AI → image/Gotenberg → file) and writes ready-to-use
-assets to `reports/awareness/`. Trigger by a **Telegram command** or **manually**
-in n8n; output is generic-branded until `CLIENT_NAME` is set for white-label
-delivery.
+assets to `reports/awareness/`. Trigger by a **Telegram command** (topic in the
+command, e.g. `/poster mfa`) or **manually** in n8n — a short **form** pops up to
+choose the topic, audience, tone and per-tool options. Output is generic-branded
+until `CLIENT_NAME` is set for white-label delivery.
 
 | Tool | Command | Output |
 |------|---------|--------|

@@ -25,8 +25,23 @@ Steer topics with `config/awareness/topics.txt`. Provider follows `AI_PROVIDER`.
 | `teachable-moment.json` | `/teachable` (+ weekly) | `teachable/` — news-triggered "what happened / why / what to do" note |
 | `kpi-report.json` | `/kpi` | `kpi/` — client KPI report from `config/awareness/kpi-input.json` |
 
+## Choosing the topic & options
+- **Telegram:** pass the topic in the command, e.g. `/poster mfa`,
+  `/tabletop ransomware`, `/quiz social engineering`.
+- **Manual run in n8n:** click **Execute** — an **Open Form** trigger shows a form
+  to choose a **Topic** (curated dropdown, or type a **Custom topic**) plus
+  optional **Audience** and **Tone**, and per-tool extras (quiz: questions &
+  difficulty; tabletop: duration & seniority; tips: number of tips). Submit and
+  the asset is generated. The form also has a **shareable web-form URL** the team
+  can use without Telegram.
+- **Default:** with nothing supplied, tools use `DEFAULT_AWARENESS_TOPIC` from
+  `.env` (falls back to `phishing`).
+- *teachable-moment* takes an optional **Focus** (else it auto-picks the week's
+  top breach); *kpi-report* reads `config/awareness/kpi-input.json` with optional
+  Period/Client overrides on the form.
+
 ## Inputs
-- `config/awareness/topics.txt` — suggested topics/themes.
+- `config/awareness/topics.txt` — suggested topics/themes (mirrored in the form dropdowns).
 - `config/awareness/kpi-input.json` — copy from `kpi-input.example.json` and fill
   with the client's real phishing-sim / training metrics.
 
