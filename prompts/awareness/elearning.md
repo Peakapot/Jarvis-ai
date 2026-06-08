@@ -23,9 +23,10 @@ branded gradient banner.
 lesson** designed to fill a monitor. Flow: an **AI cover** screen → **name entry**
 (used on the certificate) → introduction → two-column sections (Ken-Burns hero
 image + text + an **animated SVG icon** chosen from the heading) → knowledge
-check → an **animated score ring** result → a **bedded-in premium completion
-certificate** (gold seal/stamp, ornate border; rendered client-side from the
-learner's name, score, date and a generated ID, with Print / Save-as-PDF). A
+check → an **animated score ring** result → (when passed) a **review of any
+questions the learner got wrong** with explanations → a **bedded-in premium
+completion certificate** (gold seal/stamp, ornate border; rendered client-side
+from the learner's name, score and date, with Print / Save-as-PDF). A
 **voiceover** (browser Speech Synthesis) auto-reads the **body text** of the
 intro and each section aloud as the learner arrives on the slide; a
 Pause / Resume control lets them silence it. Zero-dependency, offline, no audio
