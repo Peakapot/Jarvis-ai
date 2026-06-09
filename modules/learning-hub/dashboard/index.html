@@ -3,18 +3,20 @@
 <head>
 <meta charset="utf-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1" />
-<title>Learning Hub — Security Awareness</title>
-<link rel="stylesheet" href="styles.css" />
+<title>Awareness Portal</title>
+<link rel="stylesheet" href="styles.css?v=3" />
 </head>
 <body>
   <header class="top">
     <div class="brand">
-      <svg class="logo" viewBox="0 0 24 24" fill="none" stroke="#9fe4d8" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3l7 3v5c0 4.5-3 7.6-7 9-4-1.4-7-4.5-7-9V6z"/><path d="M9 12l2 2 4-4"/></svg>
-      <div class="tt"><div class="b">Security Awareness</div><h1>Learning Hub</h1></div>
+      <span class="avatar" id="brandAvatar"></span>
+      <div class="tt"><div class="b" id="brandTagline">Awareness content portal</div><h1 id="brandName">Security Awareness</h1></div>
     </div>
     <nav class="tabs">
-      <button class="tab active" data-tab="dash">Dashboard</button>
-      <button class="tab" data-tab="certs">Certificate library</button>
+      <button class="tab active" data-tab="home">Home</button>
+      <button class="tab" data-tab="library">Library</button>
+      <button class="tab" data-tab="learning">Learning</button>
+      <button class="tab" data-tab="certs">Certificates</button>
     </nav>
     <div class="who">
       <span id="whoName">—</span>
@@ -23,29 +25,70 @@
   </header>
 
   <main class="wrap">
-    <section id="view-dash" class="view">
+    <!-- HOME -->
+    <section id="view-home" class="view">
+      <div class="hero">
+        <span class="hero-av" id="heroAvatar"></span>
+        <div class="hero-tx">
+          <div class="hero-kick">Awareness Portal</div>
+          <h2 id="heroTitle">Security Awareness</h2>
+          <p id="heroTagline">Your one-stop awareness content portal — every asset Jarvis creates, in one place.</p>
+        </div>
+      </div>
+      <div class="stats" id="homeStats"></div>
+      <h3 class="sec-h">Recent</h3>
+      <div class="grid" id="homeRecent"></div>
+      <h3 class="sec-h">Browse by category</h3>
+      <div class="cat-grid" id="homeCats"></div>
+    </section>
+
+    <!-- LIBRARY -->
+    <section id="view-library" class="view" hidden>
+      <div class="filterbar">
+        <div class="chips" id="filterChips"></div>
+        <input id="searchInput" class="search" type="search" placeholder="Search assets…" />
+      </div>
+      <div class="grid" id="libGrid"></div>
+      <div class="empty" id="emptyLib" hidden>
+        <span class="empty-av" id="emptyLibAv"></span>
+        <h2>No assets found</h2>
+        <p>Run any awareness workflow in n8n and its output will appear here automatically.</p>
+      </div>
+    </section>
+
+    <!-- LEARNING (publications) -->
+    <section id="view-learning" class="view" hidden>
       <div class="summary" id="summary"></div>
       <div class="grid" id="cards"></div>
       <div class="empty" id="emptyDash" hidden>
+        <span class="empty-av" id="emptyDashAv"></span>
         <h2>No publications yet</h2>
-        <p>Run the <code>Learning Hub — Publication + Course</code> workflow in n8n to generate
+        <p>Run the <code>Learning Hub — Publication + Course</code> workflow to generate
         the first magazine and its e-learning. They will appear here automatically.</p>
       </div>
     </section>
 
+    <!-- CERTIFICATES -->
     <section id="view-certs" class="view" hidden>
       <div class="grid" id="certCards"></div>
       <div class="empty" id="emptyCerts" hidden>
+        <span class="empty-av" id="emptyCertsAv"></span>
         <h2>No certificates yet</h2>
-        <p>Complete an e-learning course to earn a certificate. Your earned certificates
-        will be collected here.</p>
+        <p>Complete an e-learning course to earn a certificate. Issued certificates
+        also appear here.</p>
       </div>
     </section>
   </main>
 
+  <footer class="foot">
+    <span id="footBrand">Security Awareness</span>
+    <span>Powered by Jarvis</span>
+  </footer>
+
   <!-- name prompt -->
   <div class="modal" id="nameModal" hidden>
     <div class="card modal-card">
+      <span class="modal-av" id="modalAv"></span>
       <h2>Welcome</h2>
       <p>Enter your name as it should appear on your certificates.</p>
       <input id="nameInput" type="text" placeholder="Your full name" autocomplete="name" />
@@ -53,17 +96,21 @@
     </div>
   </div>
 
-  <!-- course player overlay -->
+  <!-- asset viewer overlay (pdf/html in iframe, images in lightbox) -->
   <div class="overlay" id="overlay" hidden>
     <div class="overlay-bar">
-      <span id="overlayTitle">Course</span>
-      <button class="linkbtn" id="overlayClose">✕ Close</button>
+      <span id="overlayTitle">Asset</span>
+      <span class="overlay-actions">
+        <a id="overlayDownload" class="linkbtn" download hidden>⤓ Download</a>
+        <button class="linkbtn" id="overlayClose">✕ Close</button>
+      </span>
     </div>
-    <iframe id="courseFrame" title="Course" allow="autoplay"></iframe>
+    <iframe id="courseFrame" title="Asset" allow="autoplay" hidden></iframe>
+    <div id="imgWrap" class="imgwrap" hidden><img id="overlayImg" alt="" /></div>
   </div>
 
   <div class="toast" id="toast" hidden></div>
 
-  <script src="app.js"></script>
+  <script src="app.js?v=3"></script>
 </body>
 </html>
