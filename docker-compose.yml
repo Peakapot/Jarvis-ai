@@ -77,6 +77,10 @@ services:
       N8N_LOG_FILE_LOCATION: /home/node/.n8n/logs/n8n.log
       EXECUTIONS_DATA_PRUNE: "true"
       EXECUTIONS_DATA_MAX_AGE: ${N8N_EXEC_MAX_AGE_HOURS:-336}
+      # Offload binary payloads (rendered HTML, generated PDFs) to disk instead of
+      # holding them in memory — keeps heavy image/PDF workflows (comic, magazine)
+      # from exhausting the n8n process.
+      N8N_DEFAULT_BINARY_DATA_MODE: ${N8N_BINARY_DATA_MODE:-filesystem}
       # Allow Code nodes to use the built-in 'fs' module only (scoped), so the
       # Telegram handler can list archived intelligence briefs under /reports.
       NODE_FUNCTION_ALLOW_BUILTIN: ${N8N_ALLOW_BUILTIN:-fs}
