@@ -29,8 +29,10 @@ reproducible from a single idempotent installer.
   quizzes & "spot-the-phish" packs, tabletop exercises, micro-tips & lock-screen
   cards, news-triggered "teachable moment" notes, client KPI reports,
   **interactive e-learning modules (HTML + SCORM)**, **completion certificates**,
-  **12-month campaign calendars**, **video scripts & storyboards**, and
-  **digital-signage slides** — each on request via a single Telegram command.
+  **12-month campaign calendars**, **video scripts & storyboards**,
+  **digital-signage slides**, and **branded comic books** (consistent characters
+  via anchor images, any art style) — each on request via a single Telegram command
+  (the comic generator is form/manual).
 - 🎓 **Learning Hub** — a one-run **read → learn → certify** loop: a monthly staff
   awareness **magazine** *plus* an **e-learning course built from that edition**,
   surfaced in a **local Learning Dashboard** with completion tracking, a personal
@@ -120,6 +122,7 @@ until `CLIENT_NAME` is set for white-label delivery.
 | Campaign Calendar | `/calendar [year]` | 12-month awareness plan PDF + `.ics` calendar feed |
 | Video Script & Storyboard | `/videoscript <topic>` | script + storyboard PDF (scene cards) |
 | Digital-Signage Slides | `/signage <topic>` | 1920×1080 PNG slides bundled as a `.zip` |
+| Comic Book | *(form / manual)* | branded comic on any topic in a chosen art style (cartoon/anime/realistic/…); anchor images + per-panel image edits for character/place consistency — PDF + assets `.zip` |
 
 ## Learning Hub
 

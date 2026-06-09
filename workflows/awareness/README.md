@@ -29,6 +29,7 @@ Steer topics with `config/awareness/topics.txt`. Provider follows `AI_PROVIDER`.
 | `campaign-calendar.json` | `/calendar` | `calendar/` — 12-month campaign plan PDF + `.ics` calendar feed |
 | `video-script.json` | `/videoscript` | `video/` — video script & storyboard PDF (scene cards) |
 | `signage-slides.json` | `/signage` | `signage/` — 1920×1080 digital-signage PNG slides, bundled as a `.zip` |
+| `comic-book.json` | *(form/manual)* | `comics/` — branded comic on any topic (chosen art style); character/place **anchor images** + per-panel `/images/edits` for consistency. PDF + assets `.zip` |
 
 ## Choosing the topic & options
 - **Telegram:** pass the topic in the command, e.g. `/poster mfa`,
@@ -48,7 +49,11 @@ Steer topics with `config/awareness/topics.txt`. Provider follows `AI_PROVIDER`.
   HTML, SCORM package, or both); *certificate* takes a **Recipient name**,
   **Course/topic**, **Date** and optional **Certificate ID**; *campaign-calendar*
   takes a **Year** and optional **Focus/region**; *video-script* takes a **Length
-  (seconds)**; *signage-slides* takes a **Number of slides**.
+  (seconds)**; *signage-slides* takes a **Number of slides**; *comic-book* takes a
+**Topic/brief**, an **Art style** (cartoon / anime / realistic / …), a **Number of
+scenes** and optional **per-scene descriptions** (one per line). It is form/manual
+only (no Telegram command), and needs an OpenAI image key for art (falls back to
+storyboard placeholders without one).
 
 ## Inputs
 - `config/awareness/topics.txt` — suggested topics/themes (mirrored in the form dropdowns).
