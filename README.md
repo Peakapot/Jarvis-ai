@@ -21,8 +21,8 @@ reproducible from a single idempotent installer.
 ## What Jarvis delivers
 
 - 📰 **Weekly intelligence magazines** — *Cybersecurity Talent* (awareness &
-  skills), *Cyber Defence Watch* (an OSINT cyber-defence brief themed for the KSA
-  Ministry of Defence), plus *Cyber Opportunities* and *Energy* briefs. Each is a
+  skills), *Cyber Defence Watch* (an OSINT cyber-defence brief themed for the
+  Ministry of Defence (MOD)), plus *Cyber Opportunities* and *Energy* briefs. Each is a
   designed, multi-page PDF with a custom AI cover, journalistic write-ups, live
   data and source references.
 - 🧰 **On-demand awareness toolkit** — generate posters, one-page explainers,
@@ -41,7 +41,7 @@ reproducible from a single idempotent installer.
   simple commands (`/poster phishing`, `/tabletop ransomware`, `/quiz mfa`, …);
   finished assets are saved and returned in chat.
 - 🎨 **White-label per client** — set one variable (`CLIENT_NAME`) to brand
-  every asset for a specific client; theming (e.g. the KSA green/gold defence
+  every asset for a specific client; theming (e.g. the green/gold defence
   brief) is configuration-driven.
 - 🔌 **Provider-abstracted AI** — local-first **Ollama** by default, or switch to
   **Claude**/**OpenAI** with a single setting. Cover/poster art via an image
@@ -79,7 +79,7 @@ a branded PDF — **without editing any code**.
 |------------|------------------|-------------|
 | **Telegram Assistant** | The control surface: `/help`, `/status`, `/cyber`, `/defence`, `/energy`, `/opportunities`, plus the awareness toolkit `/poster`, `/explainer`, `/quiz`, `/tabletop`, `/tips`, `/teachable`, `/kpi`, `/elearning`, `/certificate`, `/calendar`, `/videoscript`, `/signage`. | `workflows/core/telegram-assistant.json` |
 | **Cybersecurity Talent** *(weekly magazine)* | Awareness & skills magazine: editorial, featured training technique, training technology, qualifications & courses, in-demand skills, the human firewall, emerging threats — journalistic briefs, custom AI cover, references. | `workflows/core/cyber-brief.json` |
-| **Cyber Defence Watch** *(weekly brief)* | OSINT cyber-defence brief themed for the **KSA Ministry of Defence**: allied policy & capability (US/UK/Five Eyes/NATO), Middle East defence cyber, defence-impacting breaches, threat actors, and a bespoke *Implications for KSA MOD* assessment. | `workflows/core/defence-cyber.json` |
+| **Cyber Defence Watch** *(weekly brief)* | OSINT cyber-defence brief themed for the **Ministry of Defence (MOD)**: allied policy & capability (US/UK/Five Eyes/NATO), Middle East defence cyber, defence-impacting breaches, threat actors, and a bespoke *Implications for MOD* assessment. | `workflows/core/defence-cyber.json` |
 | **Cyber Opportunities Brief** *(daily)* | Commercial-opportunity radar (RFPs, tenders, MSS, GRC, SOC, OT/CNI, cloud & AI security) with a GCC-first focus. | `modules/cyber-opportunities/` |
 | **Energy Intelligence Brief** *(daily)* | UAE/ADNOC-focused energy intelligence with live oil & gas prices and an AI cover. | `modules/energy-intelligence/` |
 | **Learning Hub** *(monthly + on-demand)* | A staff awareness **magazine** + an **e-learning course derived from that edition**, registered as a publication; a **local Learning Dashboard** (nginx) shows publications, completion status, a **certificate library** and a 30-day deadline. | `modules/learning-hub/` |
@@ -88,7 +88,7 @@ a branded PDF — **without editing any code**.
 ## Intelligence magazines
 
 Jarvis runs a **registry-driven intelligence framework**: four briefs —
-**Cybersecurity Talent**, **Cyber Defence Watch** (KSA MOD), **Cyber
+**Cybersecurity Talent**, **Cyber Defence Watch** (MOD), **Cyber
 Opportunities** and **Energy** — share one reusable pipeline (provider-abstracted
 AI, source feeds, schedules, archive) and one common premium design system, so
 every issue has a consistent, magazine-quality style opened by an

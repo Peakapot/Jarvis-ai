@@ -47,7 +47,7 @@ Rules:
 ## Output quality note
 Table-grade analytical output benefits from a stronger model. With the local
 default (Ollama), use `llama3.1:8b` for better structure than `3b`. For
-Deloitte-grade depth, set `AI_PROVIDER=claude` / `openai` (provider abstraction).
+consultancy-grade depth, set `AI_PROVIDER=claude` / `openai` (provider abstraction).
 
 ---
 ## Changelog
