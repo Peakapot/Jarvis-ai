@@ -79,8 +79,11 @@ for wf in "${wf_files[@]}"; do
   total=$((total+1))
   base="$(basename "${wf}")"
   # Copy into container then import (decoupled from host paths).
+  # N8N_RUNNERS_ENABLED=false: the import CLI runs *inside* the live container, so
+  # without this it tries to start a second task-runner broker on the port the
+  # running n8n already holds and the import fails ("Task Broker's port ... in use").
   if docker cp "${wf}" "${cid}:/tmp/${base}" 2>/dev/null \
-     && ( cd "${JARVIS_ROOT}" && compose exec -T "${N8N_SERVICE}" n8n import:workflow --input="/tmp/${base}" >/dev/null 2>&1 </dev/null ); then
+     && ( cd "${JARVIS_ROOT}" && compose exec -e N8N_RUNNERS_ENABLED=false -T "${N8N_SERVICE}" n8n import:workflow --input="/tmp/${base}" >/dev/null 2>&1 </dev/null ); then
     ok=$((ok+1)); echo "OK   ${wf}" >>"${result_log}"; log_ok "Imported ${base}"
   else
     fail=$((fail+1)); echo "FAIL ${wf}" >>"${result_log}"; log_error "Failed to import ${base}"
