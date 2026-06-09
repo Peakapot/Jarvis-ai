@@ -405,9 +405,10 @@ The framework has four pillars:
 
 Intelligence products are **modules** (`"intelligence": true`,
 `"autoImport": true`) so they inherit module discovery, health, docs and backup.
-Three products ship today — `cyber-brief` (core), `cyber-opportunities` and
-`energy-intelligence` — and future products (Defence, AI, Government, Healthcare,
-Market) follow the identical architecture. Full detail, including the
+Four briefs ship today — `cyber-brief` (core), `cyber-opportunities`,
+`energy-intelligence` and `defence-cyber` (Cyber Defence Watch, core) — plus the
+monthly `learning-hub`; future products (AI, Government, Healthcare, Market)
+follow the identical architecture. Full detail, including the
 add-a-product recipe, is in
 [intelligence-products.md](intelligence-products.md).
 

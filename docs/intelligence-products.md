@@ -28,14 +28,15 @@ change (*Configuration over hard coding*, *Future expansion*).
 
 ## Overview
 
-Jarvis ships three daily intelligence products, all built on the same reusable
-framework:
+Jarvis ships four cyber/sector intelligence briefs (three daily, one weekly)
+plus the monthly **Learning Hub** — all built on the same reusable framework:
 
 | Product | Id | Module | Schedule (default) | Telegram |
 | --- | --- | --- | --- | --- |
 | Daily Cyber Threat Intelligence Brief | `cyber-brief` | `core` | `0 6 * * *` (06:00) | `/cyber` |
 | Daily Cyber Opportunities Intelligence Brief | `cyber-opportunities` | `cyber-opportunities` | `15 6 * * *` (06:15) | `/opportunities` |
 | Daily Energy Intelligence Brief | `energy-intelligence` | `energy-intelligence` | `30 6 * * *` (06:30) | `/energy` |
+| Cyber Defence Watch | `defence-cyber` | `core` | `30 5 * * 1` (Mon 05:30) | `/defence` |
 | Learning Hub — Magazine & E-learning | `learning-hub` | `learning-hub` | `0 7 1 * *` (monthly) | — |
 
 Each product:

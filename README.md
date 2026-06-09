@@ -28,15 +28,18 @@ reproducible from a single idempotent installer.
 - 🧰 **On-demand awareness toolkit** — generate posters, one-page explainers,
   quizzes & "spot-the-phish" packs, tabletop exercises, micro-tips & lock-screen
   cards, news-triggered "teachable moment" notes, client KPI reports,
-  **interactive e-learning modules (HTML + SCORM)**, **completion certificates**,
+  **interactive e-learning modules (self-contained HTML)**, **completion certificates**,
   **12-month campaign calendars**, **video scripts & storyboards**,
   **digital-signage slides**, and **branded comic books** (consistent characters
   via anchor images, any art style) — each on request via a single Telegram command
   (the comic generator is form/manual).
 - 🎓 **Learning Hub** — a one-run **read → learn → certify** loop: a monthly staff
   awareness **magazine** *plus* an **e-learning course built from that edition**,
-  surfaced in a **local Learning Dashboard** with completion tracking, a personal
-  **certificate library** and a **30-day** completion window.
+  surfaced in the **Awareness Portal** (a local, branded web dashboard) with
+  completion tracking, a personal **certificate library** and a **30-day**
+  completion window. The portal also **auto-discovers every asset** any workflow
+  writes to `reports/` — posters, quizzes, comics, magazines, e-learning and more
+  — so the whole library is browsable in one place.
 - 💬 **Conversational Telegram interface** — the team drives everything with
   simple commands (`/poster phishing`, `/tabletop ransomware`, `/quiz mfa`, …);
   finished assets are saved and returned in chat.
@@ -82,8 +85,8 @@ a branded PDF — **without editing any code**.
 | **Cyber Defence Watch** *(weekly brief)* | OSINT cyber-defence brief themed for the **Ministry of Defence (MOD)**: allied policy & capability (US/UK/Five Eyes/NATO), Middle East defence cyber, defence-impacting breaches, threat actors, and a bespoke *Implications for MOD* assessment. | `workflows/core/defence-cyber.json` |
 | **Cyber Opportunities Brief** *(daily)* | Commercial-opportunity radar (RFPs, tenders, MSS, GRC, SOC, OT/CNI, cloud & AI security) with a GCC-first focus. | `modules/cyber-opportunities/` |
 | **Energy Intelligence Brief** *(daily)* | UAE/ADNOC-focused energy intelligence with live oil & gas prices and an AI cover. | `modules/energy-intelligence/` |
-| **Learning Hub** *(monthly + on-demand)* | A staff awareness **magazine** + an **e-learning course derived from that edition**, registered as a publication; a **local Learning Dashboard** (nginx) shows publications, completion status, a **certificate library** and a 30-day deadline. | `modules/learning-hub/` |
-| **Awareness Toolkit** *(on-demand)* | Posters, explainers, quizzes, tabletop packs, micro-tips, teachable-moment notes, KPI reports, e-learning modules (HTML + SCORM), completion certificates, campaign calendars, video scripts & storyboards, digital-signage slides — files to `reports/awareness/`. | `workflows/awareness/` |
+| **Learning Hub** *(monthly + on-demand)* | A staff awareness **magazine** (PDF) + an **e-learning course derived from that edition** (self-contained HTML), registered as a publication; the **Awareness Portal** (nginx) shows publications, completion status, a **certificate library** and a 30-day deadline. | `modules/learning-hub/` |
+| **Awareness Toolkit** *(on-demand)* | Posters, explainers, quizzes, tabletop packs, micro-tips, teachable-moment notes, KPI reports, e-learning modules (self-contained HTML), completion certificates, campaign calendars, video scripts & storyboards, digital-signage slides — files to `reports/awareness/`. Every PDF carries a **"Key takeaways / Lessons learned"** box and a **Jarvis sign-off**. | `workflows/awareness/` |
 
 ## Intelligence magazines
 
@@ -117,7 +120,7 @@ until `CLIENT_NAME` is set for white-label delivery.
 | Micro-Tips & Cards | `/tips <theme>` | printable tips + lock-screen cards (also weekly) |
 | Teachable Moment | `/teachable` | news-triggered "what happened / why / what to do" note (also weekly) |
 | KPI Report | `/kpi` | client metrics report from `config/awareness/kpi-input.json` |
-| E-learning Module | `/elearning <topic>` | interactive HTML lesson + SCORM 1.2 package (scored knowledge check) |
+| E-learning Module | `/elearning <topic>` | self-contained interactive HTML lesson (scored knowledge check) — renders inline in the Awareness Portal |
 | Completion Certificate | `/certificate <name>` | diploma-style certificate PDF (landscape, unique ID) |
 | Campaign Calendar | `/calendar [year]` | 12-month awareness plan PDF + `.ics` calendar feed |
 | Video Script & Storyboard | `/videoscript <topic>` | script + storyboard PDF (scene cards) |
@@ -132,15 +135,21 @@ security-awareness **magazine** and then an **interactive e-learning course deri
 strictly from that edition**, registering both as a *publication* in
 `reports/learning-hub/publications.json`.
 
-A **local Learning Dashboard** (a static nginx service that ships with the stack)
-presents it to learners:
+The **Awareness Portal** (a static nginx service that ships with the stack)
+presents it to learners and auto-discovers every asset under `reports/`:
 
 ```bash
-docker compose up -d dashboard      # starts the dashboard service
+docker compose up -d dashboard      # starts the Awareness Portal service
 # then open http://localhost:8088   (DASHBOARD_PORT)
 ```
 
-From the dashboard a learner can **read the magazine anytime**, **complete the
+The portal is **branded via `modules/learning-hub/dashboard/portal.json`**
+(`{ "brand", "tagline", "accent", "logo" }`) — drop a `reports/portal.json` to
+override branding without touching the build. Its **Library** view lists every
+generated asset (auto-discovered through nginx JSON autoindex), while the
+**Learning** view drives the read → learn → certify flow.
+
+From the portal a learner can **read the magazine anytime**, **complete the
 e-learning** (which then shows **Complete**), and keep a personal **certificate
 library** of their progress. Each edition has a **30-day** completion window from
 release (the magazine stays readable indefinitely; the course shows a countdown and

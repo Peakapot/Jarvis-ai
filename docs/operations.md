@@ -196,8 +196,9 @@ The cyber brief is one of three **intelligence products** — see below.
 ## Intelligence products
 
 Jarvis runs a **registry-driven intelligence framework**
-([architecture.md](architecture.md#intelligence-product-framework)). Three daily
-briefs share one pipeline, schedules, archive and premium branding; each is
+([architecture.md](architecture.md#intelligence-product-framework)). Four
+briefs (three daily, one weekly) share one pipeline, schedules, archive and
+premium branding; each is
 declared in [`config/intelligence/products.json`](../config/intelligence/products.json).
 Full detail is in [intelligence-products.md](intelligence-products.md).
 
@@ -206,6 +207,7 @@ Full detail is in [intelligence-products.md](intelligence-products.md).
 | Cyber Threat Brief (`cyber-brief`) | `0 6 * * *` (06:00) | `CYBER_BRIEF_SCHEDULE_CRON` | `/cyber` | `reports/cyber-brief/` + archive |
 | Cyber Opportunities Brief (`cyber-opportunities`) | `15 6 * * *` (06:15) | `CYBER_OPPS_SCHEDULE_CRON` | `/opportunities` | `reports/cyber-opportunities/` + archive |
 | Energy Intelligence Brief (`energy-intelligence`) | `30 6 * * *` (06:30) | `ENERGY_BRIEF_SCHEDULE_CRON` | `/energy` | `reports/energy-intelligence/` + archive |
+| Cyber Defence Watch (`defence-cyber`) | `30 5 * * 1` (Mon 05:30) | `DEFENCE_BRIEF_SCHEDULE_CRON` | `/defence` | `reports/defence-cyber/` + archive |
 
 Running and scheduling:
 

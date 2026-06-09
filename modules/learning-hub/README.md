@@ -13,9 +13,14 @@ A self-contained Jarvis module that turns **one run** into a complete
 3. **Publication record** — both artifacts are registered in
    `reports/learning-hub/publications.json` with the **release date** and a
    **30-day completion window**.
-4. **Learning Dashboard** — a local web app (served by an nginx container) where a
-   learner reads the magazine anytime, completes the course, sees **Complete**, and
-   keeps a personal **certificate library**.
+4. **Awareness Portal** — a local, branded web app (served by an nginx container)
+   where a learner reads the magazine anytime, completes the course, sees
+   **Complete**, and keeps a personal **certificate library**. Its **Library** view
+   also **auto-discovers every asset** any workflow writes to `reports/` (via nginx
+   JSON autoindex), so the whole content library is browsable in one place. Branding
+   is set in [`dashboard/portal.json`](dashboard/portal.json)
+   (`{ "brand", "tagline", "accent", "logo" }`); drop a `reports/portal.json` to
+   override it without rebuilding.
 
 This module does **not** modify or depend on any other module. It reuses only the
 shared provider abstractions (`AI_PROVIDER`, `IMAGE_PROVIDER`) and Gotenberg.
