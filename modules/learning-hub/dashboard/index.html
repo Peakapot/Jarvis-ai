@@ -1,0 +1,69 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Learning Hub — Security Awareness</title>
+<link rel="stylesheet" href="styles.css" />
+</head>
+<body>
+  <header class="top">
+    <div class="brand">
+      <svg class="logo" viewBox="0 0 24 24" fill="none" stroke="#9fe4d8" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3l7 3v5c0 4.5-3 7.6-7 9-4-1.4-7-4.5-7-9V6z"/><path d="M9 12l2 2 4-4"/></svg>
+      <div class="tt"><div class="b">Security Awareness</div><h1>Learning Hub</h1></div>
+    </div>
+    <nav class="tabs">
+      <button class="tab active" data-tab="dash">Dashboard</button>
+      <button class="tab" data-tab="certs">Certificate library</button>
+    </nav>
+    <div class="who">
+      <span id="whoName">—</span>
+      <button class="linkbtn" id="changeName">change</button>
+    </div>
+  </header>
+
+  <main class="wrap">
+    <section id="view-dash" class="view">
+      <div class="summary" id="summary"></div>
+      <div class="grid" id="cards"></div>
+      <div class="empty" id="emptyDash" hidden>
+        <h2>No publications yet</h2>
+        <p>Run the <code>Learning Hub — Publication + Course</code> workflow in n8n to generate
+        the first magazine and its e-learning. They will appear here automatically.</p>
+      </div>
+    </section>
+
+    <section id="view-certs" class="view" hidden>
+      <div class="grid" id="certCards"></div>
+      <div class="empty" id="emptyCerts" hidden>
+        <h2>No certificates yet</h2>
+        <p>Complete an e-learning course to earn a certificate. Your earned certificates
+        will be collected here.</p>
+      </div>
+    </section>
+  </main>
+
+  <!-- name prompt -->
+  <div class="modal" id="nameModal" hidden>
+    <div class="card modal-card">
+      <h2>Welcome</h2>
+      <p>Enter your name as it should appear on your certificates.</p>
+      <input id="nameInput" type="text" placeholder="Your full name" autocomplete="name" />
+      <div class="modal-actions"><button class="btn" id="nameSave">Continue</button></div>
+    </div>
+  </div>
+
+  <!-- course player overlay -->
+  <div class="overlay" id="overlay" hidden>
+    <div class="overlay-bar">
+      <span id="overlayTitle">Course</span>
+      <button class="linkbtn" id="overlayClose">✕ Close</button>
+    </div>
+    <iframe id="courseFrame" title="Course" allow="autoplay"></iframe>
+  </div>
+
+  <div class="toast" id="toast" hidden></div>
+
+  <script src="app.js"></script>
+</body>
+</html>

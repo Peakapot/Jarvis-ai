@@ -1,0 +1,604 @@
+{
+  "id": "jarvisLhPub001",
+  "name": "Jarvis · Learning Hub — Publication + Course",
+  "meta": {
+    "jarvisModule": "learning-hub",
+    "jarvisVersion": "1.0.0",
+    "description": "Learning Hub publication generator and orchestrator. On a schedule (or on demand) it builds a premium staff security-awareness MAGAZINE (RSS digest -> AI editor -> A4 HTML -> Gotenberg PDF, written to /reports/learning-hub), then derives an e-learning COURSE strictly from that edition (Execute Workflow -> course generator) and registers a publication record (magazine + course, release date, 30-day window) in /reports/learning-hub/publications.json for the Learning Dashboard.",
+    "envVars": [
+      "LEARNING_HUB_ENABLED",
+      "LEARNING_HUB_SCHEDULE_CRON",
+      "LEARNING_HUB_PASS_MARK",
+      "LEARNING_HUB_SOURCES_FILE",
+      "AI_PROVIDER",
+      "IMAGE_PROVIDER",
+      "OPENAI_API_KEY",
+      "GOTENBERG_URL"
+    ]
+  },
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "nodes": [
+    {
+      "id": "sched",
+      "name": "Monthly Schedule",
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "typeVersion": 1.2,
+      "position": [
+        180,
+        120
+      ],
+      "parameters": {
+        "rule": {
+          "interval": [
+            {
+              "field": "cronExpression",
+              "expression": "={{ $env.LEARNING_HUB_SCHEDULE_CRON || '0 7 1 * *' }}"
+            }
+          ]
+        }
+      }
+    },
+    {
+      "id": "mana",
+      "name": "Run Now",
+      "type": "n8n-nodes-base.manualTrigger",
+      "typeVersion": 1,
+      "position": [
+        180,
+        280
+      ],
+      "parameters": {}
+    },
+    {
+      "id": "ewt",
+      "name": "On Command",
+      "type": "n8n-nodes-base.executeWorkflowTrigger",
+      "typeVersion": 1,
+      "position": [
+        180,
+        440
+      ],
+      "parameters": {}
+    },
+    {
+      "id": "gate",
+      "name": "Enabled?",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2,
+      "position": [
+        400,
+        120
+      ],
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": false,
+            "typeValidation": "loose"
+          },
+          "combinator": "and",
+          "conditions": [
+            {
+              "leftValue": "={{ $env.LEARNING_HUB_ENABLED || 'true' }}",
+              "rightValue": "true",
+              "operator": {
+                "type": "string",
+                "operation": "equals"
+              }
+            }
+          ]
+        }
+      }
+    },
+    {
+      "id": "load",
+      "name": "Load Sources",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        640,
+        280
+      ],
+      "parameters": {
+        "language": "javaScript",
+        "jsCode": "// Load & split the Learning Hub source list (one feed URL per line; # = comment).\n// Emits one item per URL for the RSS reader. Missing file => no items (the\n// aggregate step then produces a \"reduced coverage\" edition). Self-contained (fs).\nconst fs = require('fs');\nconst file = ($env.LEARNING_HUB_SOURCES_FILE || 'config/learning-hub-sources.txt');\nconst path = file.charAt(0) === '/' ? file : ('/' + file);\nlet lines = [];\ntry { lines = fs.readFileSync(path, 'utf8').split(/\\r?\\n/); } catch (e) { lines = []; }\nconst urls = lines.map(function (l) { return (l || '').trim(); })\n  .filter(function (l) { return l && l.charAt(0) !== '#'; });\nif (!urls.length) return [{ json: { url: '', _empty: true } }];\nreturn urls.map(function (u) { return { json: { url: u } }; });\n"
+      }
+    },
+    {
+      "id": "rss",
+      "name": "Fetch Sources",
+      "type": "n8n-nodes-base.rssFeedRead",
+      "typeVersion": 1,
+      "position": [
+        880,
+        280
+      ],
+      "parameters": {
+        "url": "={{ $json.url }}",
+        "options": {}
+      },
+      "onError": "continueRegularOutput"
+    },
+    {
+      "id": "agg",
+      "name": "Aggregate Sources",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1100,
+        280
+      ],
+      "parameters": {
+        "language": "javaScript",
+        "jsCode": "// Aggregate fetched RSS items into a compact news digest for the analyst.\n// Robust to empty/failed feeds (reduced-coverage edition). No external deps.\nconst items = $input.all().map(function (i) { return i.json || {}; })\n  .filter(function (a) { return a && (a.title || a.contentSnippet || a.content); });\nfunction clean(s) { return String(s == null ? '' : s).replace(/<[^>]*>/g, ' ').replace(/\\s+/g, ' ').trim(); }\nconst seen = {};\nconst lines = [];\nfor (let k = 0; k < items.length && lines.length < 40; k++) {\n  const a = items[k];\n  const title = clean(a.title);\n  if (!title || seen[title]) continue; seen[title] = 1;\n  let sum = clean(a.contentSnippet || a.content || a.summary || '');\n  if (sum.length > 280) sum = sum.slice(0, 280) + '…';\n  const url = (a.link || a.guid || '').toString();\n  lines.push('- ' + title + (sum ? (' — ' + sum) : '') + (url ? (' (' + url + ')') : ''));\n}\nconst digest = lines.length\n  ? lines.join('\\n')\n  : 'No fresh sources were available. Produce a timeless general security-awareness edition (phishing, passwords & MFA, social engineering, safe remote working, reporting incidents).';\nreturn [{ json: { digest: digest, sourceCount: lines.length, date: new Date().toISOString().slice(0, 10) } }];\n"
+      }
+    },
+    {
+      "id": "useclaude",
+      "name": "Use Claude?",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2,
+      "position": [
+        1320,
+        280
+      ],
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": false,
+            "typeValidation": "loose"
+          },
+          "combinator": "and",
+          "conditions": [
+            {
+              "leftValue": "={{ $env.AI_PROVIDER || 'ollama' }}",
+              "rightValue": "claude",
+              "operator": {
+                "type": "string",
+                "operation": "equals"
+              }
+            }
+          ]
+        }
+      }
+    },
+    {
+      "id": "aiclaude",
+      "name": "AI Analyst (Claude)",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        1560,
+        180
+      ],
+      "parameters": {
+        "method": "POST",
+        "url": "={{ $env.CLAUDE_BASE_URL || 'https://api.anthropic.com' }}/v1/messages",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "x-api-key",
+              "value": "={{ $env.ANTHROPIC_API_KEY }}"
+            },
+            {
+              "name": "anthropic-version",
+              "value": "2023-06-01"
+            },
+            {
+              "name": "content-type",
+              "value": "application/json"
+            }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={\n  \"model\": \"{{ $env.CLAUDE_MODEL || 'claude-sonnet-4-6' }}\",\n  \"max_tokens\": 4000,\n  \"system\": \"You are the editor of a monthly staff security-awareness magazine for a general (non-technical) workforce. Using the supplied news digest (and your own knowledge where the digest is thin), produce a SINGLE valid JSON object for this edition. Keys: title (a short, punchy edition title); weekOf (the edition label, e.g. a month and year); intro (a 2-3 sentence editor's welcome); feature (an object: headline, deck (one-line subtitle), body (3-4 short paragraphs separated by single newline characters), takeaways (3-4 short bullet strings)); threats (3-4 items, each {headline, summary (2-3 plain-English sentences)}); awareness (4-6 items, each {tip (a short imperative headline), detail (1-2 practical sentences)}); quals (3-4 items, each {name, provider, summary (1-2 sentences on who it suits)}); glossary (3-5 items, each {term, definition (one plain-English sentence)}). Keep everything engaging, concrete and free of jargon. Do NOT use markdown code fences. Output ONLY the JSON object.\",\n  \"messages\": [ {\"role\":\"user\",\"content\": {{ JSON.stringify('Create this edition. Today is ' + ($json.date || '') + '. Base it on this news digest where useful:\\n\\n' + ($json.digest || '')) }} } ]\n}",
+        "options": {
+          "timeout": 600000
+        }
+      },
+      "onError": "continueErrorOutput"
+    },
+    {
+      "id": "aiollama",
+      "name": "AI Analyst (Ollama)",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        1560,
+        380
+      ],
+      "parameters": {
+        "method": "POST",
+        "url": "={{ $env.OLLAMA_BASE_URL || 'http://jarvis-ollama:11434' }}/api/chat",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={\n  \"model\": \"{{ $env.OLLAMA_DEFAULT_MODEL || 'llama3.1:8b' }}\",\n  \"stream\": false,\n  \"keep_alive\": \"10m\",\n  \"options\": { \"temperature\": 0.4, \"num_predict\": 3500 },\n  \"messages\": [ {\"role\":\"system\",\"content\":\"You are the editor of a monthly staff security-awareness magazine for a general (non-technical) workforce. Using the supplied news digest (and your own knowledge where the digest is thin), produce a SINGLE valid JSON object for this edition. Keys: title (a short, punchy edition title); weekOf (the edition label, e.g. a month and year); intro (a 2-3 sentence editor's welcome); feature (an object: headline, deck (one-line subtitle), body (3-4 short paragraphs separated by single newline characters), takeaways (3-4 short bullet strings)); threats (3-4 items, each {headline, summary (2-3 plain-English sentences)}); awareness (4-6 items, each {tip (a short imperative headline), detail (1-2 practical sentences)}); quals (3-4 items, each {name, provider, summary (1-2 sentences on who it suits)}); glossary (3-5 items, each {term, definition (one plain-English sentence)}). Keep everything engaging, concrete and free of jargon. Do NOT use markdown code fences. Output ONLY the JSON object.\"}, {\"role\":\"user\",\"content\": {{ JSON.stringify('Create this edition. Today is ' + ($json.date || '') + '. Base it on this news digest where useful:\\n\\n' + ($json.digest || '')) }} } ]\n}",
+        "options": {
+          "timeout": 600000
+        }
+      },
+      "onError": "continueErrorOutput"
+    },
+    {
+      "id": "magprep",
+      "name": "Prep Magazine",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1800,
+        280
+      ],
+      "parameters": {
+        "language": "javaScript",
+        "jsCode": "// Parse the analyst's JSON magazine and build the cover-image prompt.\nconst j = $json || {};\nlet raw = '';\nif (j.message && j.message.content) raw = j.message.content;            // Ollama\nelse if (j.content && j.content[0] && j.content[0].text) raw = j.content[0].text; // Claude\nlet data = null;\ntry { data = JSON.parse(raw.replace(/^```(?:json)?\\s*/i, '').replace(/\\s*```$/i, '')); }\ncatch (e) { try { const m = raw.match(/\\{[\\s\\S]*\\}/); if (m) data = JSON.parse(m[0]); } catch (e2) { data = null; } }\nif (!data || typeof data !== 'object') {\n  data = { title: 'Security Awareness Digest', weekOf: '', intro: 'This edition could not be generated in full; please re-run.', feature: null, threats: [], awareness: [], quals: [], glossary: [] };\n}\nconst date = (($('Aggregate Sources').first() || {}).json || {}).date || new Date().toISOString().slice(0, 10);\nconst title = data.title || 'Security Awareness Digest';\nconst coverPrompt = 'Wide cinematic, semi-realistic editorial cover illustration for a premium corporate SECURITY-AWARENESS magazine titled \"' + title + '\". Bright modern office, diverse professionals, calm and trustworthy mood; soft natural window light; teal and deep-navy colour grade; strong empty space on the left third for a title overlay. No text, no words, no letters, no logos, no watermark, no charts, no screenshots.';\nreturn [{ json: { data: data, title: title, date: date, coverPrompt: coverPrompt } }];\n"
+      }
+    },
+    {
+      "id": "cover",
+      "name": "Generate Cover",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        2020,
+        280
+      ],
+      "parameters": {
+        "language": "javaScript",
+        "jsCode": "// Generate the magazine cover image via the shared image provider (graceful:\n// empty string => the renderer falls back to a branded gradient cover).\nconst j = $json || {};\nlet cover = '';\nconst key = $env.OPENAI_IMAGE_API_KEY || $env.OPENAI_API_KEY;\nconst wantImages = (($env.LEARNING_HUB_COVER_IMAGE || $env.CYBER_SECTION_IMAGES || 'true').toString().toLowerCase() !== 'false');\nif (wantImages && key && j.coverPrompt) {\n  try {\n    const resp = await this.helpers.httpRequest({\n      method: 'POST',\n      url: ($env.OPENAI_BASE_URL || 'https://api.openai.com/v1') + '/images/generations',\n      headers: { Authorization: 'Bearer ' + key, 'Content-Type': 'application/json' },\n      body: { model: ($env.IMAGE_MODEL || 'gpt-image-1'), prompt: j.coverPrompt, size: ($env.IMAGE_SIZE || '1024x1536'), n: 1 },\n      json: true, timeout: 180000\n    });\n    const b64 = resp && resp.data && resp.data[0] && resp.data[0].b64_json;\n    if (b64) cover = 'data:image/png;base64,' + b64;\n  } catch (e) { cover = ''; }\n}\nreturn [{ json: Object.assign({}, j, { cover: cover }) }];\n"
+      }
+    },
+    {
+      "id": "magrender",
+      "name": "Render Magazine",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        2240,
+        280
+      ],
+      "parameters": {
+        "language": "javaScript",
+        "jsCode": "// Render the staff security-awareness magazine as one premium, print-ready A4 HTML\n// (cover + editorial + feature + threats + human-firewall tips + skills + glossary).\n// Self-contained inline CSS; Gotenberg turns it into the PDF. Returns the parsed\n// magazine data alongside the HTML so the course can be grounded in it.\nconst j = $json || {};\nconst data = j.data || {};\nconst date = j.date || new Date().toISOString().slice(0, 10);\nconst title = j.title || data.title || 'Security Awareness Digest';\nconst weekOf = data.weekOf || '';\nconst cover = j.cover || '';\nfunction esc(s){ return (s==null?'':String(s)).replace(/[&<>]/g,function(c){return({'&':'&amp;','<':'&lt;','>':'&gt;'})[c];}); }\nfunction paras(s){ return String(s==null?'':s).split(/\\n+/).map(function(p){return p.trim();}).filter(Boolean).map(function(p){return '<p>'+esc(p)+'</p>';}).join(''); }\nconst A = function(x){ return Array.isArray(x)?x:[]; };\n\nconst CSS = \"@page{size:A4;margin:0} *{box-sizing:border-box} body{margin:0;font-family:-apple-system,'Segoe UI',Roboto,Helvetica,Arial,sans-serif;color:#11151C;line-height:1.55}\"\n+\".page{width:210mm;min-height:297mm;position:relative;background:#fff;overflow:hidden}\"\n+\".content{padding:22mm 18mm 20mm}\"\n+\".cover{color:#fff;background:#0A1A2F;page-break-after:always;display:flex;flex-direction:column;justify-content:space-between;height:296mm;padding:18mm}\"\n+\".cover .bg{position:absolute;inset:0;background-size:cover;background-position:center;z-index:0}\"\n+\".cover .bg.ph{background:linear-gradient(135deg,#0A1A2F,#0E7C86)}\"\n+\".cover .grad{position:absolute;inset:0;background:linear-gradient(180deg,rgba(8,18,28,.30),rgba(8,18,28,.92));z-index:1}\"\n+\".cover .inner{position:relative;z-index:2}\"\n+\".cover .kicker{letter-spacing:4px;text-transform:uppercase;font-size:12px;font-weight:800;color:#E7C76A}\"\n+\".cover h1{font-size:46px;line-height:1.05;margin:10px 0 8px;font-weight:800}\"\n+\".cover .edition{font-size:14px;color:#cfe0e6;letter-spacing:1px}\"\n+\".cover .dek{margin-top:14px;font-size:15px;color:#e7eef2;max-width:150mm}\"\n+\".cover .brandbar{position:relative;z-index:2;display:flex;align-items:center;justify-content:space-between;font-size:12px;letter-spacing:2px;color:#9fe4d8;text-transform:uppercase;font-weight:700}\"\n+\".sec{margin:0 0 16mm}\"\n+\".sec h2{font-family:Georgia,serif;font-size:24px;color:#0A1A2F;margin:0 0 4px;display:flex;align-items:center;gap:10px}\"\n+\".sec h2:before{content:'';width:22px;height:3px;background:#C9A24B;display:inline-block;border-radius:2px}\"\n+\".sec .lead{color:#5A6472;font-size:13px;margin:0 0 12px}\"\n+\"p{font-size:13.5px;margin:0 0 9px;color:#1d2733}\"\n+\".feature{background:#F4F6F9;border-left:4px solid #0E7C86;border-radius:10px;padding:16px 18px}\"\n+\".feature .hl{font-family:Georgia,serif;font-size:22px;color:#0A1A2F;font-weight:700;margin:0 0 2px}\"\n+\".feature .deck{font-style:italic;color:#5A6472;margin:0 0 10px}\"\n+\".feature ul{margin:8px 0 0;padding-left:18px}.feature li{font-size:13px;margin:4px 0;color:#0A1A2F}\"\n+\".grid{display:grid;grid-template-columns:1fr 1fr;gap:10px}\"\n+\".card{border:1px solid #E2E6EC;border-radius:10px;padding:12px 14px;background:#fff}\"\n+\".card h3{margin:0 0 5px;font-size:14px;color:#0A1A2F}.card p{font-size:12.5px;margin:0;color:#46505c}\"\n+\".tip{display:flex;gap:10px;align-items:flex-start;border:1px solid #E2E6EC;border-left:4px solid #C9A24B;border-radius:10px;padding:10px 12px;background:#fff}\"\n+\".tip .n{flex:0 0 auto;width:22px;height:22px;border-radius:50%;background:#0E7C86;color:#fff;font-size:12px;font-weight:800;display:flex;align-items:center;justify-content:center}\"\n+\".tip h3{margin:0 0 2px;font-size:13.5px;color:#0A1A2F}.tip p{margin:0;font-size:12.5px;color:#46505c}\"\n+\".qual{border:1px solid #E2E6EC;border-radius:10px;padding:11px 14px;margin:0 0 8px}.qual h3{margin:0;font-size:14px;color:#0A1A2F}.qual .prov{font-size:11px;letter-spacing:1px;text-transform:uppercase;color:#0E7C86;font-weight:700;margin:1px 0 5px}.qual p{margin:0;font-size:12.5px;color:#46505c}\"\n+\".gloss{display:grid;grid-template-columns:1fr 1fr;gap:8px 18px}.gloss .g b{color:#0A1A2F}.gloss .g{font-size:12.5px;color:#46505c;border-bottom:1px solid #eef1f5;padding:5px 0}\"\n+\".foot{position:absolute;left:18mm;right:18mm;bottom:10mm;border-top:1px solid #E2E6EC;padding-top:5px;display:flex;justify-content:space-between;color:#9aa6b2;font-size:10px}\";\n\n// ---- cover ----\nlet html = '<!doctype html><html><head><meta charset=\"utf-8\"><style>'+CSS+'</style></head><body>';\nhtml += '<section class=\"page cover\">'\n + (cover ? ('<div class=\"bg\" style=\"background-image:url('+cover+')\"></div>') : '<div class=\"bg ph\"></div>')\n + '<div class=\"grad\"></div>'\n + '<div class=\"brandbar\"><span>Security Awareness</span><span>Learning Hub</span></div>'\n + '<div class=\"inner\"><div class=\"kicker\">Staff Awareness Magazine</div>'\n + '<h1>'+esc(title)+'</h1>'\n + '<div class=\"edition\">'+esc(weekOf||date)+'</div>'\n + (data.intro?('<div class=\"dek\">'+esc(data.intro)+'</div>'):'')\n + '</div></section>';\n\n// ---- content ----\nhtml += '<section class=\"page\"><div class=\"content\">';\nif (data.intro) html += '<div class=\"sec\"><h2>Editor’s Welcome</h2>'+paras(data.intro)+'</div>';\nconst f = data.feature;\nif (f && (f.headline || f.body)) {\n  html += '<div class=\"sec\"><h2>Feature</h2><div class=\"feature\">'\n    + (f.headline?('<div class=\"hl\">'+esc(f.headline)+'</div>'):'')\n    + (f.deck?('<div class=\"deck\">'+esc(f.deck)+'</div>'):'')\n    + paras(f.body||'')\n    + (A(f.takeaways).length?('<ul>'+A(f.takeaways).map(function(t){return '<li>'+esc(t)+'</li>';}).join('')+'</ul>'):'')\n    + '</div></div>';\n}\nconst threats = A(data.threats);\nif (threats.length) {\n  html += '<div class=\"sec\"><h2>Emerging Threats</h2><p class=\"lead\">What’s circulating and what it means for you.</p><div class=\"grid\">'\n    + threats.map(function(t){return '<div class=\"card\"><h3>'+esc(t.headline||'')+'</h3><p>'+esc(t.summary||'')+'</p></div>';}).join('')\n    + '</div></div>';\n}\nconst aw = A(data.awareness);\nif (aw.length) {\n  html += '<div class=\"sec\"><h2>The Human Firewall</h2><p class=\"lead\">Practical habits that keep us all safer.</p><div class=\"grid\">'\n    + aw.map(function(a,i){return '<div class=\"tip\"><div class=\"n\">'+(i+1)+'</div><div><h3>'+esc(a.tip||'')+'</h3><p>'+esc(a.detail||'')+'</p></div></div>';}).join('')\n    + '</div></div>';\n}\nconst quals = A(data.quals);\nif (quals.length) {\n  html += '<div class=\"sec\"><h2>Skills &amp; Qualifications</h2><p class=\"lead\">Ways to grow your security know-how.</p>'\n    + quals.map(function(q){return '<div class=\"qual\"><h3>'+esc(q.name||'')+'</h3><div class=\"prov\">'+esc(q.provider||'')+'</div><p>'+esc(q.summary||'')+'</p></div>';}).join('')\n    + '</div>';\n}\nconst gl = A(data.glossary);\nif (gl.length) {\n  html += '<div class=\"sec\"><h2>Jargon Buster</h2><div class=\"gloss\">'\n    + gl.map(function(g){return '<div class=\"g\"><b>'+esc(g.term||'')+'</b> — '+esc(g.definition||'')+'</div>';}).join('')\n    + '</div></div>';\n}\nhtml += '</div><div class=\"foot\"><span>Security Awareness · Learning Hub</span><span>'+esc(weekOf||date)+'</span></div></section>';\nhtml += '</body></html>';\n\nconst fileSafe = (title.toLowerCase().replace(/[^a-z0-9]+/g,'-').replace(/^-|-$/g,'').slice(0,40)) || 'edition';\nreturn [{ json: { data: data, html: html, date: date, title: title, weekOf: weekOf, fileSafe: 'learning-hub-'+date } }];\n"
+      }
+    },
+    {
+      "id": "pdfin",
+      "name": "PDF Input",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        2460,
+        280
+      ],
+      "parameters": {
+        "language": "javaScript",
+        "jsCode": "// Wrap the rendered magazine HTML as an index.html binary for Gotenberg.\nconst meta = $('Render Magazine').first().json;\nconst buf = Buffer.from(meta.html || '<html></html>', 'utf8');\nconst bin = await this.helpers.prepareBinaryData(buf, 'index.html', 'text/html');\nreturn [{ json: { date: meta.date, fileSafe: meta.fileSafe }, binary: { data: bin } }];\n"
+      }
+    },
+    {
+      "id": "goten",
+      "name": "Gotenberg PDF",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        2680,
+        280
+      ],
+      "parameters": {
+        "method": "POST",
+        "url": "={{ $env.GOTENBERG_URL || 'http://jarvis-gotenberg:3000' }}/forms/chromium/convert/html",
+        "contentType": "multipart-form-data",
+        "sendBody": true,
+        "bodyParameters": {
+          "parameters": [
+            {
+              "parameterType": "formBinaryData",
+              "name": "files",
+              "inputDataFieldName": "data"
+            },
+            {
+              "parameterType": "formData",
+              "name": "marginTop",
+              "value": "0"
+            },
+            {
+              "parameterType": "formData",
+              "name": "marginBottom",
+              "value": "0"
+            },
+            {
+              "parameterType": "formData",
+              "name": "marginLeft",
+              "value": "0"
+            },
+            {
+              "parameterType": "formData",
+              "name": "marginRight",
+              "value": "0"
+            }
+          ]
+        },
+        "options": {
+          "response": {
+            "response": {
+              "responseFormat": "file",
+              "outputPropertyName": "data"
+            }
+          },
+          "timeout": 120000
+        }
+      },
+      "onError": "continueErrorOutput"
+    },
+    {
+      "id": "magwrite",
+      "name": "Write Magazine",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        2900,
+        280
+      ],
+      "parameters": {
+        "language": "javaScript",
+        "jsCode": "// Persist the magazine: PDF (from Gotenberg) + HTML + structured JSON archive.\n// Carries the parsed magazine data forward so the course can be grounded in it.\nconst fs = require('fs');\nconst meta = $('Render Magazine').first().json;\nconst dir = '/reports/learning-hub';\nconst archive = '/reports/archive/learning-hub';\nconst base = meta.fileSafe; // learning-hub-<date>\ntry { fs.mkdirSync(dir, { recursive: true }); } catch (e) {}\ntry { fs.mkdirSync(archive, { recursive: true }); } catch (e) {}\nlet pdfPath = '';\ntry {\n  const buf = await this.helpers.getBinaryDataBuffer(0, 'data');\n  if (buf && buf.length) { fs.writeFileSync(dir + '/' + base + '.pdf', buf); fs.writeFileSync(archive + '/' + base + '.pdf', buf); pdfPath = dir + '/' + base + '.pdf'; }\n} catch (e) { pdfPath = ''; }\ntry { fs.writeFileSync(dir + '/' + base + '.html', meta.html); } catch (e) {}\ntry { fs.writeFileSync(archive + '/' + base + '.json', JSON.stringify({ title: meta.title, weekOf: meta.weekOf, date: meta.date, data: meta.data }, null, 2)); } catch (e) {}\nreturn [{ json: {\n  ok: true,\n  date: meta.date,\n  title: meta.title,\n  weekOf: meta.weekOf,\n  data: meta.data,\n  magazinePdf: pdfPath || (dir + '/' + base + '.pdf'),\n  magazineHtml: dir + '/' + base + '.html',\n  fileSafe: base\n} }];\n"
+      }
+    },
+    {
+      "id": "coursesrc",
+      "name": "Build Course Source",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        3120,
+        280
+      ],
+      "parameters": {
+        "language": "javaScript",
+        "jsCode": "// Build the e-learning \"source\" grounding text + course metadata from the magazine.\n// Output is fed to the module's e-learning workflow (Execute Workflow) and reused\n// by Register Publication. Keeps the course strictly about this edition's content.\nconst m = $json || {};\nconst data = m.data || {};\nconst date = m.date || new Date().toISOString().slice(0, 10);\nconst A = function (x) { return Array.isArray(x) ? x : []; };\nfunction line(s) { return String(s == null ? '' : s).replace(/\\s+/g, ' ').trim(); }\nconst parts = [];\nparts.push('MAGAZINE TITLE: ' + (m.title || data.title || 'Security Awareness Digest'));\nif (data.intro) parts.push('EDITORIAL: ' + line(data.intro));\nconst f = data.feature;\nif (f && (f.headline || f.body)) {\n  parts.push('FEATURE: ' + line(f.headline || '') + (f.deck ? (' — ' + line(f.deck)) : ''));\n  if (f.body) parts.push(line(f.body));\n  if (A(f.takeaways).length) parts.push('Key takeaways: ' + A(f.takeaways).map(line).join('; '));\n}\nif (A(data.threats).length) parts.push('EMERGING THREATS: ' + A(data.threats).map(function (t) { return line(t.headline) + ' — ' + line(t.summary); }).join(' | '));\nif (A(data.awareness).length) parts.push('AWARENESS TIPS: ' + A(data.awareness).map(function (a) { return line(a.tip) + ': ' + line(a.detail); }).join(' | '));\nif (A(data.quals).length) parts.push('SKILLS & QUALIFICATIONS: ' + A(data.quals).map(function (q) { return line(q.name) + ' (' + line(q.provider) + '): ' + line(q.summary); }).join(' | '));\nif (A(data.glossary).length) parts.push('GLOSSARY: ' + A(data.glossary).map(function (g) { return line(g.term) + ' = ' + line(g.definition); }).join(' | '));\nconst source = parts.join('\\n');\nconst title = (m.title || data.title || 'Security Awareness Digest') + ' — Awareness Course';\nconst pm = parseInt(($env.LEARNING_HUB_PASS_MARK || '80'), 10);\nreturn [{ json: {\n  source: source,\n  title: title,\n  passMark: isNaN(pm) ? 80 : pm,\n  format: 'HTML',\n  illustrate: (($env.ELEARNING_SECTION_IMAGES || 'true').toString().toLowerCase() !== 'false'),\n  publicationId: 'learning-hub-' + date,\n  courseId: 'course-learning-hub-' + date,\n  releaseDate: date\n} }];\n"
+      }
+    },
+    {
+      "id": "runel",
+      "name": "Run E-learning",
+      "type": "n8n-nodes-base.executeWorkflow",
+      "typeVersion": 1,
+      "position": [
+        3340,
+        280
+      ],
+      "parameters": {
+        "source": "database",
+        "workflowId": "jarvisLhElearn1"
+      }
+    },
+    {
+      "id": "register",
+      "name": "Register Publication",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        3560,
+        280
+      ],
+      "parameters": {
+        "language": "javaScript",
+        "jsCode": "// Upsert the publication record the dashboard reads. Links the magazine + the\n// derived course, with the release date and 30-day completion window.\nconst fs = require('fs');\nconst dir = '/reports/learning-hub';\nconst file = dir + '/publications.json';\nconst src = ($('Build Course Source').first() || {}).json || {};\nconst mag = ($('Write Magazine').first() || {}).json || {};\nconst course = $json || {};\ntry { fs.mkdirSync(dir, { recursive: true }); } catch (e) {}\nlet store = { updated: '', publications: [] };\ntry { const cur = JSON.parse(fs.readFileSync(file, 'utf8')); if (cur && Array.isArray(cur.publications)) store = cur; } catch (e) {}\nconst entry = {\n  id: src.publicationId || ('learning-hub-' + (src.releaseDate || '')),\n  title: mag.title || src.title || 'Security Awareness Digest',\n  kind: 'magazine',\n  releaseDate: src.releaseDate || mag.date || new Date().toISOString().slice(0, 10),\n  deadlineDays: 30,\n  magazine: { pdf: mag.magazinePdf || '', html: mag.magazineHtml || '' },\n  course: { id: src.courseId || '', html: course.html || course.file || '', title: src.title || '', passMark: src.passMark || 80 }\n};\nstore.publications = store.publications.filter(function (p) { return p && p.id !== entry.id; });\nstore.publications.unshift(entry);\nstore.publications.sort(function (a, b) { return String(b.releaseDate).localeCompare(String(a.releaseDate)); });\nstore.updated = new Date().toISOString();\ntry { fs.writeFileSync(file, JSON.stringify(store, null, 2)); } catch (e) {}\nreturn [{ json: { ok: true, publication: entry, total: store.publications.length, file: file } }];\n"
+      }
+    }
+  ],
+  "connections": {
+    "Monthly Schedule": {
+      "main": [
+        [
+          {
+            "node": "Enabled?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Enabled?": {
+      "main": [
+        [
+          {
+            "node": "Load Sources",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        []
+      ]
+    },
+    "Run Now": {
+      "main": [
+        [
+          {
+            "node": "Load Sources",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "On Command": {
+      "main": [
+        [
+          {
+            "node": "Load Sources",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Load Sources": {
+      "main": [
+        [
+          {
+            "node": "Fetch Sources",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Fetch Sources": {
+      "main": [
+        [
+          {
+            "node": "Aggregate Sources",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Aggregate Sources": {
+      "main": [
+        [
+          {
+            "node": "Use Claude?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Use Claude?": {
+      "main": [
+        [
+          {
+            "node": "AI Analyst (Claude)",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "AI Analyst (Ollama)",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "AI Analyst (Claude)": {
+      "main": [
+        [
+          {
+            "node": "Prep Magazine",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        []
+      ]
+    },
+    "AI Analyst (Ollama)": {
+      "main": [
+        [
+          {
+            "node": "Prep Magazine",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        []
+      ]
+    },
+    "Prep Magazine": {
+      "main": [
+        [
+          {
+            "node": "Generate Cover",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Generate Cover": {
+      "main": [
+        [
+          {
+            "node": "Render Magazine",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Render Magazine": {
+      "main": [
+        [
+          {
+            "node": "PDF Input",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "PDF Input": {
+      "main": [
+        [
+          {
+            "node": "Gotenberg PDF",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Gotenberg PDF": {
+      "main": [
+        [
+          {
+            "node": "Write Magazine",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        []
+      ]
+    },
+    "Write Magazine": {
+      "main": [
+        [
+          {
+            "node": "Build Course Source",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Build Course Source": {
+      "main": [
+        [
+          {
+            "node": "Run E-learning",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Run E-learning": {
+      "main": [
+        [
+          {
+            "node": "Register Publication",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  }
+}

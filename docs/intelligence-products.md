@@ -19,6 +19,7 @@ change (*Configuration over hard coding*, *Future expansion*).
 - [Shipped products](#shipped-products)
   - [Daily Cyber Opportunities Intelligence Brief](#daily-cyber-opportunities-intelligence-brief)
   - [Daily Energy Intelligence Brief](#daily-energy-intelligence-brief)
+  - [Learning Hub — Magazine & E-learning](#learning-hub--magazine--e-learning)
 - [The cover-image and branding system](#the-cover-image-and-branding-system)
 - [Intelligence data flow](#intelligence-data-flow)
 - [Monitoring, health, status and validation](#monitoring-health-status-and-validation)
@@ -35,6 +36,7 @@ framework:
 | Daily Cyber Threat Intelligence Brief | `cyber-brief` | `core` | `0 6 * * *` (06:00) | `/cyber` |
 | Daily Cyber Opportunities Intelligence Brief | `cyber-opportunities` | `cyber-opportunities` | `15 6 * * *` (06:15) | `/opportunities` |
 | Daily Energy Intelligence Brief | `energy-intelligence` | `energy-intelligence` | `30 6 * * *` (06:30) | `/energy` |
+| Learning Hub — Magazine & E-learning | `learning-hub` | `learning-hub` | `0 7 1 * *` (monthly) | — |
 
 Each product:
 
@@ -197,6 +199,37 @@ Configuration env vars (root `.env`; see
 | `ENERGY_BRIEF_SECONDARY_FOCUS` | `Saudi Aramco,Shell,BP,Chevron,ExxonMobil,TotalEnergies,QatarEnergy` | Secondary focus entities. |
 | `ENERGY_BRIEF_OUTPUT_FORMATS` | `html,pdf,email,archive` | Output formats. |
 | `ENERGY_BRIEF_SOURCES_FILE` | `config/energy-sources.txt` | Source list. |
+
+### Learning Hub — Magazine & E-learning
+
+> Module: [`modules/learning-hub/`](../modules/learning-hub) · Id: `learning-hub`
+
+Unlike the daily briefs, the Learning Hub turns a publication into **training**. A
+single run builds a monthly staff security-awareness **magazine**, then derives an
+**interactive e-learning course strictly from that edition**, and registers both as
+a *publication* for a **local Learning Dashboard** (a static nginx service in the
+stack). Learners read the magazine anytime and have **30 days** from release to
+complete the course; the dashboard tracks completion and keeps a **certificate
+library**.
+
+- **Workflows.** `modules/learning-hub/workflows/learning-hub.json` (magazine +
+  orchestrator) and `learning-hub-elearning.json` (magazine-grounded course).
+- **Prompts.** [`learning-hub.analyst`](../modules/learning-hub/prompts/analyst.md)
+  (magazine editor) and [`learning-hub.course`](../modules/learning-hub/prompts/course.md)
+  (grounded course designer).
+- **Outputs.** `reports/learning-hub/` (magazine PDF/HTML, course HTML,
+  `publications.json`) and `reports/archive/learning-hub/`.
+- **Dashboard.** `docker compose up -d dashboard`, then open
+  `http://localhost:${DASHBOARD_PORT:-8088}`.
+
+| Variable | Default | Meaning |
+| --- | --- | --- |
+| `LEARNING_HUB_ENABLED` | `true` | Enable/disable the scheduled publication run. |
+| `LEARNING_HUB_SCHEDULE_CRON` | `0 7 1 * *` | Cron schedule (monthly, 1st 07:00). |
+| `LEARNING_HUB_PASS_MARK` | `80` | Knowledge-check pass mark (%) for the course. |
+| `LEARNING_HUB_OUTPUT_FORMATS` | `pdf,html,archive` | Magazine output formats. |
+| `LEARNING_HUB_SOURCES_FILE` | `config/learning-hub-sources.txt` | Source list. |
+| `DASHBOARD_PORT` | `8088` | Host port for the local Learning Dashboard. |
 
 ## The cover-image and branding system
 

@@ -1,0 +1,8 @@
+# Learning Hub — awareness source feeds (one URL per line; # starts a comment).
+# Used by the magazine editor as a news digest. Missing/empty file or unreachable
+# feeds degrade gracefully to a timeless general security-awareness edition.
+https://www.ncsc.gov.uk/api/1/services/v1/all-rss-feed.xml
+https://www.cisa.gov/cybersecurity-advisories/all.xml
+https://krebsonsecurity.com/feed/
+https://www.bleepingcomputer.com/feed/
+https://www.sans.org/newsletters/ouch/rss

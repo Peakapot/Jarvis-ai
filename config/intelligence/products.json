@@ -97,6 +97,29 @@
       ],
       "coverImage": true,
       "telegramCommand": "/defence"
+    },
+    {
+      "id": "learning-hub",
+      "name": "Learning Hub — Magazine & E-learning",
+      "module": "learning-hub",
+      "status": "active",
+      "enabledEnv": "LEARNING_HUB_ENABLED",
+      "enabledDefault": "true",
+      "scheduleEnv": "LEARNING_HUB_SCHEDULE_CRON",
+      "scheduleDefault": "0 7 1 * *",
+      "workflow": "modules/learning-hub/workflows/learning-hub.json",
+      "prompt": "learning-hub.analyst",
+      "sourcesFile": "config/learning-hub-sources.txt",
+      "reportDir": "reports/learning-hub",
+      "archiveDir": "reports/archive/learning-hub",
+      "template": "templates/report/learning-hub.html.tpl",
+      "outputs": [
+        "pdf",
+        "html",
+        "elearning",
+        "archive"
+      ],
+      "coverImage": true
     }
   ]
 }

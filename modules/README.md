@@ -76,6 +76,7 @@ are ignored). Tooling discovers modules by globbing `modules/*/module.json`:
 | Module | Capability | Status |
 |--------|------------|--------|
 | [`_template`](./_template/) | Copy-me scaffold for new modules | scaffold |
+| [`learning-hub`](./learning-hub/) | Magazine + e-learning derived from it, with a local Learning Dashboard (completion tracking, certificate library, 30-day deadlines) | active |
 | [`knowledge-assistant`](./knowledge-assistant/) | RAG over a knowledge base / long-term memory (future Qdrant vector DB) | planned (scaffold) |
 | [`meeting-assistant`](./meeting-assistant/) | Meeting note + transcript summarisation, action-item extraction | planned (scaffold) |
 | [`calendar-assistant`](./calendar-assistant/) | Schedule queries, event-creation drafts, daily agenda | planned (scaffold) |

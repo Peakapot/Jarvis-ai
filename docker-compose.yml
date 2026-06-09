@@ -205,6 +205,30 @@ services:
     logging: *default-logging
 
   # ---------------------------------------------------------------------------
+  # dashboard — local "Learning Hub" web dashboard (static nginx). Serves the
+  # SPA and the generated reports read-only at ONE origin, so the magazine, the
+  # e-learning course and the dashboard share an origin (iframe + postMessage +
+  # localStorage all work). Part of the Learning Hub module.
+  # ---------------------------------------------------------------------------
+  dashboard:
+    image: ${DASHBOARD_IMAGE:-nginx:alpine}
+    container_name: ${DASHBOARD_CONTAINER_NAME:-jarvis-dashboard}
+    restart: unless-stopped
+    networks: [jarvis-net]
+    ports:
+      - "${DASHBOARD_PORT:-8088}:80"
+    volumes:
+      - ./modules/learning-hub/dashboard:/usr/share/nginx/html:ro
+      - ./reports:/usr/share/nginx/html/reports:ro
+    healthcheck:
+      test: ["CMD-SHELL", "wget -qO- http://localhost:80/ >/dev/null 2>&1 || exit 1"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+      start_period: 10s
+    logging: *default-logging
+
+  # ---------------------------------------------------------------------------
   # qdrant — FUTURE vector database for knowledge base / long-term memory.
   # Enable with:  COMPOSE_PROFILES=vectordb docker compose up -d
   # ---------------------------------------------------------------------------

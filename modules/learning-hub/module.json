@@ -1,0 +1,51 @@
+{
+  "$comment": "Learning Hub module manifest. A self-contained capability that produces a monthly staff security-awareness MAGAZINE and, from that same edition, a derived interactive E-LEARNING course, then registers them as a 'publication' for a local Learning Dashboard. Follows the intelligence-product plugin contract (intelligence:true + autoImport:true) so install.sh creates its report dirs and the importer loads its workflows automatically. It does NOT modify or depend on any other module.",
+  "id": "learning-hub",
+  "name": "Learning Hub — Magazine, E-learning & Dashboard",
+  "version": "1.0.0",
+  "status": "active",
+  "intelligence": true,
+  "autoImport": true,
+  "registry": "config/intelligence/products.json",
+  "description": "One run produces a premium staff security-awareness magazine plus an interactive e-learning course derived strictly from that edition, registered as a publication. A local web Learning Dashboard lists publications, lets staff read the magazine anytime and complete the course within 30 days of release, shows completion status and a personal certificate library.",
+  "provides": [
+    "intelligence.learning-hub",
+    "elearning.from-magazine",
+    "dashboard.learning-hub"
+  ],
+  "dependsOn": [
+    "core.ai-provider",
+    "core.image-provider"
+  ],
+  "prompts": [
+    { "id": "learning-hub.analyst", "file": "prompts/analyst.md", "version": "1.0.0" },
+    { "id": "learning-hub.course", "file": "prompts/course.md", "version": "1.0.0" }
+  ],
+  "workflows": [
+    "workflows/learning-hub.json",
+    "workflows/learning-hub-elearning.json"
+  ],
+  "envVars": [
+    { "name": "LEARNING_HUB_ENABLED", "required": false, "default": "true", "secret": false, "description": "Set to 'false' to disable the scheduled publication run." },
+    { "name": "LEARNING_HUB_SCHEDULE_CRON", "required": false, "default": "0 7 1 * *", "secret": false, "description": "Cron schedule for the edition (default 07:00 on the 1st of each month)." },
+    { "name": "LEARNING_HUB_PASS_MARK", "required": false, "default": "80", "secret": false, "description": "Knowledge-check pass mark (%) for the derived course." },
+    { "name": "LEARNING_HUB_OUTPUT_FORMATS", "required": false, "default": "pdf,html,archive", "secret": false, "description": "Magazine output formats." },
+    { "name": "LEARNING_HUB_SOURCES_FILE", "required": false, "default": "config/learning-hub-sources.txt", "secret": false, "description": "Awareness source feeds (one URL per line)." },
+    { "name": "DASHBOARD_PORT", "required": false, "default": "8088", "secret": false, "description": "Host port for the local Learning Dashboard (nginx)." }
+  ],
+  "report": {
+    "sourcesFile": "config/learning-hub-sources.txt",
+    "reportDir": "reports/learning-hub",
+    "archiveDir": "reports/archive/learning-hub",
+    "template": "templates/report/learning-hub.html.tpl",
+    "coverImagePrompt": "intelligence.cover-image",
+    "sections": ["Editor’s Welcome", "Feature", "Emerging Threats", "The Human Firewall", "Skills & Qualifications", "Jargon Buster"]
+  },
+  "dashboard": {
+    "dir": "dashboard",
+    "service": "dashboard",
+    "portEnv": "DASHBOARD_PORT",
+    "url": "http://localhost:8088"
+  },
+  "healthcheck": "healthcheck.sh"
+}

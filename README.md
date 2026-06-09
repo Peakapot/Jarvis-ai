@@ -31,6 +31,10 @@ reproducible from a single idempotent installer.
   **interactive e-learning modules (HTML + SCORM)**, **completion certificates**,
   **12-month campaign calendars**, **video scripts & storyboards**, and
   **digital-signage slides** — each on request via a single Telegram command.
+- 🎓 **Learning Hub** — a one-run **read → learn → certify** loop: a monthly staff
+  awareness **magazine** *plus* an **e-learning course built from that edition**,
+  surfaced in a **local Learning Dashboard** with completion tracking, a personal
+  **certificate library** and a **30-day** completion window.
 - 💬 **Conversational Telegram interface** — the team drives everything with
   simple commands (`/poster phishing`, `/tabletop ransomware`, `/quiz mfa`, …);
   finished assets are saved and returned in chat.
@@ -76,6 +80,7 @@ a branded PDF — **without editing any code**.
 | **Cyber Defence Watch** *(weekly brief)* | OSINT cyber-defence brief themed for the **KSA Ministry of Defence**: allied policy & capability (US/UK/Five Eyes/NATO), Middle East defence cyber, defence-impacting breaches, threat actors, and a bespoke *Implications for KSA MOD* assessment. | `workflows/core/defence-cyber.json` |
 | **Cyber Opportunities Brief** *(daily)* | Commercial-opportunity radar (RFPs, tenders, MSS, GRC, SOC, OT/CNI, cloud & AI security) with a GCC-first focus. | `modules/cyber-opportunities/` |
 | **Energy Intelligence Brief** *(daily)* | UAE/ADNOC-focused energy intelligence with live oil & gas prices and an AI cover. | `modules/energy-intelligence/` |
+| **Learning Hub** *(monthly + on-demand)* | A staff awareness **magazine** + an **e-learning course derived from that edition**, registered as a publication; a **local Learning Dashboard** (nginx) shows publications, completion status, a **certificate library** and a 30-day deadline. | `modules/learning-hub/` |
 | **Awareness Toolkit** *(on-demand)* | Posters, explainers, quizzes, tabletop packs, micro-tips, teachable-moment notes, KPI reports, e-learning modules (HTML + SCORM), completion certificates, campaign calendars, video scripts & storyboards, digital-signage slides — files to `reports/awareness/`. | `workflows/awareness/` |
 
 ## Intelligence magazines
@@ -115,6 +120,32 @@ until `CLIENT_NAME` is set for white-label delivery.
 | Campaign Calendar | `/calendar [year]` | 12-month awareness plan PDF + `.ics` calendar feed |
 | Video Script & Storyboard | `/videoscript <topic>` | script + storyboard PDF (scene cards) |
 | Digital-Signage Slides | `/signage <topic>` | 1920×1080 PNG slides bundled as a `.zip` |
+
+## Learning Hub
+
+The **Learning Hub** module ([`modules/learning-hub/`](modules/learning-hub/README.md))
+links a publication to training: a single run builds a monthly staff
+security-awareness **magazine** and then an **interactive e-learning course derived
+strictly from that edition**, registering both as a *publication* in
+`reports/learning-hub/publications.json`.
+
+A **local Learning Dashboard** (a static nginx service that ships with the stack)
+presents it to learners:
+
+```bash
+docker compose up -d dashboard      # starts the dashboard service
+# then open http://localhost:8088   (DASHBOARD_PORT)
+```
+
+From the dashboard a learner can **read the magazine anytime**, **complete the
+e-learning** (which then shows **Complete**), and keep a personal **certificate
+library** of their progress. Each edition has a **30-day** completion window from
+release (the magazine stays readable indefinitely; the course shows a countdown and
+an *Overdue* badge after 30 days). Progress is stored in the browser for this
+single-user demo. Generate the first edition by running the
+*Jarvis · Learning Hub — Publication + Course* workflow in n8n (or wait for the
+monthly schedule). It is a self-contained module and leaves the existing magazines
+and awareness toolkit untouched.
 
 ## How it works
 
