@@ -260,7 +260,13 @@
             "index": 0
           }
         ],
-        []
+        [
+          {
+            "node": "Prep Content",
+            "type": "main",
+            "index": 0
+          }
+        ]
       ]
     },
     "AI (Ollama)": {
@@ -272,7 +278,13 @@
             "index": 0
           }
         ],
-        []
+        [
+          {
+            "node": "Prep Content",
+            "type": "main",
+            "index": 0
+          }
+        ]
       ]
     },
     "Prep Content": {

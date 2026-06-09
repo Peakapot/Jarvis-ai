@@ -373,7 +373,8 @@
       "parameters": {
         "source": "database",
         "workflowId": "jarvisLhElearn1"
-      }
+      },
+      "onError": "continueRegularOutput"
     },
     {
       "id": "register",
@@ -496,7 +497,13 @@
             "index": 0
           }
         ],
-        []
+        [
+          {
+            "node": "Prep Magazine",
+            "type": "main",
+            "index": 0
+          }
+        ]
       ]
     },
     "AI Analyst (Ollama)": {
@@ -508,7 +515,13 @@
             "index": 0
           }
         ],
-        []
+        [
+          {
+            "node": "Prep Magazine",
+            "type": "main",
+            "index": 0
+          }
+        ]
       ]
     },
     "Prep Magazine": {
@@ -564,7 +577,13 @@
             "index": 0
           }
         ],
-        []
+        [
+          {
+            "node": "Write Magazine",
+            "type": "main",
+            "index": 0
+          }
+        ]
       ]
     },
     "Write Magazine": {
