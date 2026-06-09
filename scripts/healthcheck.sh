@@ -63,6 +63,15 @@ check_ollama() {
   fi
 }
 
+check_dashboard() {
+  local url="http://localhost:${DASHBOARD_PORT:-8088}"
+  if http_ok "${url}/"; then
+    record PASS "Awareness Portal" "Available at ${url}"
+  else
+    record FAIL "Awareness Portal" "Not responding at ${url} (try: docker compose up -d dashboard)"
+  fi
+}
+
 check_telegram() {
   if [[ -z "${TELEGRAM_BOT_TOKEN:-}" ]]; then
     record SKIP "Telegram" "TELEGRAM_BOT_TOKEN not configured"
@@ -229,6 +238,7 @@ main() {
   require_cmd curl
   check_n8n
   check_ollama
+  check_dashboard
   check_telegram
   check_email
   check_image_provider

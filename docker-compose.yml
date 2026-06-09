@@ -86,7 +86,7 @@ services:
       AI_PROVIDER: ${AI_PROVIDER:-ollama}
       # Claude (Anthropic) — optional AI provider for higher-quality analysis
       ANTHROPIC_API_KEY: ${ANTHROPIC_API_KEY:-}
-      CLAUDE_MODEL: ${CLAUDE_MODEL:-claude-sonnet-4-6}
+      CLAUDE_MODEL: ${CLAUDE_MODEL:-claude-opus-4-8}
       CLAUDE_BASE_URL: ${CLAUDE_BASE_URL:-https://api.anthropic.com}
       # Gotenberg HTML->PDF service (used by intelligence briefs to emit PDF)
       GOTENBERG_URL: ${GOTENBERG_URL:-http://jarvis-gotenberg:3000}

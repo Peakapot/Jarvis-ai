@@ -105,7 +105,13 @@ stage_config() {
 stage_scaffold() {
   local d
   for d in logs backups reports state reports/cyber-brief reports/archive \
-           logs/diagnostics data; do
+           logs/diagnostics data \
+           reports/learning-hub reports/archive/learning-hub \
+           reports/awareness reports/awareness/posters reports/awareness/quiz \
+           reports/awareness/tabletop reports/awareness/tips reports/awareness/teachable \
+           reports/awareness/kpi reports/awareness/calendar reports/awareness/video \
+           reports/awareness/signage reports/awareness/elearning \
+           reports/awareness/certificates reports/awareness/comics; do
     mkdir -p "${JARVIS_ROOT}/${d}"
   done
   chmod 700 "${JARVIS_ROOT}/state" 2>/dev/null || true
@@ -231,6 +237,7 @@ readiness_report() {
     echo
     echo "## Next steps"
     echo " - Open n8n at ${N8N_BASE_URL:-http://localhost:5678}"
+    echo " - Open the Awareness Portal at http://localhost:${DASHBOARD_PORT:-8088}"
     echo " - Send your Telegram bot a /help message"
     echo " - Review docs/operations.md for daily operations"
   } >"${report}"
