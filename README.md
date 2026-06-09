@@ -144,10 +144,14 @@ docker compose up -d dashboard      # starts the Awareness Portal service
 ```
 
 The portal is **branded via `modules/learning-hub/dashboard/portal.json`**
-(`{ "brand", "tagline", "accent", "logo" }`) — drop a `reports/portal.json` to
-override branding without touching the build. Its **Library** view lists every
-generated asset (auto-discovered through nginx JSON autoindex), while the
-**Learning** view drives the read → learn → certify flow.
+(`{ "brand", "tagline", "accent", "logo", "n8nBaseUrl" }`) — drop a
+`reports/portal.json` to override branding without touching the build. Its
+**Create** view is a **self-service launcher**: one place to start any workflow —
+each awareness tool opens its n8n request form (at `n8nBaseUrl`, default
+`http://<portal-host>:5678`), and the Learning Hub / intelligence briefs list
+their schedule and Telegram command. The **Library** view lists every generated
+asset (auto-discovered through nginx JSON autoindex), while the **Learning** view
+drives the read → learn → certify flow.
 
 From the portal a learner can **read the magazine anytime**, **complete the
 e-learning** (which then shows **Complete**), and keep a personal **certificate

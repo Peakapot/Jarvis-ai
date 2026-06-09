@@ -4,7 +4,7 @@
 <meta charset="utf-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1" />
 <title>Awareness Portal</title>
-<link rel="stylesheet" href="styles.css?v=4" />
+<link rel="stylesheet" href="styles.css?v=5" />
 </head>
 <body>
   <header class="top">
@@ -14,6 +14,7 @@
     </div>
     <nav class="tabs">
       <button class="tab active" data-tab="home">Home</button>
+      <button class="tab" data-tab="create">Create</button>
       <button class="tab" data-tab="library">Library</button>
       <button class="tab" data-tab="learning">Learning</button>
       <button class="tab" data-tab="certs">Certificates</button>
@@ -35,11 +36,25 @@
           <p id="heroTagline">Your one-stop awareness content portal — every asset Jarvis creates, in one place.</p>
         </div>
       </div>
+      <div class="hero-cta"><button class="btn" id="heroCreate">＋ Create new content</button></div>
       <div class="stats" id="homeStats"></div>
       <h3 class="sec-h">Recent</h3>
       <div class="grid" id="homeRecent"></div>
       <h3 class="sec-h">Browse by category</h3>
       <div class="cat-grid" id="homeCats"></div>
+    </section>
+
+    <!-- CREATE (self-service launcher) -->
+    <section id="view-create" class="view" hidden>
+      <div class="create-head">
+        <h2>Create new content</h2>
+        <p>Pick a tool to launch its request form — fill in the topic and options, submit,
+        and the finished asset lands in your <b>Library</b> automatically. Need a different
+        trigger? Each tool also lists its Telegram command.</p>
+        <input id="toolSearch" class="search" type="search" placeholder="Search tools…" />
+      </div>
+      <div id="toolGroups"></div>
+      <p class="create-note" id="createNote"></p>
     </section>
 
     <!-- LIBRARY -->
@@ -111,6 +126,6 @@
 
   <div class="toast" id="toast" hidden></div>
 
-  <script src="app.js?v=4"></script>
+  <script src="app.js?v=5"></script>
 </body>
 </html>

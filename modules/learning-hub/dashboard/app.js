@@ -40,8 +40,43 @@
   };
   function catFor(key) { return CATS[key] || { label: titleCase(key), icon: '📄' }; }
 
+  /* ---- self-service tool catalog (the "Create" launcher) ----
+     Awareness tools each expose an n8n form at <n8nBaseUrl>/form/<form>. The
+     Learning Hub and intelligence briefs run on a schedule / Telegram, so they
+     show their trigger instead of a form. */
+  var TOOL_GROUPS = [
+    { group: 'Awareness Toolkit', note: 'On-demand — opens a request form.', tools: [
+      { icon: '🖼️', title: 'Poster & Explainer', desc: 'A4 awareness poster plus a one-page explainer.', form: 'aw-poster-explainer-form', cmd: '/poster' },
+      { icon: '❓', title: 'Quiz & Spot-the-Phish', desc: 'Participant quiz + facilitator answer key.', form: 'aw-quiz-pack-form', cmd: '/quiz' },
+      { icon: '🎲', title: 'Tabletop Exercise', desc: 'Scenario, roles, timed injects and debrief.', form: 'aw-tabletop-pack-form', cmd: '/tabletop' },
+      { icon: '💡', title: 'Micro-Tips & Cards', desc: 'Printable tips one-pager + lock-screen cards.', form: 'aw-micro-tips-form', cmd: '/tips' },
+      { icon: '📣', title: 'Teachable Moment', desc: 'News-triggered "what happened / why / do" note.', form: 'aw-teachable-form', cmd: '/teachable' },
+      { icon: '📊', title: 'KPI Report', desc: 'Awareness metrics report from your KPI input.', form: 'aw-kpi-form', cmd: '/kpi' },
+      { icon: '🎓', title: 'E-learning Module', desc: 'Self-contained interactive HTML lesson (scored).', form: 'aw-elearning-form', cmd: '/elearning' },
+      { icon: '🏅', title: 'Completion Certificate', desc: 'Diploma-style certificate PDF (unique ID).', form: 'aw-certificate-form', cmd: '/certificate' },
+      { icon: '📅', title: 'Campaign Calendar', desc: '12-month awareness plan PDF + .ics feed.', form: 'aw-calendar-form', cmd: '/calendar' },
+      { icon: '🎬', title: 'Video Script & Storyboard', desc: 'Scene-by-scene script and storyboard PDF.', form: 'aw-video-form', cmd: '/videoscript' },
+      { icon: '🖥️', title: 'Digital-Signage Slides', desc: '1920×1080 screen slides bundled as a .zip.', form: 'aw-signage-form', cmd: '/signage' },
+      { icon: '💥', title: 'Comic Book', desc: 'Branded comic in any art style; consistent cast.', form: 'aw-comic-form', cmd: '' }
+    ] },
+    { group: 'Learning Hub & Intelligence', note: 'Scheduled / Telegram — run from n8n or send the command.', tools: [
+      { icon: '📰', title: 'Learning Hub — Magazine + Course', desc: 'Monthly magazine + e-learning, registered as a publication.', cmd: '', trigger: 'Monthly schedule, or run in n8n' },
+      { icon: '🛰️', title: 'Daily Cyber Threat Brief', desc: 'OSINT cyber threat intelligence brief.', cmd: '/cyber', trigger: 'Daily 06:00' },
+      { icon: '🛰️', title: 'Cyber Defence Watch', desc: 'Cyber-defence brief (allied policy, threat actors).', cmd: '/defence', trigger: 'Weekly Mon 05:30' },
+      { icon: '🛰️', title: 'Cyber Opportunities Brief', desc: 'Commercial-opportunity radar (RFPs, tenders, MSS).', cmd: '/opportunities', trigger: 'Daily 06:15' },
+      { icon: '🛰️', title: 'Energy Intelligence Brief', desc: 'Energy intelligence with live oil & gas prices.', cmd: '/energy', trigger: 'Daily 06:30' }
+    ] }
+  ];
+  // n8n base: portal.json override, else assume n8n on :5678 of the current host.
+  function n8nBase() {
+    var b = (BRAND.n8nBaseUrl || '').replace(/\/+$/, '');
+    if (b) return b;
+    return location.protocol + '//' + location.hostname + ':5678';
+  }
+  function formUrl(form) { return n8nBase() + '/form/' + form; }
+
   /* ---- brand ---- */
-  var BRAND = { brand: 'Security Awareness', tagline: 'Your one-stop awareness content portal', accent: '#0E7C86', logo: '' };
+  var BRAND = { brand: 'Security Awareness', tagline: 'Your one-stop awareness content portal', accent: '#0E7C86', logo: '', n8nBaseUrl: '' };
   function applyBrand() {
     $('brandAvatar').innerHTML = BRAND.logo ? ('<img src="' + esc(BRAND.logo) + '" alt=""/>') : JARVIS;
     $('heroAvatar').innerHTML = BRAND.logo ? ('<img src="' + esc(BRAND.logo) + '" alt=""/>') : JARVIS;
@@ -303,9 +338,55 @@
     toast('Course complete — certificate added to your library');
   });
 
+  /* ================= CREATE (self-service launcher) ================= */
+  function copyCmd(cmd) {
+    var done = function () { toast('Copied ' + cmd + ' — send it to the Jarvis Telegram bot'); };
+    try { navigator.clipboard.writeText(cmd).then(done, done); } catch (e) { done(); }
+  }
+  function toolCard(t) {
+    var el = document.createElement('div'); el.className = 'tool';
+    var actions;
+    if (t.form) {
+      actions = '<a class="btn sm" href="' + esc(formUrl(t.form)) + '" target="_blank" rel="noopener">Open form ↗</a>';
+    } else if (t.trigger) {
+      actions = '<a class="btn sm alt" href="' + esc(n8nBase()) + '" target="_blank" rel="noopener">Open in n8n ↗</a>';
+    } else {
+      actions = '';
+    }
+    var meta = t.trigger ? ('<div class="tool-trig">' + esc(t.trigger) + '</div>') : '';
+    var cmd = t.cmd ? ('<button class="cmd" data-cmd="' + esc(t.cmd) + '" title="Copy command">' + esc(t.cmd) + '</button>') : '';
+    el.innerHTML =
+      '<div class="tool-top"><span class="ico">' + t.icon + '</span>' + cmd + '</div>' +
+      '<div class="tool-title">' + esc(t.title) + '</div>' +
+      '<div class="tool-desc">' + esc(t.desc) + '</div>' +
+      meta +
+      '<div class="tool-actions">' + actions + '</div>';
+    var cb = el.querySelector('[data-cmd]'); if (cb) cb.onclick = function () { copyCmd(cb.dataset.cmd); };
+    return el;
+  }
+  function renderCreate() {
+    var box = $('toolGroups'); if (!box) return;
+    var q = (($('toolSearch') && $('toolSearch').value) || '').trim().toLowerCase();
+    box.innerHTML = ''; var shown = 0;
+    TOOL_GROUPS.forEach(function (g) {
+      var tools = g.tools.filter(function (t) {
+        return !q || (t.title + ' ' + t.desc + ' ' + (t.cmd || '')).toLowerCase().indexOf(q) >= 0;
+      });
+      if (!tools.length) return;
+      shown += tools.length;
+      var h = document.createElement('h3'); h.className = 'sec-h'; h.innerHTML = esc(g.group) + ' <span class="sec-note">' + esc(g.note) + '</span>';
+      box.appendChild(h);
+      var grid = document.createElement('div'); grid.className = 'tool-grid';
+      tools.forEach(function (t) { grid.appendChild(toolCard(t)); });
+      box.appendChild(grid);
+    });
+    $('createNote').textContent = 'Forms open in n8n (' + n8nBase() + ') and require the workflow to be Active. '
+      + (shown ? '' : 'No tools match your search.');
+  }
+
   /* ---- ui plumbing ---- */
   function toast(msg) { var t = $('toast'); t.textContent = msg; t.hidden = false; clearTimeout(toast._t); toast._t = setTimeout(function () { t.hidden = true; }, 3200); }
-  var VIEWS = { home: 'view-home', library: 'view-library', learning: 'view-learning', certs: 'view-certs' };
+  var VIEWS = { home: 'view-home', create: 'view-create', library: 'view-library', learning: 'view-learning', certs: 'view-certs' };
   function switchTab(name) {
     document.querySelectorAll('.tab').forEach(function (b) { b.classList.toggle('active', b.dataset.tab === name); });
     Object.keys(VIEWS).forEach(function (k) { $(VIEWS[k]).hidden = k !== name; });
@@ -319,9 +400,11 @@
   $('nameInput').addEventListener('keydown', function (e) { if (e.key === 'Enter') saveName(); });
   $('changeName').onclick = function () { $('nameInput').value = getLearner(); $('nameModal').hidden = false; setTimeout(function () { $('nameInput').focus(); }, 50); };
   $('searchInput').addEventListener('input', renderLibrary);
+  if ($('toolSearch')) $('toolSearch').addEventListener('input', renderCreate);
+  if ($('heroCreate')) $('heroCreate').onclick = function () { switchTab('create'); };
 
   /* ---- init ---- */
-  loadBrand();
+  loadBrand().then(renderCreate);
   ensureName();
   Promise.all([loadCatalog(), loadPubs()]).then(function () {
     renderHome(); renderChips(); renderLibrary(); renderLearning(); renderCerts();

@@ -17,10 +17,13 @@ A self-contained Jarvis module that turns **one run** into a complete
    where a learner reads the magazine anytime, completes the course, sees
    **Complete**, and keeps a personal **certificate library**. Its **Library** view
    also **auto-discovers every asset** any workflow writes to `reports/` (via nginx
-   JSON autoindex), so the whole content library is browsable in one place. Branding
-   is set in [`dashboard/portal.json`](dashboard/portal.json)
-   (`{ "brand", "tagline", "accent", "logo" }`); drop a `reports/portal.json` to
-   override it without rebuilding.
+   JSON autoindex), and its **Create** view is a **self-service launcher** — one
+   place to kick off any workflow: each awareness tool opens its n8n request form,
+   and the Learning Hub / intelligence briefs show their schedule + Telegram command.
+   Branding and the n8n location are set in [`dashboard/portal.json`](dashboard/portal.json)
+   (`{ "brand", "tagline", "accent", "logo", "n8nBaseUrl" }`); `n8nBaseUrl` defaults
+   to `http://<portal-host>:5678`. Drop a `reports/portal.json` to override without
+   rebuilding.
 
 This module does **not** modify or depend on any other module. It reuses only the
 shared provider abstractions (`AI_PROVIDER`, `IMAGE_PROVIDER`) and Gotenberg.

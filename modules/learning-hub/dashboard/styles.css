@@ -134,6 +134,28 @@ body{font-family:-apple-system,'Segoe UI',Roboto,Helvetica,Arial,sans-serif;colo
 .imgwrap{flex:1;display:flex;align-items:center;justify-content:center;overflow:auto;padding:18px}
 .imgwrap img{max-width:100%;max-height:100%;box-shadow:0 10px 40px rgba(0,0,0,.5);background:#fff}
 
+/* hero CTA */
+.hero-cta{margin-top:16px}
+
+/* create (self-service launcher) */
+.create-head h2{margin:0 0 6px;color:var(--navy);font-family:Georgia,serif;font-size:26px}
+.create-head p{margin:0 0 14px;color:var(--muted);font-size:14px;line-height:1.5;max-width:760px}
+.create-head .search{width:100%;max-width:380px}
+.sec-note{font-weight:600;letter-spacing:0;text-transform:none;color:var(--muted);font-size:11px;margin-left:8px}
+.tool-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(260px,1fr));gap:14px}
+.tool{background:var(--surface);border:1px solid var(--line);border-radius:14px;padding:16px;box-shadow:0 5px 14px rgba(10,26,47,.05);display:flex;flex-direction:column}
+.tool:hover{border-color:var(--accent);box-shadow:0 8px 18px rgba(14,124,134,.12)}
+.tool-top{display:flex;align-items:center;justify-content:space-between;margin-bottom:8px}
+.tool-top .ico{font-size:24px}
+.cmd{font-family:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;font-size:12px;font-weight:700;color:var(--accent);background:#e9f4f3;border:1px solid #cfe7e4;border-radius:8px;padding:3px 9px;cursor:pointer}
+.cmd:hover{background:var(--accent);color:#fff;border-color:var(--accent)}
+.tool-title{font-size:15.5px;font-weight:800;color:var(--navy);margin:2px 0 4px;line-height:1.25}
+.tool-desc{font-size:13px;color:var(--muted);line-height:1.5;flex:1}
+.tool-trig{font-size:11px;font-weight:700;color:var(--amber);margin-top:8px}
+.tool-actions{display:flex;gap:8px;margin-top:12px}
+.tool-actions .btn{flex:1}
+.create-note{margin-top:22px;color:var(--muted);font-size:12px}
+
 /* toast + footer */
 .toast{position:fixed;left:50%;bottom:28px;transform:translateX(-50%);background:var(--navy);color:#fff;padding:12px 20px;border-radius:24px;font-size:14px;font-weight:700;z-index:70;box-shadow:0 10px 30px rgba(0,0,0,.3)}
 .foot{display:flex;justify-content:space-between;max-width:1140px;width:100%;margin:0 auto;padding:16px 22px;color:var(--muted);font-size:12px;border-top:1px solid var(--line)}
