@@ -53,8 +53,7 @@
     if (BRAND.accent) document.documentElement.style.setProperty('--accent', BRAND.accent);
   }
   function loadBrand() {
-    return fetch('reports/portal.json?t=' + Date.now()).then(function (r) { return r.ok ? r.json() : null; }).catch(function () { return null; })
-      .then(function (j) { if (!j) return fetch('portal.json?t=' + Date.now()).then(function (r) { return r.ok ? r.json() : null; }).catch(function () { return null; }); return j; })
+    return fetch('portal.json?t=' + Date.now()).then(function (r) { return r.ok ? r.json() : null; }).catch(function () { return null; })
       .then(function (j) { if (j) BRAND = Object.assign(BRAND, j); applyBrand(); });
   }
 

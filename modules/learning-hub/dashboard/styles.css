@@ -5,6 +5,9 @@
   --accent:#0E7C86;
 }
 *{box-sizing:border-box}
+/* Make the hidden attribute authoritative even on elements we give a display
+   (overlay/modal/imgwrap use display:flex, which would otherwise beat [hidden]). */
+[hidden]{display:none !important}
 html,body{margin:0}
 body{font-family:-apple-system,'Segoe UI',Roboto,Helvetica,Arial,sans-serif;color:var(--ink);background:var(--bg);min-height:100vh;display:flex;flex-direction:column}
 
