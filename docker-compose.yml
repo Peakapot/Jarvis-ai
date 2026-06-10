@@ -91,6 +91,10 @@ services:
       # unfinished executions). Give them a long timeout and ample heap.
       N8N_RUNNERS_TASK_TIMEOUT: ${N8N_RUNNERS_TASK_TIMEOUT:-3600}
       N8N_RUNNERS_MAX_OLD_SPACE_SIZE: ${N8N_RUNNERS_MAX_OLD_SPACE_SIZE:-3072}
+      # Main n8n process heap. Image/PDF runs move large binaries back through the
+      # main process; the default V8 heap can be exhausted (process crash → "Last
+      # session crashed" / unfinished executions, with no Docker OOM). Raise it.
+      NODE_OPTIONS: ${NODE_OPTIONS:---max-old-space-size=4096}
       # Provider endpoints reachable from inside the network
       OLLAMA_BASE_URL: http://${OLLAMA_CONTAINER_NAME:-jarvis-ollama}:11434
       OLLAMA_DEFAULT_MODEL: ${OLLAMA_DEFAULT_MODEL:-llama3.1:8b}
