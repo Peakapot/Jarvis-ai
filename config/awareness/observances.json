@@ -1,0 +1,14 @@
+{
+  "$comment": "Curated security-awareness observances merged into the Campaign Calendar so recognised days always land in the right month with correct dates (not left to model recall). Edit/extend freely; add regional days for your teams. type: 'fixed' = month+day; 'nth' = the nth weekday of a month (weekday 0=Sun..6=Sat); 'month' = a month-long observance (no single day).",
+  "observances": [
+    { "name": "Data Privacy Day", "type": "fixed", "month": 1, "day": 28 },
+    { "name": "Safer Internet Day", "type": "nth", "month": 2, "weekday": 2, "n": 2 },
+    { "name": "World Backup Day", "type": "fixed", "month": 3, "day": 31 },
+    { "name": "Identity Management Day", "type": "nth", "month": 4, "weekday": 2, "n": 2 },
+    { "name": "World Password Day", "type": "nth", "month": 5, "weekday": 4, "n": 1 },
+    { "name": "Anti-Ransomware Day", "type": "fixed", "month": 5, "day": 12 },
+    { "name": "Internet Safety Month", "type": "month", "month": 6 },
+    { "name": "Cybersecurity Awareness Month", "type": "month", "month": 10 },
+    { "name": "Computer Security Day", "type": "fixed", "month": 11, "day": 30 }
+  ]
+}
