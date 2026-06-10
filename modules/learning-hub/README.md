@@ -3,13 +3,23 @@
 A self-contained Jarvis module that turns **one run** into a complete
 **read → learn → certify** loop:
 
-1. **Magazine** — a premium, monthly **staff security-awareness magazine** (RSS
-   digest → AI editor → A4 HTML → Gotenberg PDF), written to
-   `reports/learning-hub/`.
-2. **E-learning** — an interactive course **derived strictly from that edition**
-   (the magazine content grounds the AI), with section images, narration, a scored
-   knowledge check, a "questions you missed" review and a bedded completion
-   certificate.
+1. **Magazine** — a monthly **staff security-awareness magazine** to consulting-
+   publication spec (RSS digest → AI editor → full-bleed cover pass + body pass
+   with running header and page-number footers → merged Gotenberg PDF): "At a
+   glance" stat band, numbered sections with hairline rules, Exhibit-captioned
+   gpt-image-2 cover/feature/threat art, serif pull quote, "The bottom line"
+   takeaways.
+2. **E-learning** — a **gamified** interactive course **derived strictly from that
+   edition** (the magazine content grounds the AI): XP, levels and achievement
+   badges; a playable **three.js mini-game** ("Firewall: Threat Storm" — allow or
+   block AI-written threat/safe scenarios flying at your firewall, with combos,
+   integrity and per-decision educational feedback; auto-falls back to a 2D version
+   without WebGL); section images, narration, a scored knowledge check, a
+   "questions you missed" review, confetti, and a bedded completion certificate.
+   Shipped **both** as self-contained HTML (for the portal) and as a **SCORM 1.2
+   package** (`imsmanifest.xml`, mastery score) for any corporate LMS. The vendored
+   `config/vendor/three.min.js` (MIT) is inlined so packages work offline in
+   locked-down LMS networks.
 3. **Publication record** — both artifacts are registered in
    `reports/learning-hub/publications.json` with the **release date** and a
    **30-day completion window**.
@@ -68,7 +78,8 @@ See [`config/config.example.env`](config/config.example.env). Key variables:
 reports/learning-hub/
 ├── learning-hub-<date>.pdf        # magazine (PDF)
 ├── learning-hub-<date>.html       # magazine (HTML)
-├── <course>-<date>.html           # interactive e-learning course
+├── <course>-<date>.html           # gamified e-learning course (self-contained)
+├── <course>-<date>-scorm.zip      # SCORM 1.2 package for any corporate LMS
 └── publications.json              # dashboard registry (magazine + course + deadline)
 reports/archive/learning-hub/      # dated magazine PDF + JSON archive
 ```

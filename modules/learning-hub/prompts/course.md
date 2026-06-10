@@ -1,6 +1,6 @@
 ---
 id: learning-hub.course
-version: 1.0.0
+version: 2.0.0
 purpose: Turn one magazine edition into an interactive e-learning micro-course (JSON).
 provider_agnostic: true
 variables:
@@ -23,6 +23,12 @@ in it. Produce a SINGLE valid JSON object:
 - `questions` — 4–6 knowledge-check items, each `{ q, options (exactly 4 short
   strings), answer (0-based index of the correct option), why (one-sentence
   explanation) }`.
+- `gameItems` — 10–12 items for the allow-or-block training game, each `{ text
+  (a SHORT realistic message, request or behaviour a member of staff might
+  encounter, max 100 characters — roughly half safe and half risky, drawn from
+  this module's content), risky (true if it should be blocked, refused or
+  reported; false if it is safe normal business), why (one sentence the learner
+  sees after deciding) }`.
 
 Plain, engaging, non-technical language tailored to the audience. Do NOT use markdown
 code fences. Output ONLY the JSON object.

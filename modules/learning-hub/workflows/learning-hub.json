@@ -199,7 +199,7 @@
         },
         "sendBody": true,
         "specifyBody": "json",
-        "jsonBody": "={\n  \"model\": \"{{ $env.CLAUDE_MODEL || 'claude-opus-4-8' }}\",\n  \"max_tokens\": 4000,\n  \"system\": \"You are the editor of a monthly staff security-awareness magazine for a general (non-technical) workforce. Using the supplied news digest (and your own knowledge where the digest is thin), produce a SINGLE valid JSON object for this edition. Keys: title (a short, punchy edition title); weekOf (the edition label, e.g. a month and year); intro (a 2-3 sentence editor's welcome); feature (an object: headline, deck (one-line subtitle), body (3-4 short paragraphs separated by single newline characters), takeaways (3-4 short bullet strings), source (the publication name the feature draws on, or \\\"\\\"), url (the article link copied VERBATIM from the digest, or \\\"\\\")); threats (3-4 items, each {headline, summary (2-3 plain-English sentences), source (publication name or \\\"\\\"), url (link copied verbatim from the digest, or \\\"\\\")}); awareness (4-6 items, each {tip (a short imperative headline), detail (1-2 practical sentences)}); quals (3-4 items, each {name, provider, summary (1-2 sentences on who it suits), url (an official link if known, or \\\"\\\")}); glossary (3-5 items, each {term, definition (one plain-English sentence)}). For every url, only ever copy a link that actually appears in the supplied digest — never invent one; leave it \\\"\\\" if unsure. Keep everything engaging, concrete and free of jargon. Do NOT use markdown code fences. Output ONLY the JSON object.\",\n  \"messages\": [ {\"role\":\"user\",\"content\": {{ JSON.stringify('Create this edition. Today is ' + ($json.date || '') + '. Base it on this news digest where useful:\\n\\n' + ($json.digest || '')) }} } ]\n}",
+        "jsonBody": "={\n  \"model\": \"{{ $env.CLAUDE_MODEL || 'claude-opus-4-8' }}\",\n  \"max_tokens\": 6000,\n  \"system\": \"You are the editor of a monthly staff security-awareness magazine for a general (non-technical) workforce. Using the supplied news digest (and your own knowledge where the digest is thin), produce a SINGLE valid JSON object for this edition. Keys: title (a short, punchy edition title); weekOf (the edition label, e.g. a month and year); standfirst (ONE elegant cover sentence setting up the edition); intro (a 2-3 sentence editor's welcome); atAGlance (EXACTLY 3 items, each {value (a short striking figure drawn from the digest, e.g. \\\"68%\\\", \\\"$4.9M\\\", \\\"x3\\\" — or a 1-2 word fact if no number fits), label (what it means, max 12 words)}); feature (an object: headline, deck (one-line subtitle), body (4-5 short paragraphs separated by single newline characters), pullQuote (one quotable sentence lifted from or distilling the body), takeaways (3-4 short bullet strings), source (the publication name the feature draws on, or \\\"\\\"), url (the article link copied VERBATIM from the digest, or \\\"\\\")); threats (3-4 items, each {headline, summary (2-3 plain-English sentences), source (publication name or \\\"\\\"), url (link copied verbatim from the digest, or \\\"\\\")}); awareness (4-6 items, each {tip (a short imperative headline), detail (1-2 practical sentences)}); quals (3-4 items, each {name, provider, summary (1-2 sentences on who it suits), url (an official link if known, or \\\"\\\")}); glossary (3-5 items, each {term, definition (one plain-English sentence)}). For every url, only ever copy a link that actually appears in the supplied digest — never invent one; leave it \\\"\\\" if unsure. Keep everything engaging, concrete and free of jargon. Do NOT use markdown code fences. Output ONLY the JSON object.\",\n  \"messages\": [ {\"role\":\"user\",\"content\": {{ JSON.stringify('Create this edition. Today is ' + ($json.date || '') + '. Base it on this news digest where useful:\\n\\n' + ($json.digest || '')) }} } ]\n}",
         "options": {
           "timeout": 600000
         }
@@ -220,7 +220,7 @@
         "url": "={{ $env.OLLAMA_BASE_URL || 'http://jarvis-ollama:11434' }}/api/chat",
         "sendBody": true,
         "specifyBody": "json",
-        "jsonBody": "={\n  \"model\": \"{{ $env.OLLAMA_DEFAULT_MODEL || 'llama3.1:8b' }}\",\n  \"stream\": false,\n  \"keep_alive\": \"10m\",\n  \"options\": { \"temperature\": 0.4, \"num_predict\": 3500 },\n  \"messages\": [ {\"role\":\"system\",\"content\":\"You are the editor of a monthly staff security-awareness magazine for a general (non-technical) workforce. Using the supplied news digest (and your own knowledge where the digest is thin), produce a SINGLE valid JSON object for this edition. Keys: title (a short, punchy edition title); weekOf (the edition label, e.g. a month and year); intro (a 2-3 sentence editor's welcome); feature (an object: headline, deck (one-line subtitle), body (3-4 short paragraphs separated by single newline characters), takeaways (3-4 short bullet strings), source (the publication name the feature draws on, or \\\"\\\"), url (the article link copied VERBATIM from the digest, or \\\"\\\")); threats (3-4 items, each {headline, summary (2-3 plain-English sentences), source (publication name or \\\"\\\"), url (link copied verbatim from the digest, or \\\"\\\")}); awareness (4-6 items, each {tip (a short imperative headline), detail (1-2 practical sentences)}); quals (3-4 items, each {name, provider, summary (1-2 sentences on who it suits), url (an official link if known, or \\\"\\\")}); glossary (3-5 items, each {term, definition (one plain-English sentence)}). For every url, only ever copy a link that actually appears in the supplied digest — never invent one; leave it \\\"\\\" if unsure. Keep everything engaging, concrete and free of jargon. Do NOT use markdown code fences. Output ONLY the JSON object.\"}, {\"role\":\"user\",\"content\": {{ JSON.stringify('Create this edition. Today is ' + ($json.date || '') + '. Base it on this news digest where useful:\\n\\n' + ($json.digest || '')) }} } ]\n}",
+        "jsonBody": "={\n  \"model\": \"{{ $env.OLLAMA_DEFAULT_MODEL || 'llama3.1:8b' }}\",\n  \"stream\": false,\n  \"keep_alive\": \"10m\",\n  \"options\": { \"temperature\": 0.4, \"num_predict\": 4500 },\n  \"messages\": [ {\"role\":\"system\",\"content\":\"You are the editor of a monthly staff security-awareness magazine for a general (non-technical) workforce. Using the supplied news digest (and your own knowledge where the digest is thin), produce a SINGLE valid JSON object for this edition. Keys: title (a short, punchy edition title); weekOf (the edition label, e.g. a month and year); standfirst (ONE elegant cover sentence setting up the edition); intro (a 2-3 sentence editor's welcome); atAGlance (EXACTLY 3 items, each {value (a short striking figure drawn from the digest, e.g. \\\"68%\\\", \\\"$4.9M\\\", \\\"x3\\\" — or a 1-2 word fact if no number fits), label (what it means, max 12 words)}); feature (an object: headline, deck (one-line subtitle), body (4-5 short paragraphs separated by single newline characters), pullQuote (one quotable sentence lifted from or distilling the body), takeaways (3-4 short bullet strings), source (the publication name the feature draws on, or \\\"\\\"), url (the article link copied VERBATIM from the digest, or \\\"\\\")); threats (3-4 items, each {headline, summary (2-3 plain-English sentences), source (publication name or \\\"\\\"), url (link copied verbatim from the digest, or \\\"\\\")}); awareness (4-6 items, each {tip (a short imperative headline), detail (1-2 practical sentences)}); quals (3-4 items, each {name, provider, summary (1-2 sentences on who it suits), url (an official link if known, or \\\"\\\")}); glossary (3-5 items, each {term, definition (one plain-English sentence)}). For every url, only ever copy a link that actually appears in the supplied digest — never invent one; leave it \\\"\\\" if unsure. Keep everything engaging, concrete and free of jargon. Do NOT use markdown code fences. Output ONLY the JSON object.\"}, {\"role\":\"user\",\"content\": {{ JSON.stringify('Create this edition. Today is ' + ($json.date || '') + '. Base it on this news digest where useful:\\n\\n' + ($json.digest || '')) }} } ]\n}",
         "options": {
           "timeout": 600000
         }
@@ -238,7 +238,7 @@
       ],
       "parameters": {
         "language": "javaScript",
-        "jsCode": "// Parse the analyst's JSON magazine and build the cover-image prompt.\nconst j = $json || {};\nlet raw = '';\nif (j.message && j.message.content) raw = j.message.content;            // Ollama\nelse if (j.content && j.content[0] && j.content[0].text) raw = j.content[0].text; // Claude\nlet data = null;\ntry { data = JSON.parse(raw.replace(/^```(?:json)?\\s*/i, '').replace(/\\s*```$/i, '')); }\ncatch (e) { try { const m = raw.match(/\\{[\\s\\S]*\\}/); if (m) data = JSON.parse(m[0]); } catch (e2) { data = null; } }\nif (!data || typeof data !== 'object') {\n  data = { title: 'Security Awareness Digest', weekOf: '', intro: 'This edition could not be generated in full; please re-run.', feature: null, threats: [], awareness: [], quals: [], glossary: [] };\n}\nconst date = (($('Aggregate Sources').first() || {}).json || {}).date || new Date().toISOString().slice(0, 10);\nconst title = data.title || 'Security Awareness Digest';\nconst coverPrompt = 'Wide cinematic, semi-realistic editorial cover illustration for a premium corporate SECURITY-AWARENESS magazine titled \"' + title + '\". Bright modern office, diverse professionals, calm and trustworthy mood; soft natural window light; teal and deep-navy colour grade; strong empty space on the left third for a title overlay. No text, no words, no letters, no logos, no watermark, no charts, no screenshots.';\nreturn [{ json: { data: data, title: title, date: date, coverPrompt: coverPrompt } }];\n"
+        "jsCode": "// Parse the analyst's JSON magazine and build the cover-image prompt.\nconst j = $json || {};\nlet raw = '';\nif (j.message && j.message.content) raw = j.message.content;            // Ollama\nelse if (j.content && j.content[0] && j.content[0].text) raw = j.content[0].text; // Claude\nlet data = null;\ntry { data = JSON.parse(raw.replace(/^```(?:json)?\\s*/i, '').replace(/\\s*```$/i, '')); }\ncatch (e) { try { const m = raw.match(/\\{[\\s\\S]*\\}/); if (m) data = JSON.parse(m[0]); } catch (e2) { data = null; } }\nif (!data || typeof data !== 'object') {\n  data = { title: 'Security Awareness Digest', weekOf: '', intro: 'This edition could not be generated in full; please re-run.', feature: null, threats: [], awareness: [], quals: [], glossary: [] };\n}\nconst date = (($('Aggregate Sources').first() || {}).json || {}).date || new Date().toISOString().slice(0, 10);\nconst title = data.title || 'Security Awareness Digest';\n// Premium consulting-publication art direction: abstract/architectural rather than\n// literal stock-photo office scenes — reads as a serious editorial cover.\nconst coverPrompt = 'Tall cover key art for a corporate security-awareness magazine titled \"' + title + '\". Sophisticated, restrained editorial illustration in the style of a premium management-consulting publication: abstract geometric forms, layered translucent planes and fine line work suggesting digital networks and protection; deep navy and teal palette with a single muted gold accent; generous negative space; calm, authoritative, modern. Keep the upper third quiet and dark for a masthead overlay. No close-up faces, no text, no words, no letters, no logos, no watermark, no charts, no screenshots.';\nreturn [{ json: { data: data, title: title, date: date, coverPrompt: coverPrompt } }];\n"
       }
     },
     {
@@ -252,7 +252,7 @@
       ],
       "parameters": {
         "language": "javaScript",
-        "jsCode": "// Generate the magazine's images with the shared image provider (gpt-image-2):\n// a COVER, a FEATURE hero, and one THUMBNAIL per emerging-threat card. Images are\n// written to a temp work dir on disk and only FILE PATHS are set on the data —\n// never base64 — so n8n execution data stays tiny (same approach as the comic\n// generator). Partial outages degrade gracefully to branded placeholders rather\n// than failing the whole publication.\nconst fs = require('fs');\nconst H = this.helpers;\nconst j = $json || {};\nconst data = j.data || {};\nconst key = $env.OPENAI_IMAGE_API_KEY || $env.OPENAI_API_KEY;\nconst wantImages = (($env.LEARNING_HUB_IMAGES || $env.LEARNING_HUB_COVER_IMAGE || 'true').toString().toLowerCase() !== 'false');\nconst base = ($env.OPENAI_BASE_URL || 'https://api.openai.com/v1');\nconst model = ($env.IMAGE_MODEL || 'gpt-image-1');\nconst QV = { low:1, medium:1, high:1, auto:1 };\nlet quality = String($env.LEARNING_HUB_IMAGE_QUALITY || $env.COMIC_IMAGE_QUALITY || 'medium').toLowerCase(); if (!QV[quality]) quality = 'medium';\nlet conc = parseInt($env.IMAGE_CONCURRENCY || '3', 10); if (!(conc > 0)) conc = 3; if (conc > 8) conc = 8;\nlet timeout = parseInt($env.IMAGE_TIMEOUT || '120000', 10); if (!(timeout > 0)) timeout = 120000;\n\nconst A = function (x) { return Array.isArray(x) ? x : []; };\nconst f = data.feature || {};\nconst threats = A(data.threats);\n\nconst baseName = 'learning-hub-' + (j.date || new Date().toISOString().slice(0, 10));\nconst workDir = '/reports/learning-hub/.work/' + baseName;\ntry { fs.mkdirSync(workDir, { recursive: true }); } catch (e) {}\n\nconst NEG = ' No text, no words, no letters, no logos, no watermark, no charts, no screenshots, no UI.';\nconst STYLE = 'Semi-realistic editorial illustration, bright modern corporate setting, calm trustworthy mood, soft natural light, teal and deep-navy colour grade. ';\n\n// Build the image jobs from the magazine content.\nconst jobs = [];\nif (j.coverPrompt) jobs.push({ id: 'cover', size: ($env.IMAGE_SIZE || '1024x1536'), prompt: j.coverPrompt });\nif (f && (f.headline || f.deck)) jobs.push({ id: 'feature', size: '1536x1024', prompt: STYLE + 'Wide feature illustration for an article titled \"' + (f.headline || '') + '\". ' + (f.deck || '') + NEG });\nthreats.forEach(function (t, k) { if (t && (t.headline || t.summary)) jobs.push({ id: 'threat-' + k, idx: k, size: '1024x1024', prompt: STYLE + 'Conceptual thumbnail illustrating: ' + (t.headline || '') + '. ' + (t.summary || '') + NEG }); });\n\nasync function mapLimit(items, limit, fn) {\n  const ret = new Array(items.length); let idx = 0;\n  async function worker() { while (idx < items.length) { const cur = idx++; ret[cur] = await fn(items[cur], cur); } }\n  const n = Math.max(1, Math.min(limit, items.length));\n  const workers = []; for (let w = 0; w < n; w++) workers.push(worker());\n  await Promise.all(workers);\n  return ret;\n}\nasync function gen(prompt, size) {\n  const resp = await H.httpRequest({ method: 'POST', url: base + '/images/generations',\n    headers: { Authorization: 'Bearer ' + key, 'Content-Type': 'application/json' },\n    body: { model: model, prompt: prompt, size: size, quality: quality, n: 1 }, json: true, timeout: timeout });\n  return resp && resp.data && resp.data[0] && resp.data[0].b64_json;\n}\n\nlet cover = '', ok = 0, failed = 0;\nif (wantImages && key && jobs.length) {\n  const results = await mapLimit(jobs, conc, async function (job) {\n    let file = '';\n    try {\n      const b64 = await gen(job.prompt, job.size);\n      if (b64) { file = workDir + '/' + job.id + '.png'; fs.writeFileSync(file, Buffer.from(b64, 'base64')); ok++; }\n      else failed++;\n    } catch (e) { failed++; }\n    return { id: job.id, idx: job.idx, file: file };\n  });\n  results.forEach(function (r) {\n    if (!r.file) return;\n    if (r.id === 'cover') cover = r.file;\n    else if (r.id === 'feature') f.image = r.file;\n    else if (r.id.indexOf('threat-') === 0 && threats[r.idx]) threats[r.idx].image = r.file;\n  });\n}\n\nreturn [{ json: Object.assign({}, j, { data: data, cover: cover, workDir: workDir, imagesGenerated: ok, imagesFailed: failed }) }];\n"
+        "jsCode": "// Generate the magazine's images with the shared image provider (gpt-image-2):\n// a COVER, a FEATURE hero, and one THUMBNAIL per emerging-threat card. Images are\n// written to a temp work dir on disk and only FILE PATHS are set on the data —\n// never base64 — so n8n execution data stays tiny (same approach as the comic\n// generator). Partial outages degrade gracefully to branded placeholders rather\n// than failing the whole publication.\nconst fs = require('fs');\nconst H = this.helpers;\nconst j = $json || {};\nconst data = j.data || {};\nconst key = $env.OPENAI_IMAGE_API_KEY || $env.OPENAI_API_KEY;\nconst wantImages = (($env.LEARNING_HUB_IMAGES || $env.LEARNING_HUB_COVER_IMAGE || 'true').toString().toLowerCase() !== 'false');\nconst base = ($env.OPENAI_BASE_URL || 'https://api.openai.com/v1');\nconst model = ($env.IMAGE_MODEL || 'gpt-image-2');\nconst QV = { low:1, medium:1, high:1, auto:1 };\nlet quality = String($env.LEARNING_HUB_IMAGE_QUALITY || 'high').toLowerCase(); if (!QV[quality]) quality = 'medium';\nlet conc = parseInt($env.IMAGE_CONCURRENCY || '3', 10); if (!(conc > 0)) conc = 3; if (conc > 8) conc = 8;\nlet timeout = parseInt($env.IMAGE_TIMEOUT || '120000', 10); if (!(timeout > 0)) timeout = 120000;\n\nconst A = function (x) { return Array.isArray(x) ? x : []; };\nconst f = data.feature || {};\nconst threats = A(data.threats);\n\nconst baseName = 'learning-hub-' + (j.date || new Date().toISOString().slice(0, 10));\nconst workDir = '/reports/learning-hub/.work/' + baseName;\ntry { fs.mkdirSync(workDir, { recursive: true }); } catch (e) {}\n\nconst NEG = ' No text, no words, no letters, no logos, no watermark, no charts, no screenshots, no UI.';\nconst STYLE = 'Sophisticated, restrained editorial illustration in the style of a premium management-consulting publication: abstract geometric forms, layered translucent planes and fine line work; deep navy and teal palette with a single muted gold accent; generous negative space; calm, authoritative, modern. No close-up faces. ';\n\n// Build the image jobs from the magazine content.\nconst jobs = [];\nif (j.coverPrompt) jobs.push({ id: 'cover', size: '1024x1536', prompt: j.coverPrompt });\nif (f && (f.headline || f.deck)) jobs.push({ id: 'feature', size: '1536x1024', prompt: STYLE + 'Wide feature illustration for an article titled \"' + (f.headline || '') + '\". ' + (f.deck || '') + NEG });\nthreats.forEach(function (t, k) { if (t && (t.headline || t.summary)) jobs.push({ id: 'threat-' + k, idx: k, size: '1024x1024', prompt: STYLE + 'Conceptual thumbnail illustrating: ' + (t.headline || '') + '. ' + (t.summary || '') + NEG }); });\n\nasync function mapLimit(items, limit, fn) {\n  const ret = new Array(items.length); let idx = 0;\n  async function worker() { while (idx < items.length) { const cur = idx++; ret[cur] = await fn(items[cur], cur); } }\n  const n = Math.max(1, Math.min(limit, items.length));\n  const workers = []; for (let w = 0; w < n; w++) workers.push(worker());\n  await Promise.all(workers);\n  return ret;\n}\nasync function gen(prompt, size) {\n  const resp = await H.httpRequest({ method: 'POST', url: base + '/images/generations',\n    headers: { Authorization: 'Bearer ' + key, 'Content-Type': 'application/json' },\n    body: { model: model, prompt: prompt, size: size, quality: quality, n: 1 }, json: true, timeout: timeout });\n  return resp && resp.data && resp.data[0] && resp.data[0].b64_json;\n}\n\nlet cover = '', ok = 0, failed = 0;\nif (wantImages && key && jobs.length) {\n  const results = await mapLimit(jobs, conc, async function (job) {\n    let file = '';\n    try {\n      const b64 = await gen(job.prompt, job.size);\n      if (b64) { file = workDir + '/' + job.id + '.png'; fs.writeFileSync(file, Buffer.from(b64, 'base64')); ok++; }\n      else failed++;\n    } catch (e) { failed++; }\n    return { id: job.id, idx: job.idx, file: file };\n  });\n  results.forEach(function (r) {\n    if (!r.file) return;\n    if (r.id === 'cover') cover = r.file;\n    else if (r.id === 'feature') f.image = r.file;\n    else if (r.id.indexOf('threat-') === 0 && threats[r.idx]) threats[r.idx].image = r.file;\n  });\n}\n\nreturn [{ json: Object.assign({}, j, { data: data, cover: cover, workDir: workDir, imagesGenerated: ok, imagesFailed: failed }) }];\n"
       }
     },
     {
@@ -266,18 +266,80 @@
       ],
       "parameters": {
         "language": "javaScript",
-        "jsCode": "function jbHex(v,d){v=String(v||'').trim();return /^#[0-9a-fA-F]{6}$/.test(v)?v:d;}\nvar JB_PRI=jbHex($env.BRAND_PRIMARY,'#0A1A2F'),JB_ACC=jbHex($env.BRAND_ACCENT,'#0E7C86'),JB_GOLD=jbHex($env.BRAND_GOLD,'#E7C76A');\nvar JB_ROOT=\":root{--jb-pri:\"+JB_PRI+\";--jb-acc:\"+JB_ACC+\";--jb-gold:\"+JB_GOLD+\"}\";\n// Render the staff security-awareness magazine as one premium, print-ready A4 HTML\n// (cover + editorial + feature + threats + human-firewall + skills + glossary).\n// Magazine-grade layout: full-bleed cover with an \"Inside this issue\" panel (so it\n// looks intentional even with no cover image), strong section headers, a two-column\n// feature with pull-quote and drop-cap, and tidy card grids. Gotenberg -> PDF.\n// Returns the parsed magazine data alongside the HTML so the course can use it.\nconst j = $json || {};\nconst data = j.data || {};\nconst date = j.date || new Date().toISOString().slice(0, 10);\nconst title = j.title || data.title || 'Security Awareness Digest';\nconst weekOf = data.weekOf || '';\nconst cover = j.cover || '';\nfunction esc(s){ return (s==null?'':String(s)).replace(/[&<>]/g,function(c){return({'&':'&amp;','<':'&lt;','>':'&gt;'})[c];}); }\nfunction paras(s){ return String(s==null?'':s).split(/\\n+/).map(function(p){return p.trim();}).filter(Boolean).map(function(p){return '<p>'+esc(p)+'</p>';}).join(''); }\nconst A = function(x){ return Array.isArray(x)?x:[]; };\nfunction firstSentence(s){ var m=String(s||'').match(/^[\\s\\S]*?[.!?](\\s|$)/); return (m?m[0]:String(s||'')).trim(); }\n\nconst f = data.feature || {};\nconst threats = A(data.threats), aw = A(data.awareness), quals = A(data.quals), gloss = A(data.glossary);\n\n// Jarvis sign-off avatar: prefer the shared branding file (as the other magazines\n// do), else an inline SVG so it always renders.\nlet _fs = null; try { _fs = require('fs'); } catch (e) {}\nfunction avatarUri(){ if (_fs) { var t = [['/config/branding/jarvis-avatar.png','image/png'],['/config/branding/jarvis-avatar.jpg','image/jpeg'],['/config/branding/jarvis-avatar.jpeg','image/jpeg'],['/config/branding/jarvis-avatar.svg','image/svg+xml']]; for (var i=0;i<t.length;i++){ try { return 'data:' + t[i][1] + ';base64,' + _fs.readFileSync(t[i][0]).toString('base64'); } catch(e){} } } return ''; }\nconst JARVIS_SVG = '<svg class=\"av\" viewBox=\"0 0 64 64\" xmlns=\"http://www.w3.org/2000/svg\"><defs><linearGradient id=\"jg\" x1=\"0\" y1=\"0\" x2=\"0\" y2=\"1\"><stop offset=\"0\" stop-color=\"#0E7C86\"/><stop offset=\"1\" stop-color=\"#0A1A2F\"/></linearGradient></defs><circle cx=\"32\" cy=\"32\" r=\"32\" fill=\"url(#jg)\"/><rect x=\"19\" y=\"21\" width=\"26\" height=\"22\" rx=\"7\" fill=\"#fff\"/><circle cx=\"27\" cy=\"32\" r=\"3.2\" fill=\"#0E7C86\"/><circle cx=\"37\" cy=\"32\" r=\"3.2\" fill=\"#0E7C86\"/><rect x=\"27\" y=\"38\" width=\"10\" height=\"2.4\" rx=\"1.2\" fill=\"#0E7C86\"/><rect x=\"30.7\" y=\"14\" width=\"2.6\" height=\"6\" rx=\"1.3\" fill=\"#9fe4d8\"/><circle cx=\"32\" cy=\"13\" r=\"2.4\" fill=\"#E7C76A\"/><path d=\"M23 47h18l-3 4.5H26z\" fill=\"#9fe4d8\"/></svg>';\nconst IMG_ICON = '<svg viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"#3b5b8c\" stroke-width=\"1.8\" stroke-linecap=\"round\" stroke-linejoin=\"round\"><rect x=\"3\" y=\"4\" width=\"18\" height=\"16\" rx=\"2\"/><circle cx=\"8.5\" cy=\"9.5\" r=\"1.6\"/><path d=\"M21 15l-5-5L5 21\"/></svg>';\n// Images arrive as on-disk file paths (from Generate Images) — read each one lazily\n// and inline it as a data URI only at render time, so images never travel through\n// the node JSON. (A data: URI is also accepted as-is.) The resulting HTML is emitted\n// as BINARY (below), not JSON, so n8n execution data stays tiny.\nfunction imgSrc(p){ if (!p) return ''; var s = String(p); if (s.indexOf('data:') === 0) return s; if (_fs) { try { return 'data:image/png;base64,' + _fs.readFileSync(s).toString('base64'); } catch (e) {} } return ''; }\n// Image placeholder: a generated image if present, else a blue placeholder box.\nfunction imgph(src, cls, label){ var u = imgSrc(src); if (u) { return '<div class=\"' + cls + '\" style=\"background-image:url(' + u + ');background-size:cover;background-position:center;border-radius:10px\"></div>'; } return '<div class=\"imgph ' + cls + '\"><span class=\"lab\">' + IMG_ICON + (label || 'Image') + '</span></div>'; }\n\nconst CSS = JB_ROOT\n+\"@page{size:A4;margin:16mm 15mm 17mm} @page cover{margin:0} *{box-sizing:border-box}\"\n+\"body{margin:0;font-family:Georgia,'Times New Roman',serif;color:#16202b;line-height:1.5;font-size:11.5pt}\"\n+\".s-sans{font-family:-apple-system,'Segoe UI',Roboto,Arial,sans-serif}\"\n// cover\n+\".cover{page:cover;position:relative;width:210mm;height:297mm;overflow:hidden;background:var(--jb-pri);color:#fff;break-after:page}\"\n+\".cover .bg{position:absolute;inset:0;background-size:cover;background-position:center;z-index:0}\"\n+\".cover .bg.ph{background:radial-gradient(120% 80% at 78% 12%,#13507a 0,var(--jb-pri) 55%),linear-gradient(160deg,var(--jb-pri),var(--jb-pri) 60%,var(--jb-acc) 140%)}\"\n+\".cover .wm{position:absolute;right:-60mm;top:18mm;width:180mm;height:180mm;opacity:.06;z-index:0}\"\n+\".cover .grad{position:absolute;inset:0;background:linear-gradient(180deg,rgba(8,18,28,.15),rgba(8,18,28,.75));z-index:1}\"\n+\".cover .inner{position:absolute;inset:0;z-index:2;display:flex;flex-direction:column;justify-content:space-between;padding:18mm}\"\n+\".cover .brandbar{display:flex;justify-content:space-between;align-items:center;font-family:-apple-system,'Segoe UI',Arial,sans-serif;font-size:10pt;letter-spacing:2px;text-transform:uppercase;font-weight:700;color:#9fe4d8}\"\n+\".cover .masthead{max-width:172mm}\"\n+\".cover .kick{font-family:-apple-system,'Segoe UI',Arial,sans-serif;font-size:11pt;letter-spacing:5px;text-transform:uppercase;color:var(--jb-gold);font-weight:800}\"\n+\".cover h1{font-size:40pt;line-height:1.04;margin:8px 0 0;font-weight:700}\"\n+\".cover .edition{font-family:-apple-system,Arial,sans-serif;font-size:11pt;color:#cfe0e6;letter-spacing:1px;margin-top:8px}\"\n+\".cover .stand{font-size:13pt;color:#eaf2f5;font-style:italic;margin-top:12px;max-width:150mm}\"\n+\".cover .toc{margin-top:16mm;border-top:2px solid rgba(201,162,75,.6);padding-top:10px}\"\n+\".cover .toc .tl{font-family:-apple-system,Arial,sans-serif;font-size:9pt;letter-spacing:3px;text-transform:uppercase;color:var(--jb-gold);font-weight:800;margin-bottom:8px}\"\n+\".cover .toc ul{list-style:none;margin:0;padding:0;column-count:2;column-gap:12mm}\"\n+\".cover .toc li{font-family:-apple-system,Arial,sans-serif;font-size:11pt;color:#eaf2f5;padding:4px 0 4px 16px;position:relative;break-inside:avoid}\"\n+\".cover .toc li:before{content:'';position:absolute;left:0;top:8px;width:8px;height:8px;background:var(--jb-gold);transform:rotate(45deg)}\"\n// section header — coloured band (accent set inline per section)\n+\".sec{margin:0 0 8mm;break-inside:avoid;page-break-inside:avoid}\"\n+\".eyebrow{font-family:-apple-system,'Segoe UI',Arial,sans-serif;font-size:9pt;letter-spacing:3px;text-transform:uppercase;font-weight:800}\"\n+\".band{border-left:5px solid var(--jb-acc);border-radius:8px;padding:9px 16px;margin:0 0 12px;break-inside:avoid;break-after:avoid;page-break-inside:avoid;page-break-after:avoid}\"\n+\".band h2{font-size:20pt;color:var(--jb-pri);margin:1px 0 0;font-weight:700;line-height:1.12}\"\n+\"p{margin:0 0 8px}\"\n+\".lead{margin:0 0 8px;text-align:justify}\"\n+\".lead::first-letter{-webkit-initial-letter:3 3;initial-letter:3 3;color:var(--jb-acc);font-weight:700;font-family:Georgia,serif;margin-right:8px}\"\n+\".cols{column-count:2;column-gap:9mm}\"\n+\".cols p{margin:0 0 8px;text-align:justify}\"\n// feature\n+\".feature{break-inside:auto;page-break-inside:auto}\"\n+\".feature .fhead{font-size:25pt;color:var(--jb-pri);font-weight:700;line-height:1.08;margin:0 0 2px}\"\n+\".feature .deck{font-style:italic;color:#5A6472;font-size:13pt;margin:0 0 10px}\"\n+\".pull{font-size:16pt;font-style:italic;color:var(--jb-acc);line-height:1.35;border-left:4px solid var(--jb-gold);padding:4px 0 4px 16px;margin:4px 0 12px;break-inside:avoid}\"\n+\".take{background:#F4F6F9;border:1px solid #E2E6EC;border-left:4px solid var(--jb-acc);border-radius:10px;padding:12px 16px;margin-top:10px;break-inside:avoid}\"\n+\".take .th{font-family:-apple-system,Arial,sans-serif;font-size:9pt;letter-spacing:2px;text-transform:uppercase;color:var(--jb-pri);font-weight:800;margin-bottom:6px}\"\n+\".take ul{margin:0;padding-left:18px}.take li{font-size:11pt;margin:5px 0}\"\n// card grids — CSS table so cells in a row are EQUAL height (clean, cross-engine)\n+\".cardtable{width:100%;border-collapse:separate;border-spacing:11px;table-layout:fixed}\"\n+\".cardtable tr{break-inside:avoid;page-break-inside:avoid}\"\n+\".cardtable td{width:50%;vertical-align:top}\"\n+\".cardtable td.empty{border:0;background:transparent}\"\n+\".cell{border:1px solid #E2E6EC;border-radius:10px;padding:12px 14px;background:#fff}\"\n+\".cell.tcell{border-left:4px solid #B02525}\"\n+\".cell h3{font-family:-apple-system,'Segoe UI',Arial,sans-serif;font-size:12pt;color:var(--jb-pri);margin:0 0 5px;line-height:1.25}\"\n+\".cell p{font-size:10.5pt;color:#46505c;margin:0;line-height:1.4}\"\n+\".cell.tip{position:relative;padding-left:44px;border-left:4px solid var(--jb-acc)}\"\n+\".cell.tip .n{position:absolute;left:12px;top:13px;width:24px;height:24px;border-radius:50%;background:var(--jb-acc);color:#fff;font-family:Arial;font-size:11pt;font-weight:800;text-align:center;line-height:24px}\"\n+\".cell.tip h3{font-size:11.5pt;margin:0 0 2px}\"\n+\".qual{border:1px solid #E2E6EC;border-radius:10px;padding:11px 15px;margin:0 0 8px;break-inside:avoid}\"\n+\".qual h3{font-family:-apple-system,Arial,sans-serif;font-size:12.5pt;color:var(--jb-pri);margin:0}\"\n+\".qual .prov{font-family:-apple-system,Arial,sans-serif;font-size:8.5pt;letter-spacing:1px;text-transform:uppercase;color:var(--jb-acc);font-weight:800;margin:2px 0 5px}\"\n+\".qual p{font-size:10.5pt;color:#46505c;margin:0}\"\n+\".gloss{font-size:0}\"\n+\".gterm{display:inline-block;width:48.5%;vertical-align:top;margin:0 3% 8px 0;font-size:10.5pt;color:#46505c;break-inside:avoid;border-bottom:1px solid #eef1f5;padding-bottom:6px}\"\n+\".gterm:nth-child(even){margin-right:0}.gterm b{color:var(--jb-pri)}\"\n// image placeholders (blue boxes showing where generated images will sit)\n+\".imgph{background:repeating-linear-gradient(135deg,#e2ecfd 0 13px,#d2e0fb 13px 26px);border:1.5px dashed #6b93ec;border-radius:10px;display:flex;align-items:center;justify-content:center;color:#3b5b8c}\"\n+\".imgph .lab{display:inline-flex;align-items:center;gap:7px;font-family:-apple-system,Arial,sans-serif;font-size:9pt;font-weight:700;letter-spacing:1.5px;text-transform:uppercase}.imgph svg{width:17px;height:17px}\"\n+\".feat-hero{width:100%;height:48mm;margin:0 0 12px}\"\n+\".thumb{height:20mm;margin:0 0 9px}\"\n// Jarvis sign-off\n+\".signoff{display:flex;align-items:center;justify-content:center;gap:14px;margin:2mm 0 8mm;padding-top:14px;border-top:2px solid var(--jb-acc);break-inside:avoid;page-break-inside:avoid}\"\n+\".signoff .av,.signoff img{width:56px;height:56px;border-radius:50%;border:2px solid var(--jb-acc);flex:0 0 auto}\"\n+\".signoff .nm{font-family:Georgia,serif;font-size:14pt;color:var(--jb-pri);font-weight:700}\"\n+\".signoff .rl{font-family:-apple-system,Arial,sans-serif;font-size:8.5pt;letter-spacing:2px;text-transform:uppercase;color:var(--jb-acc);font-weight:800;margin-top:2px}\"\n// references\n+\".refs ol{margin:0;padding:0;list-style:none;column-count:2;column-gap:9mm}\"\n+\".refs li{font-family:-apple-system,'Segoe UI',Arial,sans-serif;font-size:9pt;color:#46505c;margin:0 0 8px;break-inside:avoid;line-height:1.35}\"\n+\".refs .rn{color:var(--jb-acc);font-weight:800}\"\n+\".refs li b{color:var(--jb-pri)}.refs a{color:var(--jb-acc);word-break:break-all;text-decoration:none}\";\n\nconst wm = '<svg class=\"wm\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"#9fe4d8\" stroke-width=\"0.6\"><path d=\"M12 3l7 3v5c0 4.5-3 7.6-7 9-4-1.4-7-4.5-7-9V6z\"/><path d=\"M9 12l2 2 4-4\"/></svg>';\n\n// ---- cover ----\nconst toc = [];\nif (f && f.headline) toc.push('Feature &middot; ' + esc(f.headline));\nif (threats.length) toc.push('Emerging Threats');\nif (aw.length) toc.push('The Human Firewall &mdash; ' + aw.length + ' habits');\nif (quals.length) toc.push('Skills &amp; Qualifications');\nif (gloss.length) toc.push('Jargon Buster');\n\nlet html = '<!doctype html><html><head><meta charset=\"utf-8\"><style>' + CSS + '</style></head><body>';\nhtml += '<section class=\"cover\">'\n + (imgSrc(cover) ? ('<div class=\"bg\" style=\"background-image:url(' + imgSrc(cover) + ')\"></div>') : '<div class=\"bg ph\"></div>')\n + wm + '<div class=\"grad\"></div>'\n + '<div class=\"inner\">'\n + '<div class=\"brandbar\"><span>Security Awareness</span><span>Learning Hub</span></div>'\n + '<div class=\"masthead\"><div class=\"kick\">Staff Awareness Magazine</div>'\n + '<h1>' + esc(title) + '</h1>'\n + '<div class=\"edition\">' + esc(weekOf || date) + ' Edition</div>'\n + (data.intro ? ('<div class=\"stand\">' + esc(firstSentence(data.intro)) + '</div>') : '')\n + '</div>'\n + (toc.length ? ('<div class=\"toc\"><div class=\"tl\">Inside this issue</div><ul>' + toc.map(function(t){return '<li>' + t + '</li>';}).join('') + '</ul></div>') : '<div></div>')\n + '</div></section>';\n\n// per-section accent [border/eyebrow colour, light tint background]\nconst AC = { ed:['var(--jb-acc)','rgba(14,124,134,.08)'], feat:['#B8860B','rgba(201,162,75,.14)'], threat:['#B02525','rgba(176,37,37,.07)'], fire:['var(--jb-acc)','rgba(14,124,134,.08)'], skill:['var(--jb-pri)','rgba(10,26,47,.06)'], gloss:['#46607a','rgba(70,96,122,.09)'] };\nfunction header(eyebrow, t, key){ var a = AC[key] || AC.ed; return '<div class=\"band\" style=\"border-left-color:' + a[0] + ';background:' + a[1] + '\"><div class=\"eyebrow\" style=\"color:' + a[0] + '\">' + esc(eyebrow) + '</div><h2>' + esc(t) + '</h2></div>'; }\n// lead paragraph (drop cap, full width) + remaining paragraphs in two columns.\nfunction body2col(text){ var ps = String(text||'').split(/\\n+/).map(function(s){return s.trim();}).filter(Boolean); if(!ps.length) return ''; var lead = '<p class=\"lead\">' + esc(ps[0]) + '</p>'; var rest = ps.slice(1).map(function(p){return '<p>' + esc(p) + '</p>';}).join(''); return lead + (rest ? ('<div class=\"cols\">' + rest + '</div>') : ''); }\n// two-up card grid via a CSS table so cells in each row are equal height.\nfunction cardTable(items, cellClass){ var rows = ''; for (var i = 0; i < items.length; i += 2){ var a = '<td class=\"' + cellClass + '\">' + items[i] + '</td>'; var b = (i + 1 < items.length) ? ('<td class=\"' + cellClass + '\">' + items[i + 1] + '</td>') : '<td class=\"empty\"></td>'; rows += '<tr>' + a + b + '</tr>'; } return '<table class=\"cardtable\">' + rows + '</table>'; }\n\n// editorial\nif (data.intro) {\n  html += '<section class=\"sec\">' + header('From the editor', 'Welcome to this edition', 'ed')\n    + body2col(data.intro) + '</section>';\n}\n// feature\nif (f && (f.headline || f.body)) {\n  const pull = (A(f.takeaways)[0]) || f.deck || '';\n  html += '<section class=\"sec feature\">' + header('Feature', f.headline || 'In focus', 'feat')\n    + imgph(f.image, 'feat-hero', 'Feature image')\n    + (f.deck ? ('<div class=\"deck\">' + esc(f.deck) + '</div>') : '')\n    + (pull ? ('<div class=\"pull\">&ldquo;' + esc(pull) + '&rdquo;</div>') : '')\n    + body2col(f.body || '')\n    + (A(f.takeaways).length ? ('<div class=\"take\"><div class=\"th\">Key takeaways</div><ul>' + A(f.takeaways).map(function(t){return '<li>' + esc(t) + '</li>';}).join('') + '</ul></div>') : '')\n    + '</section>';\n}\n// threats\nif (threats.length) {\n  html += '<section class=\"sec\">' + header('Threat radar', 'Emerging Threats', 'threat')\n    + cardTable(threats.map(function(t){return imgph(t.image, 'thumb', '') + '<h3>' + esc(t.headline||'') + '</h3><p>' + esc(t.summary||'') + '</p>';}), 'cell tcell') + '</section>';\n}\n// human firewall\nif (aw.length) {\n  html += '<section class=\"sec\">' + header('Practical habits', 'The Human Firewall', 'fire')\n    + cardTable(aw.map(function(a,i){return '<span class=\"n\">' + (i+1) + '</span><h3>' + esc(a.tip||'') + '</h3><p>' + esc(a.detail||'') + '</p>';}), 'cell tip') + '</section>';\n}\n// skills\nif (quals.length) {\n  html += '<section class=\"sec\">' + header('Grow your skills', 'Skills & Qualifications', 'skill')\n    + quals.map(function(q){return '<div class=\"qual\"><h3>' + esc(q.name||'') + '</h3><div class=\"prov\">' + esc(q.provider||'') + '</div><p>' + esc(q.summary||'') + '</p></div>';}).join('') + '</section>';\n}\n// glossary\nif (gloss.length) {\n  html += '<section class=\"sec\">' + header('Plain English', 'Jargon Buster', 'gloss')\n    + '<div class=\"gloss\">' + gloss.map(function(g){return '<div class=\"gterm\"><b>' + esc(g.term||'') + '</b> &mdash; ' + esc(g.definition||'') + '</div>';}).join('') + '</div></section>';\n}\n// closing sign-off (Jarvis AI avatar) — as per the other magazines\nconst AV = avatarUri();\nhtml += '<div class=\"signoff\">' + (AV ? ('<img src=\"' + AV + '\"/>') : JARVIS_SVG) + '<div class=\"sg\"><div class=\"nm\">Jarvis</div><div class=\"rl\">Your AI Awareness Editor</div></div></div>';\n// references / further reading (links to the source articles)\nconst refs = [];\nif (f && f.url) refs.push({ s: f.source || f.headline || 'Feature', u: f.url });\nthreats.forEach(function(t){ if (t && t.url) refs.push({ s: t.source || t.headline || 'Threat report', u: t.url }); });\nquals.forEach(function(q){ if (q && q.url) refs.push({ s: q.provider || q.name || 'Course', u: q.url }); });\nif (refs.length) {\n  html += '<section class=\"sec refs\">' + header('Sources', 'References & Further Reading', 'gloss')\n    + '<ol>' + refs.map(function(r, i){ return '<li><span class=\"rn\">' + (i+1) + '.</span> <b>' + esc(r.s) + '</b><br><a href=\"' + esc(r.u) + '\">' + esc(r.u) + '</a></li>'; }).join('') + '</ol></section>';\n}\nhtml += '</body></html>';\n\n// Emit the (large) HTML as BINARY for Gotenberg, not JSON — keeps execution data\n// tiny. JSON carries only small metadata (incl. the parsed data for the course).\nconst _bin = await this.helpers.prepareBinaryData(Buffer.from(html, 'utf8'), 'index.html', 'text/html');\nreturn [{\n  json: { data: data, date: date, title: title, weekOf: weekOf, fileSafe: 'learning-hub-' + date, workDir: j.workDir || '' },\n  binary: { data: _bin }\n}];\n"
+        "jsCode": "// Render the staff security-awareness magazine to McKinsey-grade editorial spec:\n// a restrained full-bleed cover (separate PDF pass, no footer) plus body pages with\n// generous whitespace, hairline rules, numbered sections, an \"At a glance\" stat\n// band, Exhibit-captioned imagery, a large serif pull quote and page-number footers\n// (Gotenberg header/footer pass, merged with the cover downstream).\n// Returns coverHtml + bodyHtml + headerHtml + footerHtml alongside the parsed data.\nconst j = $json || {};\nconst data = j.data || {};\nconst date = j.date || new Date().toISOString().slice(0, 10);\nconst title = j.title || data.title || 'Security Awareness Digest';\nconst weekOf = data.weekOf || '';\nfunction esc(s){ return (s==null?'':String(s)).replace(/[&<>]/g,function(c){return({'&':'&amp;','<':'&lt;','>':'&gt;'})[c];}); }\nconst A = function(x){ return Array.isArray(x)?x:[]; };\nfunction firstSentence(s){ var m=String(s||'').match(/^[\\s\\S]*?[.!?](\\s|$)/); return (m?m[0]:String(s||'')).trim(); }\n\nconst f = data.feature || {};\nconst threats = A(data.threats), aw = A(data.awareness), quals = A(data.quals), gloss = A(data.glossary);\nconst glance = A(data.atAGlance).filter(function(g){ return g && (g.value || g.label); }).slice(0,3);\nconst standfirst = data.standfirst || (data.intro ? firstSentence(data.intro) : '');\n\n// Env-driven brand theme (platform standard).\nfunction jbHex(v,d){v=String(v||'').trim();return /^#[0-9a-fA-F]{6}$/.test(v)?v:d;}\nvar JB_PRI=jbHex($env.BRAND_PRIMARY,'#0A1A2F'),JB_ACC=jbHex($env.BRAND_ACCENT,'#0E7C86'),JB_GOLD=jbHex($env.BRAND_GOLD,'#C9A24B');\n\n// Jarvis sign-off avatar: prefer the shared branding file, else inline SVG.\nlet _fs = null; try { _fs = require('fs'); } catch (e) {}\nfunction avatarUri(){ if (_fs) { var t = [['/config/branding/jarvis-avatar.png','image/png'],['/config/branding/jarvis-avatar.jpg','image/jpeg'],['/config/branding/jarvis-avatar.jpeg','image/jpeg'],['/config/branding/jarvis-avatar.svg','image/svg+xml']]; for (var i=0;i<t.length;i++){ try { return 'data:' + t[i][1] + ';base64,' + _fs.readFileSync(t[i][0]).toString('base64'); } catch(e){} } } return ''; }\n// Images arrive as on-disk file paths (from Generate Images) — read each one\n// lazily and inline as a data URI only at render time (data: URIs pass through).\nfunction imgSrc(p){ if (!p) return ''; var v = String(p); if (v.indexOf('data:') === 0) return v; if (_fs) { try { return 'data:image/png;base64,' + _fs.readFileSync(v).toString('base64'); } catch (e) {} } return ''; }\nconst cover = imgSrc(j.cover);\nconst featureImg = imgSrc(f.image);\nconst JARVIS_SVG = '<svg class=\"av\" viewBox=\"0 0 64 64\" xmlns=\"http://www.w3.org/2000/svg\"><defs><linearGradient id=\"jg\" x1=\"0\" y1=\"0\" x2=\"0\" y2=\"1\"><stop offset=\"0\" stop-color=\"'+JB_ACC+'\"/><stop offset=\"1\" stop-color=\"'+JB_PRI+'\"/></linearGradient></defs><circle cx=\"32\" cy=\"32\" r=\"32\" fill=\"url(#jg)\"/><rect x=\"19\" y=\"21\" width=\"26\" height=\"22\" rx=\"7\" fill=\"#fff\"/><circle cx=\"27\" cy=\"32\" r=\"3.2\" fill=\"'+JB_ACC+'\"/><circle cx=\"37\" cy=\"32\" r=\"3.2\" fill=\"'+JB_ACC+'\"/><rect x=\"27\" y=\"38\" width=\"10\" height=\"2.4\" rx=\"1.2\" fill=\"'+JB_ACC+'\"/><rect x=\"30.7\" y=\"14\" width=\"2.6\" height=\"6\" rx=\"1.3\" fill=\"#9fe4d8\"/><circle cx=\"32\" cy=\"13\" r=\"2.4\" fill=\"#E7C76A\"/><path d=\"M23 47h18l-3 4.5H26z\" fill=\"#9fe4d8\"/></svg>';\n\n// ---------- shared CSS (body pages) ----------\nconst CSS = \":root{--pri:\"+JB_PRI+\";--acc:\"+JB_ACC+\";--gold:\"+JB_GOLD+\"}\"\n+\"*{box-sizing:border-box}\"\n+\"body{margin:0;padding:0 18mm;font-family:Georgia,'Times New Roman',serif;color:#1d2630;line-height:1.58;font-size:10.5pt}\"\n+\".sans{font-family:-apple-system,'Segoe UI',Roboto,Arial,sans-serif}\"\n+\"p{margin:0 0 9px}\"\n// section architecture: big light numeral + eyebrow + serif headline over a hairline\n+\".sec{margin:0 0 11mm;break-inside:avoid-page}\"\n+\".sec.flow{break-inside:auto}\"\n+\".shead{display:flex;align-items:flex-start;gap:14px;border-bottom:1.5px solid var(--pri);padding-bottom:10px;margin-bottom:14px;break-inside:avoid;break-after:avoid;page-break-after:avoid}\"\n+\".shead .no{font-size:26pt;font-weight:400;color:var(--gold);line-height:1;letter-spacing:1px;position:relative;top:3px}\"\n+\".shead .ttl{flex:1}\"\n+\".shead .eyebrow{font-family:-apple-system,Arial,sans-serif;font-size:8pt;letter-spacing:3.5px;text-transform:uppercase;color:var(--acc);font-weight:700;margin-bottom:3px}\"\n+\".shead h2{font-size:21pt;color:var(--pri);margin:0;font-weight:700;line-height:1.1}\"\n// at-a-glance stat band\n+\".glance{display:flex;gap:0;border-top:1.5px solid var(--pri);border-bottom:1px solid #d9dee4;margin:0 0 11mm;break-inside:avoid}\"\n+\".glance .g{flex:1;padding:14px 16px 13px;border-left:1px solid #e3e7ec}\"\n+\".glance .g:first-child{border-left:0;padding-left:0}\"\n+\".glance .lab{font-family:-apple-system,Arial,sans-serif;font-size:7.5pt;letter-spacing:3px;text-transform:uppercase;color:#8a93a0;font-weight:700;margin-bottom:6px}\"\n+\".glance .v{font-size:25pt;color:var(--acc);line-height:1.05;font-weight:400}\"\n+\".glance .d{font-size:9.5pt;color:#46505c;margin-top:5px;line-height:1.4}\"\n+\".glance .ghead{flex:0 0 30mm;padding:14px 14px 13px 0}\"\n+\".glance .ghead .gh{font-family:-apple-system,Arial,sans-serif;font-size:8pt;letter-spacing:3px;text-transform:uppercase;color:var(--pri);font-weight:800;line-height:1.5}\"\n// editorial\n+\".lead{margin:0 0 9px;text-align:justify}\"\n+\".lead::first-letter{-webkit-initial-letter:3 3;initial-letter:3 3;color:var(--acc);font-weight:700;margin-right:8px}\"\n+\".cols{column-count:2;column-gap:9mm}.cols p{text-align:justify}\"\n// feature\n+\".deck{font-style:italic;color:#5a6472;font-size:12.5pt;line-height:1.45;margin:0 0 12px;max-width:160mm}\"\n+\".exhibit{margin:0 0 13px;break-inside:avoid}\"\n+\".exhibit .img{width:100%;height:62mm;background-size:cover;background-position:center;border:1px solid #d9dee4}\"\n+\".exhibit .cap{font-family:-apple-system,Arial,sans-serif;font-size:8pt;color:#6a737e;margin-top:6px;line-height:1.45;border-left:2px solid var(--gold);padding-left:8px}\"\n+\".exhibit .cap b{color:var(--pri);letter-spacing:1px;text-transform:uppercase}\"\n+\".pull{margin:14px 0;padding:13px 0;border-top:1px solid var(--gold);border-bottom:1px solid var(--gold);break-inside:avoid}\"\n+\".pull .q{font-size:16.5pt;font-style:italic;color:var(--pri);line-height:1.35;text-align:center}\"\n+\".bottomline{background:#f5f7f9;border-top:3px solid var(--pri);padding:13px 17px;margin-top:12px;break-inside:avoid}\"\n+\".bottomline .th{font-family:-apple-system,Arial,sans-serif;font-size:8pt;letter-spacing:3px;text-transform:uppercase;color:var(--pri);font-weight:800;margin-bottom:7px}\"\n+\".bottomline ul{margin:0;padding-left:16px}.bottomline li{font-size:10pt;margin:5px 0;line-height:1.5}\"\n// threat radar — numbered editorial entries with hairline separators\n+\".titem{display:flex;gap:14px;padding:11px 0;border-bottom:1px solid #e3e7ec;break-inside:avoid}\"\n+\".titem:last-child{border-bottom:0}\"\n+\".titem .tn{flex:0 0 26px;font-size:17pt;color:#b02525;font-weight:400;line-height:1.15}\"\n+\".titem .timg{flex:0 0 21mm;height:21mm;background-size:cover;background-position:center;border:1px solid #d9dee4}\"\n+\".titem .tb{flex:1}\"\n+\".titem h3{font-family:-apple-system,Arial,sans-serif;font-size:11.5pt;color:var(--pri);margin:0 0 4px;line-height:1.3;font-weight:700}\"\n+\".titem p{font-size:10pt;color:#46505c;margin:0;line-height:1.5}\"\n+\".titem .src{font-family:-apple-system,Arial,sans-serif;font-size:7.5pt;letter-spacing:2px;text-transform:uppercase;color:#8a93a0;font-weight:700;margin-top:5px}\"\n// human firewall — two-column numbered habits\n+\".habits{column-count:2;column-gap:10mm}\"\n+\".habit{break-inside:avoid;padding:0 0 11px;margin-bottom:11px;border-bottom:1px solid #e3e7ec}\"\n+\".habit .hn{font-family:-apple-system,Arial,sans-serif;display:inline-block;min-width:22px;height:22px;border-radius:50%;background:var(--acc);color:#fff;font-size:10pt;font-weight:800;text-align:center;line-height:22px;margin-bottom:6px}\"\n+\".habit h3{font-family:-apple-system,Arial,sans-serif;font-size:10.5pt;color:var(--pri);margin:0 0 4px;line-height:1.3;font-weight:700}\"\n+\".habit p{font-size:9.5pt;color:#46505c;margin:0;line-height:1.5}\"\n// skills\n+\".qual{padding:10px 0;border-bottom:1px solid #e3e7ec;break-inside:avoid}\"\n+\".qual:last-child{border-bottom:0}\"\n+\".qual .prov{font-family:-apple-system,Arial,sans-serif;font-size:7.5pt;letter-spacing:2.5px;text-transform:uppercase;color:var(--acc);font-weight:800;margin-bottom:2px}\"\n+\".qual h3{font-size:12.5pt;color:var(--pri);margin:0 0 3px;font-weight:700}\"\n+\".qual p{font-size:10pt;color:#46505c;margin:0;line-height:1.5}\"\n// glossary\n+\".gloss{column-count:2;column-gap:10mm}\"\n+\".gterm{break-inside:avoid;font-size:10pt;color:#46505c;border-bottom:1px solid #eef1f5;padding:7px 0;line-height:1.5}\"\n+\".gterm b{color:var(--pri)}\"\n// sign-off + references\n+\".signoff{display:flex;align-items:center;justify-content:center;gap:14px;margin:4mm 0 9mm;padding-top:14px;border-top:1px solid var(--gold);break-inside:avoid}\"\n+\".signoff .av,.signoff img{width:50px;height:50px;border-radius:50%;border:2px solid var(--acc);flex:0 0 auto}\"\n+\".signoff .nm{font-size:13pt;color:var(--pri);font-weight:700}\"\n+\".signoff .rl{font-family:-apple-system,Arial,sans-serif;font-size:8pt;letter-spacing:2px;text-transform:uppercase;color:var(--acc);font-weight:800;margin-top:2px}\"\n+\".refs ol{margin:0;padding:0;list-style:none;column-count:2;column-gap:9mm}\"\n+\".refs li{font-family:-apple-system,Arial,sans-serif;font-size:8.5pt;color:#46505c;margin:0 0 8px;break-inside:avoid;line-height:1.4}\"\n+\".refs .rn{color:var(--acc);font-weight:800}\"\n+\".refs li b{color:var(--pri)}.refs a{color:var(--acc);word-break:break-all;text-decoration:none}\";\n\n// ---------- cover (separate full-bleed page; no footer) ----------\nconst wm = '<svg style=\"position:absolute;right:-55mm;bottom:-30mm;width:170mm;height:170mm;opacity:.07\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"#9fe4d8\" stroke-width=\"0.6\"><path d=\"M12 3l7 3v5c0 4.5-3 7.6-7 9-4-1.4-7-4.5-7-9V6z\"/><path d=\"M9 12l2 2 4-4\"/></svg>';\nconst sectionNames = [];\nif (data.intro) sectionNames.push('From the editor');\nif (f && (f.headline || f.body)) sectionNames.push(f.headline || 'Feature');\nif (threats.length) sectionNames.push('Threat radar');\nif (aw.length) sectionNames.push('The human firewall');\nif (quals.length) sectionNames.push('Skills & qualifications');\nif (gloss.length) sectionNames.push('Jargon buster');\n\nconst COVER_CSS = \":root{--pri:\"+JB_PRI+\";--acc:\"+JB_ACC+\";--gold:\"+JB_GOLD+\"}\"\n+\"@page{size:A4;margin:0}*{box-sizing:border-box}body{margin:0;font-family:Georgia,'Times New Roman',serif}\"\n+\".cv{position:relative;width:210mm;height:297mm;background:var(--pri);color:#fff;overflow:hidden;display:flex;flex-direction:column}\"\n+\".cv .pad{padding:0 17mm}\"\n+\".cv .brandbar{display:flex;justify-content:space-between;align-items:center;font-family:-apple-system,Arial,sans-serif;font-size:8.5pt;letter-spacing:3px;text-transform:uppercase;font-weight:700;color:#9fe4d8;padding-top:14mm;padding-bottom:7mm}\"\n+\".cv .goldrule{height:1px;background:linear-gradient(90deg,var(--gold),rgba(201,162,75,.25))}\"\n+\".cv .kick{font-family:-apple-system,Arial,sans-serif;font-size:9.5pt;letter-spacing:5px;text-transform:uppercase;color:var(--gold);font-weight:800;margin-top:11mm}\"\n+\".cv h1{font-size:42pt;line-height:1.05;margin:6mm 0 0;font-weight:700;max-width:176mm}\"\n+\".cv .stand{font-size:13pt;color:#dce7ec;font-style:italic;margin-top:6mm;max-width:158mm;line-height:1.5}\"\n+\".cv .plate{position:relative;margin-top:9mm;flex:1 1 auto;min-height:88mm;background-size:cover;background-position:center}\"\n+\".cv .plate.ph{background:radial-gradient(120% 90% at 76% 10%,#13507a 0,var(--pri) 58%),linear-gradient(160deg,var(--pri),#0E2233 55%,var(--acc) 165%)}\"\n+\".cv .plate .edge{position:absolute;left:0;right:0;top:0;height:1px;background:var(--gold)}\"\n+\".cv .toc{background:rgba(6,14,24,.55);border-top:1px solid rgba(201,162,75,.55)}\"\n+\".cv .toc .in{display:flex;gap:0;padding:8mm 17mm 11mm}\"\n+\".cv .toc .tl{flex:0 0 34mm;font-family:-apple-system,Arial,sans-serif;font-size:8pt;letter-spacing:3px;text-transform:uppercase;color:var(--gold);font-weight:800;padding-top:3px}\"\n+\".cv .toc ul{list-style:none;margin:0;padding:0;column-count:2;column-gap:11mm;flex:1}\"\n+\".cv .toc li{font-family:-apple-system,Arial,sans-serif;font-size:9.5pt;color:#e8eff3;padding:3px 0;break-inside:avoid;display:flex;gap:8px;align-items:baseline}\"\n+\".cv .toc li .n{color:var(--gold);font-size:8pt;font-weight:800;letter-spacing:1px}\"\n+\".cv .edition{font-family:-apple-system,Arial,sans-serif;font-size:9pt;color:#9fb3bd;letter-spacing:2px;text-transform:uppercase;margin-top:4mm}\";\n\nlet coverHtml = '<!doctype html><html><head><meta charset=\"utf-8\"><style>'+COVER_CSS+'</style></head><body><div class=\"cv\">'\n + wm\n + '<div class=\"pad\"><div class=\"brandbar\"><span>Security Awareness</span><span>Learning Hub</span></div><div class=\"goldrule\"></div>'\n + '<div class=\"kick\">Staff Awareness Magazine</div>'\n + '<h1>'+esc(title)+'</h1>'\n + (standfirst ? ('<div class=\"stand\">'+esc(standfirst)+'</div>') : '')\n + '<div class=\"edition\">'+esc(weekOf || date)+' Edition</div></div>'\n + '<div class=\"plate'+(cover?'':' ph')+'\"'+(cover?(' style=\"background-image:url('+cover+')\"'):'')+'><div class=\"edge\"></div></div>'\n + (sectionNames.length ? ('<div class=\"toc\"><div class=\"in\"><div class=\"tl\">In this issue</div><ul>'\n    + sectionNames.map(function(t,i){return '<li><span class=\"n\">'+String(i+1).padStart(2,'0')+'</span><span>'+esc(t)+'</span></li>';}).join('') + '</ul></div></div>') : '')\n + '</div></body></html>';\n\n// ---------- body ----------\nlet secNo = 0;\nfunction shead(eyebrow, t){ secNo++; return '<div class=\"shead\"><div class=\"no\">'+String(secNo).padStart(2,'0')+'</div><div class=\"ttl\"><div class=\"eyebrow\">'+esc(eyebrow)+'</div><h2>'+esc(t)+'</h2></div></div>'; }\nfunction body2col(text){ var ps = String(text||'').split(/\\n+/).map(function(s){return s.trim();}).filter(Boolean); if(!ps.length) return ''; var lead = '<p class=\"lead\">' + esc(ps[0]) + '</p>'; var rest = ps.slice(1).map(function(p){return '<p>' + esc(p) + '</p>';}).join(''); return lead + (rest ? ('<div class=\"cols\">' + rest + '</div>') : ''); }\n\nlet body = '<!doctype html><html><head><meta charset=\"utf-8\"><style>'+CSS+'</style></head><body>';\n// at a glance — the consulting-style stat band\nif (glance.length) {\n  body += '<div class=\"glance\"><div class=\"ghead\"><div class=\"gh\">At a<br>glance</div></div>'\n    + glance.map(function(g){ return '<div class=\"g\">'+(g.value?('<div class=\"v\">'+esc(g.value)+'</div>'):'')+'<div class=\"d\">'+esc(g.label||'')+'</div></div>'; }).join('')\n    + '</div>';\n}\n// editorial\nif (data.intro) {\n  body += '<section class=\"sec\">' + shead('From the editor', 'Welcome to this edition') + body2col(data.intro) + '</section>';\n}\n// feature\nif (f && (f.headline || f.body)) {\n  const pull = f.pullQuote || (A(f.takeaways)[0]) || '';\n  body += '<section class=\"sec flow\">' + shead('Feature', f.headline || 'In focus')\n    + (f.deck ? ('<div class=\"deck\">'+esc(f.deck)+'</div>') : '')\n    + (featureImg ? ('<div class=\"exhibit\"><div class=\"img\" style=\"background-image:url('+featureImg+')\"></div><div class=\"cap\"><b>Exhibit 1</b> &nbsp;'+esc(f.deck||f.headline||'')+'</div></div>') : '')\n    + body2col(f.body || '')\n    + (pull ? ('<div class=\"pull\"><div class=\"q\">&ldquo;'+esc(pull)+'&rdquo;</div></div>') : '')\n    + (A(f.takeaways).length ? ('<div class=\"bottomline\"><div class=\"th\">The bottom line</div><ul>' + A(f.takeaways).map(function(t){return '<li>'+esc(t)+'</li>';}).join('') + '</ul></div>') : '')\n    + '</section>';\n}\n// threat radar\nif (threats.length) {\n  body += '<section class=\"sec flow\">' + shead('Threat radar', 'Emerging Threats')\n    + threats.map(function(t,i){ var tu=imgSrc(t.image); return '<div class=\"titem\"><div class=\"tn\">'+String(i+1).padStart(2,'0')+'</div>'+(tu?('<div class=\"timg\" style=\"background-image:url('+tu+')\"></div>'):'')+'<div class=\"tb\"><h3>'+esc(t.headline||'')+'</h3><p>'+esc(t.summary||'')+'</p>'+(t.source?('<div class=\"src\">'+esc(t.source)+'</div>'):'')+'</div></div>'; }).join('')\n    + '</section>';\n}\n// human firewall\nif (aw.length) {\n  body += '<section class=\"sec flow\">' + shead('Practical habits', 'The Human Firewall')\n    + '<div class=\"habits\">' + aw.map(function(a,i){ return '<div class=\"habit\"><span class=\"hn\">'+(i+1)+'</span><h3>'+esc(a.tip||'')+'</h3><p>'+esc(a.detail||'')+'</p></div>'; }).join('') + '</div></section>';\n}\n// skills\nif (quals.length) {\n  body += '<section class=\"sec flow\">' + shead('Grow your skills', 'Skills & Qualifications')\n    + quals.map(function(q){ return '<div class=\"qual\"><div class=\"prov\">'+esc(q.provider||'')+'</div><h3>'+esc(q.name||'')+'</h3><p>'+esc(q.summary||'')+'</p></div>'; }).join('') + '</section>';\n}\n// glossary\nif (gloss.length) {\n  body += '<section class=\"sec flow\">' + shead('Plain English', 'Jargon Buster')\n    + '<div class=\"gloss\">' + gloss.map(function(g){ return '<div class=\"gterm\"><b>'+esc(g.term||'')+'</b> &mdash; '+esc(g.definition||'')+'</div>'; }).join('') + '</div></section>';\n}\n// sign-off (subtle) + references\nconst AV = avatarUri();\nbody += '<div class=\"signoff\">' + (AV ? ('<img src=\"' + AV + '\"/>') : JARVIS_SVG) + '<div><div class=\"nm\">Jarvis</div><div class=\"rl\">Your AI Awareness Editor</div></div></div>';\nconst refs = [];\nif (f && f.url) refs.push({ s: f.source || f.headline || 'Feature', u: f.url });\nthreats.forEach(function(t){ if (t && t.url) refs.push({ s: t.source || t.headline || 'Threat report', u: t.url }); });\nquals.forEach(function(q){ if (q && q.url) refs.push({ s: q.provider || q.name || 'Course', u: q.url }); });\nif (refs.length) {\n  body += '<section class=\"sec flow refs\">' + shead('Sources', 'References & Further Reading')\n    + '<ol>' + refs.map(function(r, i){ return '<li><span class=\"rn\">' + (i+1) + '.</span> <b>' + esc(r.s) + '</b><br><a href=\"' + esc(r.u) + '\">' + esc(r.u) + '</a></li>'; }).join('') + '</ol></section>';\n}\nbody += '</body></html>';\n\n// ---------- Gotenberg running header / page-number footer (body pages only) ----------\nconst headerHtml = '<!doctype html><html><head><style>body{margin:0;font-family:Georgia,serif}'\n + '.h{display:flex;justify-content:space-between;align-items:center;font-size:7.5pt;color:#8a93a0;padding:5mm 18mm 0;width:100%;letter-spacing:2px;text-transform:uppercase;font-family:Arial,sans-serif}'\n + '</style></head><body><div class=\"h\"><span>'+esc(title)+'</span><span>'+esc(weekOf||date)+'</span></div></body></html>';\nconst footerHtml = '<!doctype html><html><head><style>body{margin:0}'\n + '.f{display:flex;justify-content:space-between;align-items:center;font-size:7.5pt;color:#8a93a0;padding:0 18mm 4mm;width:100%;font-family:Arial,sans-serif;letter-spacing:1px}'\n + '.f .pg{color:'+JB_PRI+';font-weight:700}'\n + '</style></head><body><div class=\"f\"><span>Security Awareness &middot; Learning Hub</span><span class=\"pg\"><span class=\"pageNumber\"></span></span></div></body></html>';\n\n// The HTMLs embed multi-MB images — write them to the work dir and pass only\n// file paths through node JSON (hardened pattern; Write Magazine cleans up).\nconst workDir = j.workDir || ('/reports/learning-hub/.work/learning-hub-' + date);\ntry { _fs.mkdirSync(workDir, { recursive: true }); } catch (e) {}\nfunction put(name, content){ var p = workDir + '/' + name; _fs.writeFileSync(p, content); return p; }\nconst files = {\n  cover: put('cover.html', coverHtml),\n  body: put('body.html', body),\n  header: put('header.html', headerHtml),\n  footer: put('footer.html', footerHtml)\n};\nreturn [{ json: { data: data, htmlFiles: files, date: date, title: title, weekOf: weekOf, fileSafe: 'learning-hub-' + date, workDir: workDir } }];\n"
       }
     },
     {
-      "id": "goten",
-      "name": "Gotenberg PDF",
-      "type": "n8n-nodes-base.httpRequest",
-      "typeVersion": 4.2,
+      "id": "magwrite",
+      "name": "Write Magazine",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        3880,
+        280
+      ],
+      "parameters": {
+        "language": "javaScript",
+        "jsCode": "// Persist the magazine: PDF (from Gotenberg) + structured JSON archive.\n// (No standalone .html artifact — the PDF is the deliverable.)\n// Carries the parsed magazine data forward so the course can be grounded in it.\nconst fs = require('fs');\nconst meta = $('Render Magazine').first().json;\nconst dir = '/reports/learning-hub';\nconst archive = '/reports/archive/learning-hub';\nconst base = meta.fileSafe; // learning-hub-<date>\ntry { fs.mkdirSync(dir, { recursive: true }); } catch (e) {}\ntry { fs.mkdirSync(archive, { recursive: true }); } catch (e) {}\nlet pdfPath = '';\ntry {\n  const buf = await this.helpers.getBinaryDataBuffer(0, 'data');\n  if (buf && buf.length) { fs.writeFileSync(dir + '/' + base + '.pdf', buf); fs.writeFileSync(archive + '/' + base + '.pdf', buf); pdfPath = dir + '/' + base + '.pdf'; }\n} catch (e) { pdfPath = ''; }\nlet jsonOk = false;\ntry { fs.writeFileSync(archive + '/' + base + '.json', JSON.stringify({ title: meta.title, weekOf: meta.weekOf, date: meta.date, data: meta.data }, null, 2)); jsonOk = true; } catch (e) {}\n// Fail loudly (red node) rather than silently green if the output dir is not writable.\nif (!jsonOk) throw new Error('Learning Hub: could not write to ' + dir + '. Make /reports writable by the n8n container, e.g. `chmod -R a+rwX reports` on the host.');\n// The generated cover/feature/threat images are now baked into the PDF — remove the\n// temp work dir (guard: only paths under a /.work/ area).\nif (meta.workDir && meta.workDir.indexOf('/.work/') >= 0) { try { fs.rmSync(meta.workDir, { recursive: true, force: true }); } catch (e) {} }\nreturn [{ json: {\n  ok: true,\n  date: meta.date,\n  title: meta.title,\n  weekOf: meta.weekOf,\n  data: meta.data,\n  magazinePdf: pdfPath || (dir + '/' + base + '.pdf'),\n  magazineHtml: '',\n  fileSafe: base\n} }];\n"
+      }
+    },
+    {
+      "id": "coursesrc",
+      "name": "Build Course Source",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        4100,
+        280
+      ],
+      "parameters": {
+        "language": "javaScript",
+        "jsCode": "// Build the e-learning \"source\" grounding text + course metadata from the magazine.\n// Output is fed to the module's e-learning workflow (Execute Workflow) and reused\n// by Register Publication. Keeps the course strictly about this edition's content.\nconst m = $json || {};\nconst data = m.data || {};\nconst date = m.date || new Date().toISOString().slice(0, 10);\nconst A = function (x) { return Array.isArray(x) ? x : []; };\nfunction line(s) { return String(s == null ? '' : s).replace(/\\s+/g, ' ').trim(); }\nconst parts = [];\nparts.push('MAGAZINE TITLE: ' + (m.title || data.title || 'Security Awareness Digest'));\nif (data.intro) parts.push('EDITORIAL: ' + line(data.intro));\nconst f = data.feature;\nif (f && (f.headline || f.body)) {\n  parts.push('FEATURE: ' + line(f.headline || '') + (f.deck ? (' — ' + line(f.deck)) : ''));\n  if (f.body) parts.push(line(f.body));\n  if (A(f.takeaways).length) parts.push('Key takeaways: ' + A(f.takeaways).map(line).join('; '));\n}\nif (A(data.threats).length) parts.push('EMERGING THREATS: ' + A(data.threats).map(function (t) { return line(t.headline) + ' — ' + line(t.summary); }).join(' | '));\nif (A(data.awareness).length) parts.push('AWARENESS TIPS: ' + A(data.awareness).map(function (a) { return line(a.tip) + ': ' + line(a.detail); }).join(' | '));\nif (A(data.quals).length) parts.push('SKILLS & QUALIFICATIONS: ' + A(data.quals).map(function (q) { return line(q.name) + ' (' + line(q.provider) + '): ' + line(q.summary); }).join(' | '));\nif (A(data.glossary).length) parts.push('GLOSSARY: ' + A(data.glossary).map(function (g) { return line(g.term) + ' = ' + line(g.definition); }).join(' | '));\nconst source = parts.join('\\n');\nconst title = (m.title || data.title || 'Security Awareness Digest') + ' — Awareness Course';\nconst pm = parseInt(($env.LEARNING_HUB_PASS_MARK || '80'), 10);\nreturn [{ json: {\n  source: source,\n  title: title,\n  passMark: isNaN(pm) ? 80 : pm,\n  format: 'Both',\n  illustrate: (($env.ELEARNING_SECTION_IMAGES || 'true').toString().toLowerCase() !== 'false'),\n  publicationId: 'learning-hub-' + date,\n  courseId: 'course-learning-hub-' + date,\n  releaseDate: date\n} }];\n"
+      }
+    },
+    {
+      "id": "runel",
+      "name": "Run E-learning",
+      "type": "n8n-nodes-base.executeWorkflow",
+      "typeVersion": 1,
+      "position": [
+        4320,
+        280
+      ],
+      "parameters": {
+        "source": "database",
+        "workflowId": "jarvisLhElearn1"
+      },
+      "onError": "continueRegularOutput"
+    },
+    {
+      "id": "register",
+      "name": "Register Publication",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        4540,
+        280
+      ],
+      "parameters": {
+        "language": "javaScript",
+        "jsCode": "// Upsert the publication record the dashboard reads. Links the magazine + the\n// derived course, with the release date and 30-day completion window.\nconst fs = require('fs');\nconst dir = '/reports/learning-hub';\nconst file = dir + '/publications.json';\nconst src = ($('Build Course Source').first() || {}).json || {};\nconst mag = ($('Write Magazine').first() || {}).json || {};\nconst course = $json || {};\ntry { fs.mkdirSync(dir, { recursive: true }); } catch (e) {}\nlet store = { updated: '', publications: [] };\ntry { const cur = JSON.parse(fs.readFileSync(file, 'utf8')); if (cur && Array.isArray(cur.publications)) store = cur; } catch (e) {}\nconst entry = {\n  id: src.publicationId || ('learning-hub-' + (src.releaseDate || '')),\n  title: mag.title || src.title || 'Security Awareness Digest',\n  kind: 'magazine',\n  releaseDate: src.releaseDate || mag.date || new Date().toISOString().slice(0, 10),\n  deadlineDays: 30,\n  magazine: { pdf: mag.magazinePdf || '', html: mag.magazineHtml || '' },\n  course: { id: src.courseId || '', html: course.html || course.file || '', scorm: course.scorm || '', title: src.title || '', passMark: src.passMark || 80 }\n};\nstore.publications = store.publications.filter(function (p) { return p && p.id !== entry.id; });\nstore.publications.unshift(entry);\nstore.publications.sort(function (a, b) { return String(b.releaseDate).localeCompare(String(a.releaseDate)); });\nstore.updated = new Date().toISOString();\ntry { fs.writeFileSync(file, JSON.stringify(store, null, 2)); } catch (e) {}\nreturn [{ json: { ok: true, publication: entry, total: store.publications.length, file: file } }];\n"
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "// Full-bleed cover pass: read the rendered cover HTML from the work dir and\n// hand it to Gotenberg on its own (margins 0, no footer on the cover page).\nconst fs = require('fs');\nconst r = $('Render Magazine').first().json;\nconst html = fs.readFileSync((r.htmlFiles||{}).cover, 'utf8');\nconst bin = await this.helpers.prepareBinaryData(Buffer.from(html,'utf8'), 'index.html', 'text/html');\nreturn [{ json: { date: r.date }, binary: { data: bin } }];\n"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
       "position": [
         2460,
         280
       ],
+      "id": "lh-build-cover-file",
+      "name": "Build Cover File"
+    },
+    {
       "parameters": {
         "method": "POST",
         "url": "={{ $env.GOTENBERG_URL || 'http://jarvis-gotenberg:3000' }}/forms/chromium/convert/html",
@@ -289,11 +351,6 @@
               "parameterType": "formBinaryData",
               "name": "files",
               "inputDataFieldName": "data"
-            },
-            {
-              "parameterType": "formData",
-              "name": "preferCssPageSize",
-              "value": "true"
             },
             {
               "parameterType": "formData",
@@ -314,6 +371,11 @@
               "parameterType": "formData",
               "name": "marginRight",
               "value": "0"
+            },
+            {
+              "parameterType": "formData",
+              "name": "preferCssPageSize",
+              "value": "true"
             }
           ]
         },
@@ -327,64 +389,166 @@
           "timeout": 120000
         }
       },
-      "onError": "continueErrorOutput"
-    },
-    {
-      "id": "magwrite",
-      "name": "Write Magazine",
-      "type": "n8n-nodes-base.code",
-      "typeVersion": 2,
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
       "position": [
-        2680,
+        2660,
         280
       ],
-      "parameters": {
-        "language": "javaScript",
-        "jsCode": "// Persist the magazine: PDF (from Gotenberg) + structured JSON archive.\n// (No standalone .html artifact — the PDF is the deliverable.)\n// Carries the parsed magazine data forward so the course can be grounded in it.\nconst fs = require('fs');\nconst meta = $('Render Magazine').first().json;\nconst dir = '/reports/learning-hub';\nconst archive = '/reports/archive/learning-hub';\nconst base = meta.fileSafe; // learning-hub-<date>\ntry { fs.mkdirSync(dir, { recursive: true }); } catch (e) {}\ntry { fs.mkdirSync(archive, { recursive: true }); } catch (e) {}\nlet pdfPath = '';\ntry {\n  const buf = await this.helpers.getBinaryDataBuffer(0, 'data');\n  if (buf && buf.length) { fs.writeFileSync(dir + '/' + base + '.pdf', buf); fs.writeFileSync(archive + '/' + base + '.pdf', buf); pdfPath = dir + '/' + base + '.pdf'; }\n} catch (e) { pdfPath = ''; }\nlet jsonOk = false;\ntry { fs.writeFileSync(archive + '/' + base + '.json', JSON.stringify({ title: meta.title, weekOf: meta.weekOf, date: meta.date, data: meta.data }, null, 2)); jsonOk = true; } catch (e) {}\n// Fail loudly (red node) rather than silently green if the output dir is not writable.\nif (!jsonOk) throw new Error('Learning Hub: could not write to ' + dir + '. Make /reports writable by the n8n container, e.g. `chmod -R a+rwX reports` on the host.');\n// The generated cover/feature/threat images are now baked into the PDF — remove the\n// temp work dir (guard: only paths under a /.work/ area).\nif (meta.workDir && meta.workDir.indexOf('/.work/') >= 0) { try { fs.rmSync(meta.workDir, { recursive: true, force: true }); } catch (e) {} }\nreturn [{ json: {\n  ok: true,\n  date: meta.date,\n  title: meta.title,\n  weekOf: meta.weekOf,\n  data: meta.data,\n  magazinePdf: pdfPath || (dir + '/' + base + '.pdf'),\n  magazineHtml: '',\n  fileSafe: base\n} }];\n"
-      }
+      "id": "lh-gotenberg-cover",
+      "name": "Gotenberg Cover"
     },
     {
-      "id": "coursesrc",
-      "name": "Build Course Source",
-      "type": "n8n-nodes-base.code",
-      "typeVersion": 2,
-      "position": [
-        2900,
-        280
-      ],
       "parameters": {
-        "language": "javaScript",
-        "jsCode": "// Build the e-learning \"source\" grounding text + course metadata from the magazine.\n// Output is fed to the module's e-learning workflow (Execute Workflow) and reused\n// by Register Publication. Keeps the course strictly about this edition's content.\nconst m = $json || {};\nconst data = m.data || {};\nconst date = m.date || new Date().toISOString().slice(0, 10);\nconst A = function (x) { return Array.isArray(x) ? x : []; };\nfunction line(s) { return String(s == null ? '' : s).replace(/\\s+/g, ' ').trim(); }\nconst parts = [];\nparts.push('MAGAZINE TITLE: ' + (m.title || data.title || 'Security Awareness Digest'));\nif (data.intro) parts.push('EDITORIAL: ' + line(data.intro));\nconst f = data.feature;\nif (f && (f.headline || f.body)) {\n  parts.push('FEATURE: ' + line(f.headline || '') + (f.deck ? (' — ' + line(f.deck)) : ''));\n  if (f.body) parts.push(line(f.body));\n  if (A(f.takeaways).length) parts.push('Key takeaways: ' + A(f.takeaways).map(line).join('; '));\n}\nif (A(data.threats).length) parts.push('EMERGING THREATS: ' + A(data.threats).map(function (t) { return line(t.headline) + ' — ' + line(t.summary); }).join(' | '));\nif (A(data.awareness).length) parts.push('AWARENESS TIPS: ' + A(data.awareness).map(function (a) { return line(a.tip) + ': ' + line(a.detail); }).join(' | '));\nif (A(data.quals).length) parts.push('SKILLS & QUALIFICATIONS: ' + A(data.quals).map(function (q) { return line(q.name) + ' (' + line(q.provider) + '): ' + line(q.summary); }).join(' | '));\nif (A(data.glossary).length) parts.push('GLOSSARY: ' + A(data.glossary).map(function (g) { return line(g.term) + ' = ' + line(g.definition); }).join(' | '));\nconst source = parts.join('\\n');\nconst title = (m.title || data.title || 'Security Awareness Digest') + ' — Awareness Course';\nconst pm = parseInt(($env.LEARNING_HUB_PASS_MARK || '80'), 10);\nreturn [{ json: {\n  source: source,\n  title: title,\n  passMark: isNaN(pm) ? 80 : pm,\n  format: 'HTML',\n  illustrate: (($env.ELEARNING_SECTION_IMAGES || 'true').toString().toLowerCase() !== 'false'),\n  publicationId: 'learning-hub-' + date,\n  courseId: 'course-learning-hub-' + date,\n  releaseDate: date\n} }];\n"
-      }
-    },
-    {
-      "id": "runel",
-      "name": "Run E-learning",
-      "type": "n8n-nodes-base.executeWorkflow",
-      "typeVersion": 1,
-      "position": [
-        3120,
-        280
-      ],
-      "parameters": {
-        "source": "database",
-        "workflowId": "jarvisLhElearn1"
+        "jsCode": "// Hold the rendered cover PDF as base64 while the body pass runs.\nconst buf = await this.helpers.getBinaryDataBuffer(0, 'data');\nreturn [{ json: { date: $('Render Magazine').first().json.date, coverB64: (buf ? buf.toString('base64') : '') } }];\n"
       },
-      "onError": "continueRegularOutput"
-    },
-    {
-      "id": "register",
-      "name": "Register Publication",
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
       "position": [
-        3340,
+        2860,
         280
       ],
+      "id": "lh-stash-cover",
+      "name": "Stash Cover"
+    },
+    {
       "parameters": {
-        "language": "javaScript",
-        "jsCode": "// Upsert the publication record the dashboard reads. Links the magazine + the\n// derived course, with the release date and 30-day completion window.\nconst fs = require('fs');\nconst dir = '/reports/learning-hub';\nconst file = dir + '/publications.json';\nconst src = ($('Build Course Source').first() || {}).json || {};\nconst mag = ($('Write Magazine').first() || {}).json || {};\nconst course = $json || {};\ntry { fs.mkdirSync(dir, { recursive: true }); } catch (e) {}\nlet store = { updated: '', publications: [] };\ntry { const cur = JSON.parse(fs.readFileSync(file, 'utf8')); if (cur && Array.isArray(cur.publications)) store = cur; } catch (e) {}\nconst entry = {\n  id: src.publicationId || ('learning-hub-' + (src.releaseDate || '')),\n  title: mag.title || src.title || 'Security Awareness Digest',\n  kind: 'magazine',\n  releaseDate: src.releaseDate || mag.date || new Date().toISOString().slice(0, 10),\n  deadlineDays: 30,\n  magazine: { pdf: mag.magazinePdf || '', html: mag.magazineHtml || '' },\n  course: { id: src.courseId || '', html: course.html || course.file || '', title: src.title || '', passMark: src.passMark || 80 }\n};\nstore.publications = store.publications.filter(function (p) { return p && p.id !== entry.id; });\nstore.publications.unshift(entry);\nstore.publications.sort(function (a, b) { return String(b.releaseDate).localeCompare(String(a.releaseDate)); });\nstore.updated = new Date().toISOString();\ntry { fs.writeFileSync(file, JSON.stringify(store, null, 2)); } catch (e) {}\nreturn [{ json: { ok: true, publication: entry, total: store.publications.length, file: file } }];\n"
-      }
+        "jsCode": "// Body pass: index.html + running header + page-number footer for Gotenberg,\n// read back from the work dir (only file paths travel through node JSON).\nconst fs = require('fs');\nconst r = $('Render Magazine').first().json;\nconst hf = r.htmlFiles || {};\nasync function bin(path, name){ return await this.helpers.prepareBinaryData(Buffer.from(fs.readFileSync(path,'utf8'),'utf8'), name, 'text/html'); }\nreturn [{ json: { date: r.date },\n  binary: {\n    index:  await bin.call(this, hf.body, 'index.html'),\n    header: await bin.call(this, hf.header, 'header.html'),\n    footer: await bin.call(this, hf.footer, 'footer.html')\n  } }];\n"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        3060,
+        280
+      ],
+      "id": "lh-build-body-files",
+      "name": "Build Body Files"
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "={{ $env.GOTENBERG_URL || 'http://jarvis-gotenberg:3000' }}/forms/chromium/convert/html",
+        "contentType": "multipart-form-data",
+        "sendBody": true,
+        "bodyParameters": {
+          "parameters": [
+            {
+              "parameterType": "formBinaryData",
+              "name": "files",
+              "inputDataFieldName": "index"
+            },
+            {
+              "parameterType": "formBinaryData",
+              "name": "files",
+              "inputDataFieldName": "header"
+            },
+            {
+              "parameterType": "formBinaryData",
+              "name": "files",
+              "inputDataFieldName": "footer"
+            },
+            {
+              "parameterType": "formData",
+              "name": "marginTop",
+              "value": "0.62"
+            },
+            {
+              "parameterType": "formData",
+              "name": "marginBottom",
+              "value": "0.55"
+            },
+            {
+              "parameterType": "formData",
+              "name": "marginLeft",
+              "value": "0"
+            },
+            {
+              "parameterType": "formData",
+              "name": "marginRight",
+              "value": "0"
+            },
+            {
+              "parameterType": "formData",
+              "name": "paperWidth",
+              "value": "8.27"
+            },
+            {
+              "parameterType": "formData",
+              "name": "paperHeight",
+              "value": "11.7"
+            }
+          ]
+        },
+        "options": {
+          "response": {
+            "response": {
+              "responseFormat": "file",
+              "outputPropertyName": "data"
+            }
+          },
+          "timeout": 120000
+        }
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        3260,
+        280
+      ],
+      "id": "lh-gotenberg-body",
+      "name": "Gotenberg Body"
+    },
+    {
+      "parameters": {
+        "jsCode": "// Pair the stashed cover PDF with the body PDF for the merge (names set the order).\nconst coverB64 = ($('Stash Cover').first().json.coverB64) || '';\nconst bodyBuf = await this.helpers.getBinaryDataBuffer(0, 'data');\nconst cover = await this.helpers.prepareBinaryData(Buffer.from(coverB64,'base64'), '01-cover.pdf', 'application/pdf');\nconst body  = await this.helpers.prepareBinaryData(bodyBuf, '02-body.pdf', 'application/pdf');\nreturn [{ json: { date: $('Render Magazine').first().json.date }, binary: { cover: cover, body: body } }];\n"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        3460,
+        280
+      ],
+      "id": "lh-assemble-pdfs",
+      "name": "Assemble PDFs"
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "={{ $env.GOTENBERG_URL || 'http://jarvis-gotenberg:3000' }}/forms/pdfengines/merge",
+        "contentType": "multipart-form-data",
+        "sendBody": true,
+        "bodyParameters": {
+          "parameters": [
+            {
+              "parameterType": "formBinaryData",
+              "name": "files",
+              "inputDataFieldName": "cover"
+            },
+            {
+              "parameterType": "formBinaryData",
+              "name": "files",
+              "inputDataFieldName": "body"
+            }
+          ]
+        },
+        "options": {
+          "response": {
+            "response": {
+              "responseFormat": "file",
+              "outputPropertyName": "data"
+            }
+          },
+          "timeout": 120000
+        }
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        3660,
+        280
+      ],
+      "id": "lh-gotenberg-merge",
+      "name": "Gotenberg Merge"
     }
   ],
   "connections": {
@@ -546,25 +710,7 @@
       "main": [
         [
           {
-            "node": "Gotenberg PDF",
-            "type": "main",
-            "index": 0
-          }
-        ]
-      ]
-    },
-    "Gotenberg PDF": {
-      "main": [
-        [
-          {
-            "node": "Write Magazine",
-            "type": "main",
-            "index": 0
-          }
-        ],
-        [
-          {
-            "node": "Write Magazine",
+            "node": "Build Cover File",
             "type": "main",
             "index": 0
           }
@@ -598,6 +744,83 @@
         [
           {
             "node": "Register Publication",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Build Cover File": {
+      "main": [
+        [
+          {
+            "node": "Gotenberg Cover",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Gotenberg Cover": {
+      "main": [
+        [
+          {
+            "node": "Stash Cover",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Stash Cover": {
+      "main": [
+        [
+          {
+            "node": "Build Body Files",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Build Body Files": {
+      "main": [
+        [
+          {
+            "node": "Gotenberg Body",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Gotenberg Body": {
+      "main": [
+        [
+          {
+            "node": "Assemble PDFs",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Assemble PDFs": {
+      "main": [
+        [
+          {
+            "node": "Gotenberg Merge",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Gotenberg Merge": {
+      "main": [
+        [
+          {
+            "node": "Write Magazine",
             "type": "main",
             "index": 0
           }

@@ -1,6 +1,6 @@
 ---
 id: learning-hub.analyst
-version: 1.0.0
+version: 2.0.0
 purpose: Edit a monthly staff security-awareness magazine as a single JSON object.
 provider_agnostic: true
 variables:
@@ -16,9 +16,14 @@ Keys:
 
 - `title` — a short, punchy edition title.
 - `weekOf` — the edition label (e.g. a month and year).
+- `standfirst` — ONE elegant cover sentence setting up the edition.
+- `atAGlance` — EXACTLY 3 items, each `{ value (a short striking figure drawn from
+  the digest, e.g. "68%", "$4.9M", "x3" — or a 1–2 word fact if no number fits),
+  label (what it means, max 12 words) }`.
 - `intro` — a 2–3 sentence editor's welcome.
-- `feature` — `{ headline, deck (one-line subtitle), body (3–4 short paragraphs
-  separated by single newline characters), takeaways (3–4 short bullet strings) }`.
+- `feature` — `{ headline, deck (one-line subtitle), body (4–5 short paragraphs
+  separated by single newline characters), pullQuote (one quotable sentence lifted
+  from or distilling the body), takeaways (3–4 short bullet strings) }`.
 - `threats` — 3–4 items, each `{ headline, summary (2–3 plain-English sentences) }`.
 - `awareness` — 4–6 items, each `{ tip (a short imperative headline), detail
   (1–2 practical sentences) }`.
