@@ -84,11 +84,12 @@ services:
       # Allow Code nodes to use the built-in 'fs' module only (scoped), so the
       # Telegram handler can list archived intelligence briefs under /reports.
       NODE_FUNCTION_ALLOW_BUILTIN: ${N8N_ALLOW_BUILTIN:-fs}
-      # Task runners (n8n 2.x default): Code nodes run in the JS task runner, which
-      # has a ~5-min default task timeout and its own V8 heap. The comic/magazine
-      # image-generation Code nodes make many gpt-image-2 calls and can run well
-      # past 5 min — without these they get KILLED mid-run (execution "crash" /
-      # unfinished executions). Give them a long timeout and ample heap.
+      # Task runners (n8n 2.x). Heavy, httpRequest-laden Code nodes (comic/magazine
+      # image generation) can destabilise the JS task runner. Set
+      # N8N_RUNNERS_ENABLED=false to run Code nodes in the main n8n process instead
+      # (uses NODE_OPTIONS heap below; rock-solid for these heavy generators).
+      N8N_RUNNERS_ENABLED: ${N8N_RUNNERS_ENABLED:-true}
+      # When runners ARE enabled: long task timeout + ample runner heap.
       N8N_RUNNERS_TASK_TIMEOUT: ${N8N_RUNNERS_TASK_TIMEOUT:-3600}
       N8N_RUNNERS_MAX_OLD_SPACE_SIZE: ${N8N_RUNNERS_MAX_OLD_SPACE_SIZE:-3072}
       # Main n8n process heap. Image/PDF runs move large binaries back through the
