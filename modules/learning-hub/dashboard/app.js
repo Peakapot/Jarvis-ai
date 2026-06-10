@@ -403,9 +403,14 @@
   if ($('toolSearch')) $('toolSearch').addEventListener('input', renderCreate);
   if ($('heroCreate')) $('heroCreate').onclick = function () { switchTab('create'); };
 
+  /* ---- loading skeleton (shown while the asset catalog is discovered) ---- */
+  function skel(n) { var h = ''; for (var i = 0; i < n; i++) h += '<div class="skel-card"><div class="skel-line w60"></div><div class="skel-line w90"></div><div class="skel-line w40"></div></div>'; return h; }
+  function showSkeleton() { var a = $('homeRecent'), b = $('libGrid'); if (a) a.innerHTML = skel(6); if (b) b.innerHTML = skel(8); }
+
   /* ---- init ---- */
   loadBrand().then(renderCreate);
   ensureName();
+  showSkeleton();
   Promise.all([loadCatalog(), loadPubs()]).then(function () {
     renderHome(); renderChips(); renderLibrary(); renderLearning(); renderCerts();
   });
