@@ -1,6 +1,6 @@
 ---
 id: learning-hub.course
-version: 2.0.0
+version: 2.1.0
 purpose: Turn one magazine edition into an interactive e-learning micro-course (JSON).
 provider_agnostic: true
 variables:
@@ -23,12 +23,19 @@ in it. Produce a SINGLE valid JSON object:
 - `questions` — 4–6 knowledge-check items, each `{ q, options (exactly 4 short
   strings), answer (0-based index of the correct option), why (one-sentence
   explanation) }`.
-- `gameItems` — 10–12 items for the allow-or-block training game, each `{ text
-  (a SHORT realistic message, request or behaviour a member of staff might
-  encounter, max 100 characters — roughly half safe and half risky, drawn from
-  this module's content), risky (true if it should be blocked, refused or
-  reported; false if it is safe normal business), why (one sentence the learner
-  sees after deciding) }`.
+- `gameItems` — 10–12 items for the **SOC-triage** training game (the learner sorts
+  each into Allow / Report / Block), each `{ from (who it appears to be from — a name
+  and/or email address, a phone caller, or e.g. "IT Helpdesk"), subject (a short
+  subject line or the gist of the request, max 80 chars), body (1–2 short sentences
+  with the message or request), clues (2–4 very short things a careful person would
+  notice — a mix of genuine red flags and reassuring or neutral details), action
+  ("allow" = safe normal business; "report" = suspicious/phishing to report to
+  security; "block" = clearly malicious or an unsafe request to refuse), why (one
+  sentence shown after deciding), level (1, 2 or 3 to group items into difficulty
+  tiers), boss (true for exactly ONE climactic targeted-attack scenario such as
+  CEO/BEC gift-card fraud, otherwise omit) }`. Aim for a roughly even spread of
+  allow/report/block, drawn from this module's content. (The renderer is backward
+  compatible with the legacy `{ text, risky, why }` shape, mapping it to Allow/Block.)
 
 Plain, engaging, non-technical language tailored to the audience. Do NOT use markdown
 code fences. Output ONLY the JSON object.
